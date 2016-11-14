@@ -36,7 +36,7 @@ XDR 同于描述传输的数据，在网络包出现于RPC 以及NFS 层中，�
 | 4 | access | Check Access Permission | 检查现有会话下对某FH 对应的文件具有何种权限
 | 5 | readlink | Read from　Symbolic Link | 读取一个符号链接的文件名
 | 6 | read | Read | 从远端读
-| 7 | write | Write |　向远端写
+| 7 | write | Write | 向远端写
 | 8 | create | Create a File | 在远端创建文件
 | 9 | mkdir | Make a Dir | 在远端创建路径
 |10 | symlink | Create a Symbolic Link | 在远端创建符号链接
