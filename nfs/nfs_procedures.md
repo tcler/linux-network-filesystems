@@ -3,6 +3,7 @@
 NFS 基于网络过程，因此NFS 中本地与远端的所有交互都可以通过观察NFS 包中的数据和交互模式找到问题，无论是权限还是性能问题，最基础的部分是RFC 中定义的NFS 特有的RPC 过程，这些过程是理解export-mount 交互模式和各个选项的基础。
 
 NFS 于OSI 分层模型中的位置：
+
 OSI Model | OSI 模型 | NFS Architecture | NFS 结构 |
 ----------|------|--------------|----------|----------|
 Application | 应用层 | NFS built-in procedures | NFS 内建过程
