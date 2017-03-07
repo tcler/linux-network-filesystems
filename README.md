@@ -2,6 +2,8 @@
 
 ## NFS
 * http://wiki.linux-nfs.org/wiki/index.php/Main_Page
+* https://datatracker.ietf.org/wg/nfsv4/documents/
+* https://tools.ietf.org/wg/nfsv4/
 
 ##CIFS
 * https://linux-cifs.samba.org/
