@@ -5,10 +5,10 @@
 * https://datatracker.ietf.org/wg/nfsv4/documents/
 * https://tools.ietf.org/wg/nfsv4/
 
-##CIFS
+## CIFS
 * https://linux-cifs.samba.org/
 * https://wiki.samba.org/index.php/LinuxCIFS_utils
 * https://wiki.samba.org/index.php/Main_Page
 
-##autofs
+## autofs
 * http://en.wikipedia.org/wiki/Automounter
