@@ -1,0 +1,8 @@
+
+see https://tcler.github.io/2017/08/24/NetApp-conceptions-and-cli/
+
+################################################################################
+Question:
+	怎么创建cluster?
+	怎么添加node? #node systemshell 登录
+	cluster node 都什么关系?

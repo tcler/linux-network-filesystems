@@ -1,0 +1,89 @@
+|fscache/cachefiles|
+
+Support status:
+  https://access.redhat.com/solutions/275073
+  Red Hat Enterprise Linux 5
+    From RHEL5.1 to RHEL5.2, NFS with FS-Cache was Technology Preview.
+    In RHEL5.3 it was decided fscache would not transition to full support, and the Technology Preview status of fscache with NFS was removed.
+    In RHEL5.8 the last documentation reference to fscache was removed.
+
+  Red Hat Enterprise Linux 6
+    In RHEL6, NFS with FS-Cache is Technology Preview.
+    Please see Using the Cache With NFS and RHEL 6.8 Technical Notes for more details
+
+  Red Hat Enterprise Linux 7
+    fscache is no longer Technology Preview in this release and is fully supported.
+
+  *Root Cause
+    The following reasoning was given for removing fscache from Technology Preview status in RHEL5, as well as alluding to the re-instatement of fscache in RHEL6 and following. From
+    Bug 481579 - fsc is no longer available for nfs mount points after upgrading from nfs-utils-1.0.9-35z.el5_2 to nfs-utils-1.0.9-40.el5.:
+
+
+Design and Implementation:
+  Author:
+    {David Howells} @redhat  #take all fscache/cachefiles bugs
+
+  Ref:
+    https://people.redhat.com/dhowells/fscache/FS-Cache.pdf
+    https://www.kernel.org/doc/Documentation/filesystems/caching/fscache.txt
+
+	+---------+
+	|         |
+	| Server  |
+	|         |
+	+---------+
+             |
+	     |                  NETWORK
+	~~~~~|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	     |
+	     |           +----------+
+	     V           |          |
+	+---------+      |          |
+	|         |      |          |
+	|   NFS   |----->| FS-Cache |
+	|         |      |          |--+
+	+---------+      |          |  |   +--------------+   +--------------+
+	     |           |          |  |   |              |   |              |
+	     V           +----------+  +-->|  CacheFiles  |-->|  Ext3        |
+	+---------+                        |  /var/cache  |   |  /dev/sda6   |
+	|         |                        +--------------+   +--------------+
+	|   VFS   |                                ^                     ^
+	|         |                                |                     |
+	+---------+                                +--------------+      |
+	     |                  KERNEL SPACE                      |      |
+	~~~~~|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~/dev/cachefiles~
+	     |                  USER SPACE                        |      |
+	     V                                                    |      |
+	+---------+                                           +--------------+
+	|         |                                           |              |
+	| Process |                                           | cachefilesd  |
+	|         |                                           |              |
+	+---------+                                           +--------------+
+
+    https://www.kernel.org/doc/Documentation/filesystems/caching/netfs-api.txt
+    https://www.kernel.org/doc/Documentation/filesystems/caching/backend-api.txt
+    https://www.kernel.org/doc/Documentation/filesystems/caching/cachefiles.txt
+    https://www.kernel.org/doc/Documentation/filesystems/caching/object.txt
+    http://www.linux-mag.com/id/7378/1/  #[linux magazine 2009 {Jeffrey B. Layton}]
+    `-> http://bbs.linuxtone.org/thread-3240-1-1.html  [Chinese]
+
+     When *nix OS’s were developed, systems could be a bit on the slow side. Typical networks were either 10 Mb/s or, if you were lucky, 100 Mb/s. Accessing network based file systems such as NFS and AFS could be rather slow over these networks. In response to sometimes slow access, a local caching mechanism, called CacheFS, was developed to provide local caching for distributed file systems. This mechanism caches data (either complete files or parts of files) on local storage so that data can be possibly accessed from a local storage device instead of a network based file system.
+     As part of the 2.6.30 kernel bonanza of file systems, a CacheFS implementation for Linux was added. Currently it supports NFS and AFS, but other file systems could benefit from such a caching mechanism (more on that later in the article). This article is a brief introduction to CacheFS, which is still undergoing a few growing pains, but is showing great progress for helping network file system performance with an eye toward other uses. In addition, the article will discuss FS-Cache which is a thin layer between CacheFS and the file system itself.
+
+     *What is FS-Cache and CacheFS?
+     *If you have read about FS-Cache or CacheFS you can easily get confused by the terminology. FS-Cache is the interface between the file system and the cache, allowing the file system to be cache agnostic. CacheFS is the caching backend for FS-cache. CacheFS does the actual handling of data storage and retrieval (i.e. the caching mechanism) and uses a partition on a block device. There is also an alternative caching mechanism called *CacheFiles* that uses a directory in an existing file system. This architecture allows alternative caching mechanisms to be used with FS-Cache. The first implementation of CacheFS was developed by Sun in 1993 for the Solaris 2.3 operating system. After that, other versions soon appeared, notably for Irix in 1994.
+
+     A number of years ago, some Linux kernel developers, notably Dave Howells and Steve Dickson, began to develop FS-Cache and CacheFS for Linux. In August 2004, Dave posted a set of patches to the Linux kernel mailing list for CacheFS. FS-Cache patches have been posted along with CacheFS. A good overview of CacheFS is an article on lwn.net. With the 2.6.30 kernel, CacheFS is included and is available for NFS and AFS.
+
+     CacheFS cannot be used for just any file system. The file system must be written to use FS-Cache. FS-Cache can use any caching mechanism it wants (using the caching interface) and the file system does not care. Both AFS and NFS have been modified to use FS-Cache. The 2.6.30 kernel contains these modified versions that utilize FS_Cache.
+
+
+	```
+	[yjh@dhcp-12-159 nfs-utils]$ cat /proc/fs/nfsfs/servers 
+	NV SERVER   PORT USE HOSTNAME
+	[yjh@dhcp-12-159 nfs-utils]$ cat /proc/fs/nfsfs/volumes 
+	NV SERVER   PORT DEV          FSID                              FSC
+	[yjh@dhcp-12-159 nfs]$ cat /proc/fs/fscache/objects 
+	[yjh@dhcp-12-159 nfs]$ cat /proc/fs/fscache/stats 
+	```
+
