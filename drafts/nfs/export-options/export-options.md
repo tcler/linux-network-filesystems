@@ -13,13 +13,18 @@ sec=
 
 secure / insecure
 
-	secure 选项要求 nfs 客户端 mount 请求源端口小于 1024（然而在使用 NAT 网络地址转换时端口一般总是大于1024的），默认情况下是开启这个选项的，如果要禁止这个选项，需要显式指定 insecure 选项。客户端 mount 时可以指定 noresvport 选项来确保使用 > 1024 的端口来向服务端发起请求。
-	如果 server 端导出指定了 secure 选项，而客户端端 mount 指定了 noresvport 选项，会得到 'mount.nfs: Operation not permitted' 错误
+	secure 选项要求 nfs 客户端 mount 请求源端口小于 1024（然而在使用 NAT 网络地址转换时端口一般总是大于1024的），
+	默认情况下是开启这个选项的，如果要禁止这个选项，需要显式指定 insecure 选项。客户端 mount 时可以指定 noresvport
+	选项来确保使用 > 1024 的端口来向服务端发起请求。
+	如果 server 端导出指定了 secure 选项，而客户端端 mount 指定了 noresvport 选项，会得到如下错误:
+	 'mount.nfs: Operation not permitted'
 
 
 sync / async 和 no_wdelay / wdelay
 
-	如果指定 async 选项，表示允许server端可以无需等待写请求的数据提交到磁盘即可返回。如果指定了 sync 并且指定了 wdelay 选项会使 nfsd 在提交写操作到磁盘之前执行等待操作，等待其他可能相关的写请求到达后再一起提交，从而减少总的写等待(磁盘寻址)时间(具体需要实际测试连续写、随机写在机械硬盘和SSD硬盘的效果)。
+	如果指定 async 选项，表示允许server端可以无需等待写请求的数据提交到磁盘即可返回。如果指定了 sync 并且指定了
+	wdelay 选项会使 nfsd 在提交写操作到磁盘之前执行等待操作，等待其他可能相关的写请求到达后再一起提交，从而减少
+	总的写等待(磁盘寻址)时间(具体需要实际测试连续写、随机写在机械硬盘和SSD硬盘的效果)。
 	相关代码: fs/nfsd/vfs.c: nfsd_vfs_write()
 
 	```
@@ -45,7 +50,8 @@ sync / async 和 no_wdelay / wdelay
 nohide / hide
 
 	该选项只在nfsv2 nfsv3生效；
-	如果服务端文件系统/A下面挂载了文件系统/A/B；并同时导出 /A /A/B；在客户端mount /A 之后，默认无法浏览/A/B的内容，如果在导出/A/B时添加 nohide 就可以在父文件系统中看到了。
+	如果服务端文件系统/A下面挂载了文件系统/A/B；并同时导出 /A /A/B；在客户端mount /A 之后，默认无法浏览/A/B的内容，
+	如果在导出/A/B时添加 nohide 就可以在父文件系统中看到了。
 
 	nfsv4中所有导出的文件系统，都可见；不需要指定 nohide
 
@@ -59,7 +65,8 @@ crossmnt
 	/A/B  *(rw,nohide)  # nfsv4 可省略nohide
 	/A/C  *(rw,nohide)  # nfsv4 可省略nohide
 
-	实际操作发现执行 ls /A/B 之后，其实会在/proc/mounts里生成一个新的mount point，感觉有点像autofs的挂载过程，可以单独umount这个子mount point。
+	实际操作发现执行 ls /A/B 之后，其实会在/proc/mounts里生成一个新的mount point，感觉有点像autofs的挂载过程，
+	可以单独 umount 这个子 mount point。
 
 	client 端显示的 mountpoint 跟 export 导出项对应关系:
 	  1. 如果导出目录为 /mountpoint/a/b/c ，客户端生成
@@ -94,6 +101,7 @@ fsid=num|root|uuid
 
 
 rdirplus
+
 	disable READDIRPLUS 请求；只对nfsv3有效；
 	READDIRPLUS 作用: 遍历目录时顺便获取文件列表和文件的属性，从而减少 系统/过程 调用次数，提高效率
 	待验证: find 性能
