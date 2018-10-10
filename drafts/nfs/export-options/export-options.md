@@ -80,7 +80,9 @@ crossmnt
 
 *no_subtree_check
 
-	
+	Check whether every file requested by the client is in the exported subdirectory of Server.
+	From  release 1.1.0 of nfs-utils onwards, the default will be no_subtree_check as subtree_checking
+	tends to cause more problems than it is worth.	
 
 
 insecure_locks | no_auth_nlm
@@ -100,10 +102,27 @@ fsid=num|root|uuid
 	遗留问题: 哪些特殊文件系统，没有UUID or device number ？
 
 
-rdirplus
+ nordirplus / rdirplus
 
 	disable READDIRPLUS 请求；只对nfsv3有效；
 	READDIRPLUS 作用: 遍历目录时顺便获取文件列表和文件的属性，从而减少 系统/过程 调用次数，提高效率
 	待验证: find 性能
 
 
+refer=path@host[+host][:path@host[+host]]
+
+	$export  \*(rw,refer=$export2@$server2)
+	就是你 mount 的src $server:$export 其实在另外一台 nfs server上 $server2:$export2
+	#仅V4可用; 便于 NFS server 迁移，类似 HTTP redirect
+
+replicas=path@host[+host][:path@host[+host]]
+
+	该选项使您能够以管理员的身份将数据的副本放置在多个 NFSv4 服务器上并告知 NFSv4 客户机副本所驻留的位置。
+	#仅V4可用; 允许 NFS client 从候选中列表中选一个 NFS server（文件复制需要服务端自己实现）
+	#refer 只是重定向，而 replicas 会复制文件多个副本到其他机器
+	
+pnfs / no_pnfs
+
+	enable pnfs, default is no_pnfs
+	
+	
