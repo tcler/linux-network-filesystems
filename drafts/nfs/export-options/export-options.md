@@ -2,7 +2,7 @@
 
 ro / rw
 
-	顾名思义：只读和可读可写
+	顾名思义：只读和可读可写; 默认 ro
 
 
 sec=
@@ -124,5 +124,21 @@ replicas=path@host[+host][:path@host[+host]]
 pnfs / no_pnfs
 
 	enable pnfs, default is no_pnfs
-	
-	
+
+
+root_squash / no_root_squash
+
+	[安全] 把root用户映射到anonymous用户
+
+all_squash
+
+	[安全] 把所有用户映射到anonymous用户
+
+anonuid & anongid
+
+	定义具体 anonymous uid/gid的值；可以用 all_squash 加 
+	anonuid & anongid 选项，将导出目录定义为只有某个用户/组才有权限
+
+Extra Export Tables: /etc/exports.d/\*.exports
+
+	除了/etc/exports，exportfs命令还会试图找所有 /etc/exports.d/*.exports 文件进行解析
