@@ -102,7 +102,7 @@ fsid=num|root|uuid
 	遗留问题: 哪些特殊文件系统，没有UUID or device number ？
 
 
- nordirplus / rdirplus
+nordirplus
 
 	disable READDIRPLUS 请求；只对nfsv3有效；
 	READDIRPLUS 作用: 遍历目录时顺便获取文件列表和文件的属性，从而减少 系统/过程 调用次数，提高效率
