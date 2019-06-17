@@ -127,7 +127,11 @@ pnfs / no_pnfs
 
 security_label
 
-	With this option set, clients using NFSv4.2 or higher will be able to set and retrieve security labels (such as those used by SELinux). This will only work if all clients use a consistent security policy. Note that early kernels did not support this export option, and instead enabled security labels by default.
+	With this option set, clients using NFSv4.2 or higher will be able to set and retrieve security
+	labels (such as those used by SELinux). This will only work if all clients use a consistent 
+	security policy. Note that early kernels did not support this export option, and instead enabled
+	security labels by default.
+	
 	显式导出 selinux labels, 如果不导出 客户端挂载后, 文件的 label 为默认的 nfs_t
 	see: https://selinuxproject.org/page/Labeled_NFS
 
