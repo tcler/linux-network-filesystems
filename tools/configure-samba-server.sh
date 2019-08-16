@@ -45,8 +45,8 @@ done
 
 
 ## install related packages
-yum install -y samba &>/dev/null
-yum install -y samba-client cifs-utils tree &>/dev/null
+yum install -y samba samba-common-tools >/dev/null
+yum install -y samba-client cifs-utils tree >/dev/null
 
 
 ## create smbusers and directorys
