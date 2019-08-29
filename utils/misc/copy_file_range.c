@@ -24,48 +24,49 @@ int main(int argc, char **argv)
 	unsigned len, ret;
 	int fd_in;
 	int fd_out;
-	loff_t offseti = 0;
-	loff_t offseto = 0;
+	loff_t off_in = 0;
+	loff_t off_out = 0;
 
-	char *token = NULL;
-	char *pout = NULL;
-	char *pin = NULL;
-	char *fout = NULL;
-	char *fin = NULL;
+	char *dst = NULL;
+	char *src = NULL;
+	char *dst_file = NULL;
+	char *src_file = NULL;
+	char *dst_off = NULL;
+	char *src_off = NULL;
 	struct stat stat;
 	char *endptr;
 
 	if (argc < 3) {
-		fprintf(stderr, "Usage: %s <destination[:offset]> <<source|->[:offset]>\n", argv[0]);
+		fprintf(stderr, "Usage: %s <destination[:offset]> <<source|->[:offset]> [len]\n", argv[0]);
 		fprintf(stderr, "`note: source is '-' means that 'fd_in' equal 'fd_out' # see copy_file_range(2)\n");
 		exit(EXIT_FAILURE);
 	}
 
-	pout = strdup(argv[1]);
-	pin = strdup(argv[2]);
+	dst = strdup(argv[1]);
+	src = strdup(argv[2]);
 
-	fout = strsep(&pout, ":");
-	token = strsep(&pout, ":");
-	if (token != NULL)
-		offseto = strtoll(token, &endptr, 0);
+	dst_file = strsep(&dst, ":");
+	dst_off = strsep(&dst, ":");
+	if (dst_off != NULL)
+		off_out = strtoll(dst_off, &endptr, 0);
 
-	fin = strsep(&pin, ":");
-	token = strsep(&pin, ":");
-	if (token != NULL)
-		offseti = strtoll(token, &endptr, 0);
+	src_file = strsep(&src, ":");
+	src_off = strsep(&src, ":");
+	if (src_off != NULL)
+		off_in = strtoll(src_off, &endptr, 0);
 
-	fd_out = open(fout, O_RDWR, 0666);
+	fd_out = open(dst_file, O_RDWR|O_CREAT, 0666);
 	if (fd_out == -1) {
-		perror("open fout");
+		perror("open dst file");
 		exit(EXIT_FAILURE);
 	}
 
-	if (strcmp("-", fin) == 0) {
+	if (strcmp("-", src_file) == 0) {
 		fd_in = fd_out;
 	} else {
-		fd_in = open(fin, O_RDONLY);
+		fd_in = open(src_file, O_RDONLY);
 		if (fd_in == -1) {
-			perror("open fin)");
+			perror("open src file)");
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -76,17 +77,22 @@ int main(int argc, char **argv)
 	}
 	len = stat.st_size;
 
-	if (fd_in == fd_out && offseto == 0)
-		offseto=len;
+	if (fd_in == fd_out && dst_off == NULL)
+		off_out=len;
+
+	if (argv[3] != NULL) {
+		len = strtoll(argv[3], &endptr, 0);
+	}
 
 	do {
-		ret = copy_file_range(fd_in, &offseti, fd_out, &offseto, len, 0);
+		ret = copy_file_range(fd_in, &off_in, fd_out, &off_out, len, 0);
 		if (ret == -1) {
 			perror("copy_file_range");
 			exit(EXIT_FAILURE);
 		}
-
 	        printf("ret=%d\n",ret);
+		if (ret == 0)
+			break;
 		len -= ret;
 	} while (len > 0);
 
