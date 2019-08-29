@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	if (strcmp("-", src_file) == 0) {
+	if (strcmp("-", src_file) == 0 || src_file[0] == '\0') {
 		fd_in = fd_out;
 	} else {
 		fd_in = open(src_file, O_RDONLY);
