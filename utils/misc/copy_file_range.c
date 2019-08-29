@@ -36,7 +36,8 @@ int main(int argc, char **argv)
 	char *endptr;
 
 	if (argc < 3) {
-		fprintf(stderr, "Usage: %s <destination[:offset]> <source[:offset]>\n", argv[0]);
+		fprintf(stderr, "Usage: %s <destination[:offset]> <<source|->[:offset]>\n", argv[0]);
+		fprintf(stderr, "`note: source is '-' means that 'fd_in' equal 'fd_out' # see copy_file_range(2)\n");
 		exit(EXIT_FAILURE);
 	}
 
