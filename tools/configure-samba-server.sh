@@ -14,16 +14,20 @@ PASSWORD=redhat
 ## argparse
 P=${0##*/}
 Usage() {
-	echo "Usage: $P [options]"
 	cat <<EOF
+Usage:
+  sudo $P [options]
+
 Options:
-    -h, -help              ; show this help
-    -group <group name>    ; group name
-    -users <user list>     ; comma separated samba user list(default: root,smbuser1,smbuser2)
-    -passwd <passwd>       ; common password(default: redhat)
-    -prefix <path>         ; root directory of samba share(default: /smbshare/)
+  -h, -help              ; show this help
+  -group <group name>    ; group name
+  -users <user list>     ; comma separated samba user list(default: root,smbuser1,smbuser2)
+  -passwd <passwd>       ; common password(default: redhat)
+  -prefix <path>         ; root directory of samba share(default: /smbshare/)
 EOF
 }
+test `id -u` = 0 || { echo "{Warn} This command has to be run under the root user"|grep --color=always . >&2; Usage >&2; exit 1; }
+
 _at=$(getopt -a -o h \
 	--long help \
 	--long group: \
