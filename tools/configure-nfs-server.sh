@@ -38,7 +38,7 @@ done
 
 ## install related packages
 yum install -y nfs-utils &>/dev/null
-yum install -y krb5-workstation gssproxy &>/dev/null
+#yum install -y krb5-workstation &>/dev/null
 
 
 ## create nfs export directorys
