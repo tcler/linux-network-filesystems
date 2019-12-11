@@ -22,6 +22,8 @@ ns -n c1 --macvlan-ip 192.168.254.11 -bind=/usr -noboot -clone nsmini
 ns exec c1 -- mkdir -p /mnt/nfs
 ns exec c1 -- showmount -e 192.168.254.1
 ns exec c1 -- mount 192.168.254.1:/ /mnt/nfs -overs=4.2,actimeo=1,sync
+ns exec c1 -- mount -t nfs
+ns exec c1 -- mount -t nfs4
 
 ns exec serv -- ls -lZ /nfsshare/testfile
 ns exec c1 -- ls -lZ /mnt/nfs/nfsshare/testfile
