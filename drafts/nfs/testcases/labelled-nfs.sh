@@ -5,6 +5,8 @@ baseurl=https://raw.githubusercontent.com/tcler/bkr-client-improved/master
 curl -s -o /usr/local/bin/ns -L ${baseurl}/utils/ns
 chmod +x /usr/local/bin/ns
 
+sleeptime=${1:-1}
+
 ns
 ns jj nsbase nfs-utils iproute iputils firewalld
 ns jj nsmini bash
@@ -44,7 +46,7 @@ cmp con.s con.c2 || echo -e "\n{warnig} ^^^^^^^^^^^"
 
 #change from server
 ns exec serv -- chcon -t etc_t /nfsshare/testfile
-sleep 1
+sleep ${sleeptime}
 ns exec serv -- ls -lZ /nfsshare/testfile
 ns exec c1 -- ls -lZ /mnt/nfs/nfsshare/testfile
 ns exec c2 -- ls -lZ /mnt/nfs/nfsshare/testfile
@@ -56,7 +58,7 @@ cmp con.s con.c2 || echo -e "\n{warnig} ^^^^^^^^^^^"
 
 #change from server again
 ns exec serv -- chcon -t default_t /nfsshare/testfile
-sleep 1
+sleep ${sleeptime}
 ns exec serv -- ls -lZ /nfsshare/testfile
 ns exec c1 -- ls -lZ /mnt/nfs/nfsshare/testfile
 ns exec c2 -- ls -lZ /mnt/nfs/nfsshare/testfile
@@ -68,7 +70,7 @@ cmp con.s con.c2 || echo -e "\n{warnig} ^^^^^^^^^^^"
 
 #change from c1
 ns exec c1 -- 'chcon -t usr_t /mnt/nfs/nfsshare/testfile; sync'
-sleep 1
+sleep ${sleeptime}
 ns exec serv -- ls -lZ /nfsshare/testfile
 ns exec c1 -- ls -lZ /mnt/nfs/nfsshare/testfile
 ns exec c2 -- ls -lZ /mnt/nfs/nfsshare/testfile
@@ -80,7 +82,7 @@ cmp con.s con.c2 || echo -e "\n{warnig} ^^^^^^^^^^^"
 
 #change from c2
 ns exec c2 -- 'chcon -t etc_t /mnt/nfs/nfsshare/testfile; sync'
-sleep 1
+sleep ${sleeptime}
 ns exec serv -- ls -lZ /nfsshare/testfile
 ns exec c1 -- ls -lZ /mnt/nfs/nfsshare/testfile
 ns exec c2 -- ls -lZ /mnt/nfs/nfsshare/testfile
