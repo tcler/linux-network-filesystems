@@ -32,7 +32,7 @@ ns exec c1 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c
 cmp con.s con.c || echo -e "\n{warnig} ^^^^^^^^^^^"
 
 ns exec serv -- chcon -t etc_t /nfsshare/testfile
-ns exec serv -- "sync; sync"
+sleep 1
 ns exec serv -- ls -lZ /nfsshare/testfile
 ns exec c1 -- ls -lZ /mnt/nfs/nfsshare/testfile
 ns exec serv -- stat -c %C /nfsshare/testfile | tee con.s
@@ -40,7 +40,7 @@ ns exec c1 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c
 cmp con.s con.c || echo -e "\n{warnig} ^^^^^^^^^^^"
 
 ns exec serv -- chcon -t default_t /nfsshare/testfile
-ns exec serv -- "sync; sync"
+sleep 1
 ns exec serv -- ls -lZ /nfsshare/testfile
 ns exec c1 -- ls -lZ /mnt/nfs/nfsshare/testfile
 ns exec serv -- stat -c %C /nfsshare/testfile | tee con.s
