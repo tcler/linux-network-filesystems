@@ -25,27 +25,70 @@ ns exec c1 -- mount 192.168.254.1:/ /mnt/nfs -overs=4.2,actimeo=1,sync
 ns exec c1 -- mount -t nfs
 ns exec c1 -- mount -t nfs4
 
+ns -n c2 --macvlan-ip 192.168.254.12 -bind=/usr -noboot -clone nsmini
+ns exec c2 -- mkdir -p /mnt/nfs
+ns exec c2 -- showmount -e 192.168.254.1
+ns exec c2 -- mount 192.168.254.1:/ /mnt/nfs -overs=4.2,actimeo=1,sync
+ns exec c2 -- mount -t nfs
+ns exec c2 -- mount -t nfs4
+
+#init value
 ns exec serv -- ls -lZ /nfsshare/testfile
 ns exec c1 -- ls -lZ /mnt/nfs/nfsshare/testfile
+ns exec c2 -- ls -lZ /mnt/nfs/nfsshare/testfile
 ns exec serv -- stat -c %C /nfsshare/testfile | tee con.s
-ns exec c1 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c
-cmp con.s con.c || echo -e "\n{warnig} ^^^^^^^^^^^"
+ns exec c1 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c1
+ns exec c2 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c2
+cmp con.s con.c1 || echo -e "\n{warnig} ^^^^^^^^^^^"
+cmp con.s con.c2 || echo -e "\n{warnig} ^^^^^^^^^^^"
 
+#change from server
 ns exec serv -- chcon -t etc_t /nfsshare/testfile
 sleep 1
 ns exec serv -- ls -lZ /nfsshare/testfile
 ns exec c1 -- ls -lZ /mnt/nfs/nfsshare/testfile
+ns exec c2 -- ls -lZ /mnt/nfs/nfsshare/testfile
 ns exec serv -- stat -c %C /nfsshare/testfile | tee con.s
-ns exec c1 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c
-cmp con.s con.c || echo -e "\n{warnig} ^^^^^^^^^^^"
+ns exec c1 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c1
+ns exec c2 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c2
+cmp con.s con.c1 || echo -e "\n{warnig} ^^^^^^^^^^^"
+cmp con.s con.c2 || echo -e "\n{warnig} ^^^^^^^^^^^"
 
+#change from server again
 ns exec serv -- chcon -t default_t /nfsshare/testfile
 sleep 1
 ns exec serv -- ls -lZ /nfsshare/testfile
 ns exec c1 -- ls -lZ /mnt/nfs/nfsshare/testfile
+ns exec c2 -- ls -lZ /mnt/nfs/nfsshare/testfile
 ns exec serv -- stat -c %C /nfsshare/testfile | tee con.s
-ns exec c1 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c
-cmp con.s con.c || echo -e "\n{warnig} ^^^^^^^^^^^"
+ns exec c1 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c1
+ns exec c2 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c2
+cmp con.s con.c1 || echo -e "\n{warnig} ^^^^^^^^^^^"
+cmp con.s con.c2 || echo -e "\n{warnig} ^^^^^^^^^^^"
+
+#change from c1
+ns exec c1 -- 'chcon -t usr_t /mnt/nfs/nfsshare/testfile; sync'
+sleep 1
+ns exec serv -- ls -lZ /nfsshare/testfile
+ns exec c1 -- ls -lZ /mnt/nfs/nfsshare/testfile
+ns exec c2 -- ls -lZ /mnt/nfs/nfsshare/testfile
+ns exec serv -- stat -c %C /nfsshare/testfile | tee con.s
+ns exec c1 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c1
+ns exec c2 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c2
+cmp con.s con.c1 || echo -e "\n{warnig} ^^^^^^^^^^^"
+cmp con.s con.c2 || echo -e "\n{warnig} ^^^^^^^^^^^"
+
+#change from c2
+ns exec c2 -- 'chcon -t etc_t /mnt/nfs/nfsshare/testfile; sync'
+sleep 1
+ns exec serv -- ls -lZ /nfsshare/testfile
+ns exec c1 -- ls -lZ /mnt/nfs/nfsshare/testfile
+ns exec c2 -- ls -lZ /mnt/nfs/nfsshare/testfile
+ns exec serv -- stat -c %C /nfsshare/testfile | tee con.s
+ns exec c1 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c1
+ns exec c2 -- stat -c %C /mnt/nfs/nfsshare/testfile | tee con.c2
+cmp con.s con.c1 || echo -e "\n{warnig} ^^^^^^^^^^^"
+cmp con.s con.c2 || echo -e "\n{warnig} ^^^^^^^^^^^"
 
 ns exec c1 -- mount -t nfs
 ns exec c1 -- mount -t nfs4
