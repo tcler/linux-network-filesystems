@@ -42,14 +42,16 @@ yum install -y nfs-utils &>/dev/null
 
 
 ## create nfs export directorys
-mkdir -p $PREFIX/{ro,rw,async}
+mkdir -p $PREFIX/{ro,rw,async,labelled-nfs}
+touch $PREFIX/{ro,rw,async,labelled-nfs}/testfile
 
 
 ## generate exports config file
 cat <<EOF >/etc/exports
 /nfsshare/ro *(ro)
-/nfsshare/rw *(rw)
-/nfsshare/async *(rw,async)
+/nfsshare/rw *(rw,no_root_squash)
+/nfsshare/async *(rw,no_root_squash,async)
+/nfsshare/labelled-nfs *(rw,no_root_squash,security_label)
 EOF
 
 
