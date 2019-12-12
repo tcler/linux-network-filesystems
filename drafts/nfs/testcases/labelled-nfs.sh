@@ -28,6 +28,7 @@ ns exec serv -- firewall-cmd --get-services
 ns -n c1 --macvlan-ip $Client1IP -bind=/usr -noboot -clone nsmini
 ns exec c1 -- mkdir -p $MountPoint
 ns exec c1 -- showmount -e $ServerIP
+ns exec c1 -- ping -c 4 $ServerIP
 ns exec c1 -- mount $ServerIP:/ $MountPoint -overs=4.2,actimeo=1,sync
 ns exec c1 -- mount -t nfs
 ns exec c1 -- mount -t nfs4
@@ -35,6 +36,7 @@ ns exec c1 -- mount -t nfs4
 ns -n c2 --macvlan-ip $Client2IP -bind=/usr -noboot -clone nsmini
 ns exec c2 -- mkdir -p $MountPoint
 ns exec c2 -- showmount -e $ServerIP
+ns exec c2 -- ping -c 4 $ServerIP
 ns exec c2 -- mount $ServerIP:/ $MountPoint -overs=4.2,actimeo=1,sync
 ns exec c2 -- mount -t nfs
 ns exec c2 -- mount -t nfs4
@@ -107,5 +109,17 @@ ns exec c2 -- mount -t nfs4
 ns exec c1 -- ls -lZ $MountPoint/$ExportDir/testfile
 ns exec c2 -- ls -lZ $MountPoint/$ExportDir/testfile
 
-ns exec c1 -- umount $MountPoint
+[[ ${sleeptime} = 0 ]] && {
+	echo "[info] will get unexpected stale file handle, if hit bug"
+	sleep 10
+	ns exec c1 -- ls -lZ $MountPoint/$ExportDir/testfile
+	ns exec c2 -- ls -lZ $MountPoint/$ExportDir/testfile
+}
+
+cat <<COMM
+#please clean test env:
 ns exec c2 -- umount $MountPoint
+ns exec c1 -- umount $MountPoint
+ns exec serv -- systemctl stop firewalld
+ns exec serv -- systemctl stop nfs-server
+COMM
