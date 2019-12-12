@@ -110,7 +110,7 @@ ns exec c1 -- ls -lZ $MountPoint/$ExportDir/testfile
 ns exec c2 -- ls -lZ $MountPoint/$ExportDir/testfile
 
 [[ ${sleeptime} = 0 ]] && {
-	echo "[info] will get unexpected stale file handle, if hit bug"
+	echo -e "\n{info} will get unexpected stale file handle, if hit bug"
 	sleep 10
 	ns exec c1 -- ls -lZ $MountPoint/$ExportDir/testfile
 	ns exec c2 -- ls -lZ $MountPoint/$ExportDir/testfile
