@@ -118,10 +118,8 @@ ns exec c2 -- ls -lZ $MountPoint/$ExportDir/testfile
 	ns exec c2 -- ls -lZ $MountPoint/$ExportDir/testfile
 }
 
-cat <<COMM
 #please clean test env:
 ns exec c2 -- umount $MountPoint
 ns exec c1 -- umount $MountPoint
 ns exec serv -- systemctl stop firewalld
 ns exec serv -- systemctl stop nfs-server
-COMM
