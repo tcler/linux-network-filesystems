@@ -1,8 +1,8 @@
 #!/bin/bash
 #ref: https://packetpushers.net/multipathing-nfs4-1-kvm
 
-baseurl=https://raw.githubusercontent.com/tcler/bkr-client-improved/master
-curl -s -o /usr/local/bin/ns -L ${baseurl}/utils/ns
+baseurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master
+curl -s -o /usr/local/bin/ns -L ${baseurl}/kiss-ns
 chmod +x /usr/local/bin/ns
 
 ServerIP1=192.168.10.1
