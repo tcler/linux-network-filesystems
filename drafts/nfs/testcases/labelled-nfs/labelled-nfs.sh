@@ -12,18 +12,18 @@ ExportDir=/nfsshare
 MountPoint=/mnt/nfs
 export nsverbose=yes
 
+systemctl stop firewalld
+
 ns
-ns jj nsbase nfs-utils iproute iputils firewalld
+ns jj nsbase nfs-utils iproute iputils #firewalld
 ns jj nsmini bash
 
 ns -n serv --macvlan-ip $ServerIP  --clone nsbase
+ns exec serv -- systemctl stop firewalld
 ns exec serv -- mkdir -p $ExportDir
 ns exec serv -- touch $ExportDir/testfile
 ns exec serv -- "echo '$ExportDir *(rw,no_root_squash,security_label)' >/etc/exports"
 ns exec serv -- systemctl restart nfs-server
-ns exec serv -- systemctl start firewalld
-ns exec serv -- firewall-cmd --add-service={nfs,mountd,rpc-bind}
-ns exec serv -- firewall-cmd --get-services
 
 ns -n c1 --macvlan-ip $Client1IP -bind=/usr -noboot -clone nsmini
 ns exec c1 -- mkdir -p $MountPoint
@@ -120,5 +120,4 @@ ns exec c2 -- ls -lZ $MountPoint/$ExportDir/testfile
 #please clean test env:
 ns exec c2 -- umount $MountPoint
 ns exec c1 -- umount $MountPoint
-ns exec serv -- systemctl stop firewalld
 ns exec serv -- systemctl stop nfs-server
