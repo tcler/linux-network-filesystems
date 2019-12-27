@@ -25,10 +25,10 @@ vm net netname=net10 brname=vm-vbr10 subnet=10
 vm netinfo net10
 vm create "$distro" -n serv --saveimage -p "nfs-utils" --nointeract --net default --net net10 -f
 vm create "$distro" -n clnt --saveimage -p "nfs-utils" --nointeract --net default --net net10 -f
-S=$(vm --getvmname "$distro" -n serv)
-C=$(vm --getvmname "$distro" -n clnt)
-Saddr1=$(vm ifaddr $S|grep '192.168.122\.')
-Saddr2=$(vm ifaddr $S|grep '192.168.10\.')
+S=$(vm -r --getvmname "$distro" -n serv)
+C=$(vm -r --getvmname "$distro" -n clnt)
+Saddr1=$(vm -r ifaddr $S|grep '192.168.122\.')
+Saddr2=$(vm -r ifaddr $S|grep '192.168.10\.')
 
 vm exec -v $S -- mkdir -p $ExportDir
 vm exec -v $S -- touch $ExportDir/testfile
