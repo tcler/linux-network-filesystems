@@ -1,6 +1,11 @@
 #!/bin/bash
 #ref: https://packetpushers.net/multipathing-nfs4-1-kvm
 
+if ! egrep -wo '(vmx|svm)' /proc/cpuinfo -q; then
+	echo -e "[ERR] this testcase need host support Virtualiztion, but current machine doen't support." >&2
+	exit 1
+fi
+
 baseurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master
 curl -s -o /usr/local/bin/vm -L ${baseurl}/kiss-vm
 chmod +x /usr/local/bin/vm
