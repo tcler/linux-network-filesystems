@@ -7,8 +7,11 @@ if ! egrep -wo '(vmx|svm)' /proc/cpuinfo -q; then
 fi
 
 baseurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master
-curl -s -o /usr/local/bin/vm -L ${baseurl}/kiss-vm
-chmod +x /usr/local/bin/vm
+which vm &>/dev/null || {
+	echo -e "[INFO] install kiss-vm ..."
+	sudo curl -s -o /usr/local/bin/vm -L ${baseurl}/kiss-vm
+	sudo chmod +x /usr/local/bin/vm
+}
 
 ExportDir=/nfsshare
 MountPoint=/mnt/nfs
