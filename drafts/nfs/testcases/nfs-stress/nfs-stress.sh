@@ -49,9 +49,9 @@ for ((i=0; i<NSCNT; i++)); do
 done
 
 showmount -e ${serv}
-touch $expdir/nfs-stress.sh
-chmod +x $expdir/nfs-stress.sh
-cat <<'EOF' >$expdir/nfs-stress.sh
+touch $expdir/nfsstress.sh
+chmod +x $expdir/nfsstress.sh
+cat <<'EOF' >$expdir/nfsstress.sh
 #!/bin/bash
 
 NFSSHARE="${1}"
@@ -139,14 +139,14 @@ for ((j=0; j<NSCNT; j++)); do
 	netns -v exec $ns -- mount -vv $nfsshare $mp
 	netns -v exec $ns -- mount -t nfs4
 
-	echo "- {INFO} Running nfs-stress.sh script $runcnt instance from client $ns"
+	echo "- {INFO} Running nfsstress.sh script $runcnt instance from client $ns"
 	for ((i=0; i<runcnt; i++)) do
-		netns -v exec $ns -- "tmux -L netns-$ns new -d '$mp/nfs-stress.sh $nfsshare &>/tmp/$ns-nfs-stress$i.log'"
+		netns -v exec $ns -- "tmux -L netns-$ns new -d '$mp/nfsstress.sh $nfsshare &>/tmp/$ns-nfs-stress$i.log'"
 		sleep 1
 	done
 	sleep 400
-	ps aux | grep -v grep | grep nfs-stress.sh
-	netns -v exec $ns -- pkill nfs-stress.sh
+	ps aux | grep -v grep | grep nfsstress.sh
+	netns -v exec $ns -- pkill nfsstress.sh
 	netns -v exec $ns -- umount -a -f -t nfs4
 	netns del $ns
 
