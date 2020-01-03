@@ -65,6 +65,7 @@ dmesg -c
 systemctl restart nfs-server
 exportfs -v
 systemctl start firewalld
+firewall-cmd --add-service=nfs --add-service=mountd --add-service=rpc-bind
 
 #create a series network namespaces
 sysctl -w net.ipv4.conf.all.forwarding=1
@@ -86,7 +87,6 @@ for ((i=0; i<NSCNT; i++)); do
 	iptables -A POSTROUTING -s 192.168.$i.0/24 -j MASQUERADE -t nat
 done
 
-showmount -e ${serv}
 touch $expdir/nfsstress.sh
 chmod +x $expdir/nfsstress.sh
 cat <<'EOF' >$expdir/nfsstress.sh
@@ -174,6 +174,7 @@ for ((j=0; j<NSCNT; j++)); do
 	mkdir -p $mp
 
 	echo "{INFO} Test in namespace $ns ..."
+	netns -v exec $ns -- showmount -e ${serv}
 	netns -v exec $ns -- mount -vv $nfsshare $mp
 	netns -v exec $ns -- mount -t nfs4
 
