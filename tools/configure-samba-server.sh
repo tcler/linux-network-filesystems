@@ -57,7 +57,7 @@ yum install -y samba-client cifs-utils tree >/dev/null
 
 [[ "$FSTYPE" = ext4 ]] && {
 	mkdir -p $PREFIX
-	dd if=/dev/zero of=/sambashare.img bs=1M count=1000
+	dd if=/dev/zero of=/sambashare.img bs=1M count=1000 status=progress
 	mkfs.ext4 -F /sambashare.img
 	mount -t ext4 -oloop /sambashare.img $PREFIX
 }
