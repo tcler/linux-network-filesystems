@@ -102,6 +102,10 @@ cat <<EOF >/etc/samba/smb.conf
     guest ok = no
     valid users = %S
 
+[top]
+    path = $PREFIX
+    writeable = yes
+
 [pub]
     path = $PREFIX/pub
     writable = yes
