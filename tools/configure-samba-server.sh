@@ -24,6 +24,7 @@ Options:
   -users <user list>     ; comma separated samba user list(default: root,smbuser1,smbuser2)
   -passwd <passwd>       ; common password(default: redhat)
   -prefix <path>         ; root directory of samba share(default: /smbshare/)
+  -fstype <type>         ; fs type of default samba share(/smbshare/)
 EOF
 }
 test `id -u` = 0 || { echo "{Warn} This command has to be run under the root user"|grep --color=always . >&2; Usage >&2; exit 1; }
@@ -34,6 +35,7 @@ _at=$(getopt -a -o h \
 	--long prefix: \
 	--long users: \
 	--long passwd: \
+	--long fstype: \
 	-n "$P" -- "$@")
 eval set -- "$_at"
 while true; do
@@ -43,6 +45,7 @@ while true; do
 	--prefix)     PREFIX=$2; shift 2;;
 	--users)      USERLIST=$2; shift 2;;
 	--passwd)     PASSWORD=$2; shift 2;;
+	--fstype)     FSTYPE=$2; shift 2;;
 	--) shift; break;;
 	esac
 done
@@ -52,6 +55,12 @@ done
 yum install -y samba samba-common-tools >/dev/null
 yum install -y samba-client cifs-utils tree >/dev/null
 
+[[ "$FSTYPE" = ext4 ]] && {
+	mkdir -p $PREFIX
+	dd if=/dev/zero of=/sambashare.img bs=1M count=1000
+	mkfs.ext4 -F /sambashare.img
+	mount -t ext4 -oloop /sambashare.img $PREFIX
+}
 
 ## create smbusers and directorys
 HOMEDIR=$PREFIX/homes
