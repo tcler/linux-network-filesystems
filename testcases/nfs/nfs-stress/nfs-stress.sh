@@ -72,8 +72,8 @@ sysctl -w net.ipv4.conf.all.forwarding=1
 modprobe -r veth
 which netns || {
 	netnsurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master/kiss-netns
-	curl -s -o /usr/local/bin/netns -L $netnsurl
-	chmod +x /usr/local/bin/netns
+	curl -s -o /usr/bin/netns -L $netnsurl
+	chmod +x /usr/bin/netns
 }
 for ((i=0; i<NSCNT; i++)); do
 	ns=ns$i

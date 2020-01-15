@@ -2,8 +2,8 @@
 #ref: https://packetpushers.net/multipathing-nfs4-1-kvm
 
 baseurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master
-curl -s -o /usr/local/bin/ns -L ${baseurl}/kiss-ns
-chmod +x /usr/local/bin/ns
+curl -s -o /usr/bin/ns -L ${baseurl}/kiss-ns
+chmod +x /usr/bin/ns
 
 ServerIP1=192.168.10.1
 ClientIP1=192.168.10.2

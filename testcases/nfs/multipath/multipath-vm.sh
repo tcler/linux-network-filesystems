@@ -9,8 +9,8 @@ fi
 baseurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master
 which vm &>/dev/null || {
 	echo -e "[INFO] install kiss-vm ..."
-	sudo curl -s -o /usr/local/bin/vm -L ${baseurl}/kiss-vm
-	sudo chmod +x /usr/local/bin/vm
+	sudo curl -s -o /usr/bin/vm -L ${baseurl}/kiss-vm
+	sudo chmod +x /usr/bin/vm
 }
 
 ExportDir=/nfsshare
