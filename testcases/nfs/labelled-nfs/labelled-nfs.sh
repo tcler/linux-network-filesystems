@@ -125,3 +125,5 @@ ns exec c2 -- ls -lZ $MountPoint/$ExportDir/testfile
 ns exec -vx0 c2 -- umount $MountPoint
 ns exec -vx0 c1 -- umount $MountPoint
 ns exec serv -- systemctl stop nfs-server
+
+ns del c1 c2 serv
