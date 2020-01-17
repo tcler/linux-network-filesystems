@@ -45,7 +45,7 @@ ns exec -vx0 c1 -- mount -vvv $ServerIP2:/ $MountPoint
 
 ns exec -v   c1 -- "mount -l | grep nfs4"
 
-#ns exec serv -- dd if=/dev/zero of=$ExportDir/testimage bs=1M count=1024
+#ns exec -v serv -- dd if=/dev/zero of=$ExportDir/testimage bs=1M count=1024
 
 #please clean test env:
 ns exec -vx0 c1 -- umount $MountPoint

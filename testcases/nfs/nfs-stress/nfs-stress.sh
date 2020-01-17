@@ -91,7 +91,7 @@ for ((i=0; i<NSCNT; i++)); do
 	nsip=192.168.$i.2
 
 	netns host,$vethif,$hostip---$ns,$vethif_peer,$nsip
-	netns -v exec "$ns" -- ip route add default via $hostip dev $vethif_peer
+	netns exec -v "$ns" -- ip route add default via $hostip dev $vethif_peer
 	iptables -A POSTROUTING -s 192.168.$i.0/24 -j MASQUERADE -t nat
 done
 
@@ -182,19 +182,19 @@ for ((j=0; j<NSCNT; j++)); do
 	mkdir -p $mp
 
 	echo "{INFO} Test in namespace $ns ..."
-	netns -vx0 exec $ns -- showmount -e ${serv}
-	netns -vx0 exec $ns -- mount -vv $nfsshare $mp
-	netns -v   exec $ns -- mount -t nfs4
+	netns exec -vx0 $ns -- showmount -e ${serv}
+	netns exec -vx0 $ns -- mount -vv $nfsshare $mp
+	netns exec -v   $ns -- mount -t nfs4
 
 	echo "- {INFO} Running nfsstress.sh script $runcnt instance from client $ns"
 	for ((i=0; i<runcnt; i++)) do
-		netns -v exec $ns -- "tmux -L netns-$ns new -d '$mp/nfsstress.sh $nfsshare &>/tmp/$ns-nfs-stress$i.log'"
+		netns exec -v $ns -- "tmux -L netns-$ns new -d '$mp/nfsstress.sh $nfsshare &>/tmp/$ns-nfs-stress$i.log'"
 		sleep 1
 	done
 	sleep 400
 	ps aux | grep -v grep | grep nfsstress.sh
-	netns -v exec $ns -- pkill nfsstress.sh
-	netns -v exec $ns -- umount -a -f -t nfs4
+	netns exec -v $ns -- pkill nfsstress.sh
+	netns exec -v $ns -- umount -a -f -t nfs4
 	netns del $ns
 
 	if dmesg | egrep '\[[ .[0-9]]+\] WARNING:'; then

@@ -63,67 +63,67 @@ cmp con.s con.c1 || faillog "$(< con.s) != $(< con.c1)"
 cmp con.s con.c2 || faillog "$(< con.s) != $(< con.c2)"
 
 #change from server
-ns exec serv -- chcon -t etc_t $ExportDir/testfile
+ns exec -v serv -- chcon -t etc_t $ExportDir/testfile
 sleep ${sleeptime}
-ns exec serv -- ls -lZ $ExportDir/testfile
-ns exec c1 -- ls -lZ $MountPoint/$ExportDir/testfile
-ns exec c2 -- ls -lZ $MountPoint/$ExportDir/testfile
-ns exec serv -- stat -c %C $ExportDir/testfile | tee con.s
-ns exec c1 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c1
-ns exec c2 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c2
+ns exec -v serv -- ls -lZ $ExportDir/testfile
+ns exec -v c1 -- ls -lZ $MountPoint/$ExportDir/testfile
+ns exec -v c2 -- ls -lZ $MountPoint/$ExportDir/testfile
+ns exec -v serv -- stat -c %C $ExportDir/testfile | tee con.s
+ns exec -v c1 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c1
+ns exec -v c2 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c2
 cmp con.s con.c1 || faillog "$(< con.s) != $(< con.c1)"
 cmp con.s con.c2 || faillog "$(< con.s) != $(< con.c2)"
 
 #change from server again
-ns exec serv -- chcon -t default_t $ExportDir/testfile
+ns exec -v serv -- chcon -t default_t $ExportDir/testfile
 sleep ${sleeptime}
-ns exec serv -- ls -lZ $ExportDir/testfile
-ns exec c1 -- ls -lZ $MountPoint/$ExportDir/testfile
-ns exec c2 -- ls -lZ $MountPoint/$ExportDir/testfile
-ns exec serv -- stat -c %C $ExportDir/testfile | tee con.s
-ns exec c1 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c1
-ns exec c2 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c2
+ns exec -v serv -- ls -lZ $ExportDir/testfile
+ns exec -v c1 -- ls -lZ $MountPoint/$ExportDir/testfile
+ns exec -v c2 -- ls -lZ $MountPoint/$ExportDir/testfile
+ns exec -v serv -- stat -c %C $ExportDir/testfile | tee con.s
+ns exec -v c1 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c1
+ns exec -v c2 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c2
 cmp con.s con.c1 || faillog "$(< con.s) != $(< con.c1)"
 cmp con.s con.c2 || faillog "$(< con.s) != $(< con.c2)"
 
 #change from c1
-ns exec c1 -- "chcon -t usr_t $MountPoint/$ExportDir/testfile; sync"
+ns exec -v c1 -- "chcon -t usr_t $MountPoint/$ExportDir/testfile; sync"
 sleep ${sleeptime}
-ns exec serv -- ls -lZ $ExportDir/testfile
-ns exec c1 -- ls -lZ $MountPoint/$ExportDir/testfile
-ns exec c2 -- ls -lZ $MountPoint/$ExportDir/testfile
-ns exec serv -- stat -c %C $ExportDir/testfile | tee con.s
-ns exec c1 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c1
-ns exec c2 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c2
+ns exec -v serv -- ls -lZ $ExportDir/testfile
+ns exec -v c1 -- ls -lZ $MountPoint/$ExportDir/testfile
+ns exec -v c2 -- ls -lZ $MountPoint/$ExportDir/testfile
+ns exec -v serv -- stat -c %C $ExportDir/testfile | tee con.s
+ns exec -v c1 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c1
+ns exec -v c2 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c2
 cmp con.s con.c1 || faillog "$(< con.s) != $(< con.c1)"
 cmp con.s con.c2 || faillog "$(< con.s) != $(< con.c2)"
 
 #change from c2
-ns exec c2 -- "chcon -t etc_t $MountPoint/$ExportDir/testfile; sync"
+ns exec -v c2 -- "chcon -t etc_t $MountPoint/$ExportDir/testfile; sync"
 sleep ${sleeptime}
-ns exec serv -- ls -lZ $ExportDir/testfile
-ns exec c1 -- ls -lZ $MountPoint/$ExportDir/testfile
-ns exec c2 -- ls -lZ $MountPoint/$ExportDir/testfile
-ns exec serv -- stat -c %C $ExportDir/testfile | tee con.s
-ns exec c1 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c1
-ns exec c2 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c2
+ns exec -v serv -- ls -lZ $ExportDir/testfile
+ns exec -v c1 -- ls -lZ $MountPoint/$ExportDir/testfile
+ns exec -v c2 -- ls -lZ $MountPoint/$ExportDir/testfile
+ns exec -v serv -- stat -c %C $ExportDir/testfile | tee con.s
+ns exec -v c1 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c1
+ns exec -v c2 -- stat -c %C $MountPoint/$ExportDir/testfile | tee con.c2
 cmp con.s con.c1 || faillog "$(< con.s) != $(< con.c1)"
 cmp con.s con.c2 || faillog "$(< con.s) != $(< con.c2)"
 
 #check mount -t output
-ns exec c1 -- mount -t nfs
-ns exec c1 -- mount -t nfs4
-ns exec c2 -- mount -t nfs
-ns exec c2 -- mount -t nfs4
+ns exec -v c1 -- mount -t nfs
+ns exec -v c1 -- mount -t nfs4
+ns exec -v c2 -- mount -t nfs
+ns exec -v c2 -- mount -t nfs4
 
 #check file info again
 echo -e "\n{info} 1. will get unexpected stale file handle, if hit bug"
-ns exec c1 -- ls -lZ $MountPoint/$ExportDir/testfile
-ns exec c2 -- ls -lZ $MountPoint/$ExportDir/testfile
+ns exec -v c1 -- ls -lZ $MountPoint/$ExportDir/testfile
+ns exec -v c2 -- ls -lZ $MountPoint/$ExportDir/testfile
 
 #please clean test env:
 ns exec -vx0 c2 -- umount $MountPoint
 ns exec -vx0 c1 -- umount $MountPoint
-ns exec serv -- systemctl stop nfs-server
+ns exec -v   serv -- systemctl stop nfs-server
 
 ns del c1 c2 serv
