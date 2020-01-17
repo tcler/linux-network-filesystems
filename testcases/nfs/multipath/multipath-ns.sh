@@ -13,10 +13,10 @@ which ns &>/dev/null || {
 	sudo chmod +x /usr/bin/ns
 }
 
-ServerIP1=192.168.10.1
-ClientIP1=192.168.10.2
-ServerIP2=192.168.11.1
-ClientIP2=192.168.11.2
+ServerIP1=192.168.8.1
+ClientIP1=192.168.8.2
+ServerIP2=192.168.9.1
+ClientIP2=192.168.9.2
 ExportDir=/nfsshare
 MountPoint=/mnt/nfs
 

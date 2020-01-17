@@ -83,7 +83,8 @@ firewall-cmd --add-service=nfs --add-service=mountd --add-service=rpc-bind
 sysctl -w net.ipv4.conf.all.forwarding=1
 modprobe -r veth
 
-for ((i=0; i<NSCNT; i++)); do
+for ((n=0; n<NSCNT; n++)); do
+	i=$((100+n))
 	ns=ns$i
 	vethif=ve-$ns.h
 	vethif_peer=ve-$ns.n

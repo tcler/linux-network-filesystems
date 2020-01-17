@@ -13,10 +13,10 @@ which netns &>/dev/null || {
 	sudo chmod +x /usr/bin/netns
 }
 
-ServerIP1=192.168.10.1
-ClientIP1=192.168.10.2
-ServerIP2=192.168.11.1
-ClientIP2=192.168.11.2
+ServerIP1=192.168.6.1
+ClientIP1=192.168.6.2
+ServerIP2=192.168.7.1
+ClientIP2=192.168.7.2
 
 ExportDir=/nfsshare
 MountPoint=/mnt/netns0/nfs
