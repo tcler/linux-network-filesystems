@@ -85,7 +85,7 @@ modprobe -r veth
 
 for ((n=0; n<NSCNT; n++)); do
 	i=$((100+n))
-	ns=ns$i
+	ns=netns$i
 	vethif=ve-$ns.h
 	vethif_peer=ve-$ns.n
 	hostip=192.168.$i.1
@@ -179,7 +179,7 @@ EOF
 runcnt=10
 for ((n=0; n<NSCNT; n++)); do
 	j=$((100+n))
-	ns=ns$j
+	ns=netns$j
 	mp=$nfsmp/${ns}mp
 	mkdir -p $mp
 
