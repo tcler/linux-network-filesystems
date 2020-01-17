@@ -49,6 +49,8 @@ getDefaultIp() {
   getIp "$nic" "$@"
 }
 
+faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
+warnlog() { echo -e "\033[41m{TEST:WARN} $*\033[0m"; }
 
 NSCNT=10
 prefix=nfs-stress
@@ -174,9 +176,9 @@ for ((j=0; j<NSCNT; j++)); do
 	mkdir -p $mp
 
 	echo "{INFO} Test in namespace $ns ..."
-	netns -v exec $ns -- showmount -e ${serv}
-	netns -v exec $ns -- mount -vv $nfsshare $mp
-	netns -v exec $ns -- mount -t nfs4
+	netns -vx0 exec $ns -- showmount -e ${serv}
+	netns -vx0 exec $ns -- mount -vv $nfsshare $mp
+	netns -v   exec $ns -- mount -t nfs4
 
 	echo "- {INFO} Running nfsstress.sh script $runcnt instance from client $ns"
 	for ((i=0; i<runcnt; i++)) do

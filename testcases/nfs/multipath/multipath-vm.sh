@@ -1,8 +1,11 @@
 #!/bin/bash
 #ref: https://packetpushers.net/multipathing-nfs4-1-kvm
 
+faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
+warnlog() { echo -e "\033[41m{TEST:WARN} $*\033[0m"; }
+
 if ! egrep -wo '(vmx|svm)' /proc/cpuinfo -q; then
-	echo -e "[ERR] this testcase need host support Virtualiztion, but current machine doen't support." >&2
+	warnlog "this testcase need host support Virtualiztion, but current machine doen't support." >&2
 	exit 1
 fi
 
@@ -37,12 +40,16 @@ vm exec -v $S -- mkdir -p $ExportDir
 vm exec -v $S -- touch $ExportDir/testfile
 vm exec -v $S -- "echo '$ExportDir *(rw,no_root_squash,security_label)' >/etc/exports"
 vm exec -v $S -- systemctl restart nfs-server
-vm exec -v $C -- mkdir -p $MountPoint
-vm exec -v $C -- showmount -e $Saddr1
-vm exec -v $C -- mount -vvv $Saddr1:/ $MountPoint
-vm exec -v $C -- showmount -e $Saddr2
-vm exec -v $C -- mount -vvv $Saddr2:/ $MountPoint
-vm exec -v $C -- mount -t nfs4
+
+vm exec -v   $C -- mkdir -p $MountPoint
+vm exec -vx0 $C -- showmount -e $Saddr1
+vm exec -vx0 $C -- mount -vvv $Saddr1:/ $MountPoint
+vm exec -vx0 $C -- showmount -e $Saddr2
+vm exec -vx0 $C -- mount -vvv $Saddr2:/ $MountPoint
+
+vm exec -v   $C -- mount -t nfs4
+vm exec -vx0 $C -- umount $MountPoint
+vm exec -vx0 $C -- umount $MountPoint
 
 #please clean test env:
 vm del $C
