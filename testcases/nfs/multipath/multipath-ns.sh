@@ -19,7 +19,7 @@ ServerIP2=192.168.11.1
 ClientIP2=192.168.11.2
 ExportDir=/nfsshare
 MountPoint=/mnt/nfs
-export nsverbose=yes
+
 ns 2>/dev/null
 
 #ns jj nsmini bash

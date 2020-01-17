@@ -19,7 +19,6 @@ Client2IP=192.168.254.12
 ExportDir=/nfsshare
 MountPoint=/mnt/nfs
 
-export nsverbose=yes
 ns 2>/dev/null
 
 #ns jj nsmini bash
