@@ -177,7 +177,8 @@ done
 EOF
 
 runcnt=10
-for ((j=0; j<NSCNT; j++)); do
+for ((n=0; n<NSCNT; n++)); do
+	j=$((100+n))
 	ns=ns$j
 	mp=$nfsmp/${ns}mp
 	mkdir -p $mp
