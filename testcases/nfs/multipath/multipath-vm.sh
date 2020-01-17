@@ -22,6 +22,9 @@ which vm &>/dev/null || {
 ExportDir=/nfsshare
 MountPoint=/mnt/nfs
 distro=${distro:-$1}
+subnet=11
+brname=vm-vbr$subnet
+netname=net$subnet
 
 [[ -z "$distro" ]] && {
 	echo "Usage: $0 <distro>"
@@ -30,10 +33,10 @@ distro=${distro:-$1}
 
 vm --prepare
 
-vm net netname=net11 brname=vm-vbr11 subnet=11
-vm netinfo net11
-vm create "$distro" -n serv --saveimage -p "nfs-utils" --nointeract --net default --net net10 -f
-vm create "$distro" -n clnt --saveimage -p "nfs-utils" --nointeract --net default --net net10 -f
+vm net netname=$netname brname=$brname subnet=$subnet
+vm netinfo $netname
+vm create "$distro" -n serv --saveimage -p "nfs-utils" --nointeract --net default --net $netname -f
+vm create "$distro" -n clnt --saveimage -p "nfs-utils" --nointeract --net default --net $netname -f
 S=$(vm -r --getvmname "$distro" -n serv)
 C=$(vm -r --getvmname "$distro" -n clnt)
 Saddr1=$(vm -r ifaddr $S|grep '192.168.122\.')
@@ -57,4 +60,4 @@ vm exec -vx0 $C -- umount $MountPoint
 #please clean test env:
 vm del $C
 vm del $S
-vm netdel net10
+vm netdel $netname
