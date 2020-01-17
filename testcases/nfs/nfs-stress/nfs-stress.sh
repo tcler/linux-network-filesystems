@@ -190,7 +190,7 @@ for ((n=0; n<NSCNT; n++)); do
 
 	echo "- {INFO} Running nfsstress.sh script $runcnt instance from client $ns"
 	for ((i=0; i<runcnt; i++)) do
-		netns exec -v $ns -- "tmux -L netns-$ns new -d '$mp/nfsstress.sh $nfsshare &>/tmp/$ns-nfs-stress$i.log'"
+		netns exec -v $ns -- "tmux -L $ns-test new -d '$mp/nfsstress.sh $nfsshare &>/tmp/$ns-nfs-stress$i.log'"
 		sleep 1
 	done
 	sleep 400
