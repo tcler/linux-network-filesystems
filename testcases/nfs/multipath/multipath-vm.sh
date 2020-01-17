@@ -1,18 +1,21 @@
 #!/bin/bash
 #ref: https://packetpushers.net/multipathing-nfs4-1-kvm
 
-faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
 warnlog() { echo -e "\033[41m{TEST:WARN} $*\033[0m"; }
-
 if ! egrep -wo '(vmx|svm)' /proc/cpuinfo -q; then
 	warnlog "this testcase need host support Virtualiztion, but current machine doen't support." >&2
 	exit 1
 fi
 
-baseurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master
+toolsurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master
+faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
+
 which vm &>/dev/null || {
+	is_available_url() { curl --connect-timeout 8 -m 16 --output /dev/null --silent --head --fail $1 &>/dev/null; }
+	is_intranet() { is_available_url http://download.devel.redhat.com; }
+	is_intranet && toolsurl=http://download.devel.redhat.com/qa/rhts/lookaside/kiss-vm-ns
 	echo -e "[INFO] install kiss-vm ..."
-	sudo curl -s -o /usr/bin/vm -L ${baseurl}/kiss-vm
+	sudo curl -s -o /usr/bin/vm -L ${toolsurl}/kiss-vm
 	sudo chmod +x /usr/bin/vm
 }
 

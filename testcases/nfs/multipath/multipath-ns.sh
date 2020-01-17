@@ -1,11 +1,17 @@
 #!/bin/bash
 #ref: https://packetpushers.net/multipathing-nfs4-1-kvm
 
+toolsurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master
 faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
 
-baseurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master
-curl -s -o /usr/bin/ns -L ${baseurl}/kiss-ns
-chmod +x /usr/bin/ns
+which ns &>/dev/null || {
+	is_available_url() { curl --connect-timeout 8 -m 16 --output /dev/null --silent --head --fail $1 &>/dev/null; }
+	is_intranet() { is_available_url http://download.devel.redhat.com; }
+	is_intranet && toolsurl=http://download.devel.redhat.com/qa/rhts/lookaside/kiss-vm-ns
+	echo -e "[INFO] install kiss-ns ..."
+	sudo curl -s -o /usr/bin/ns -L ${toolsurl}/kiss-ns
+	sudo chmod +x /usr/bin/ns
+}
 
 ServerIP1=192.168.10.1
 ClientIP1=192.168.10.2

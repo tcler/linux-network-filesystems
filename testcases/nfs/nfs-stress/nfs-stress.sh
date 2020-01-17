@@ -12,6 +12,19 @@ switchroot() {
 }
 switchroot;
 
+toolsurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master
+which netns &>/dev/null || {
+	is_available_url() { curl --connect-timeout 8 -m 16 --output /dev/null --silent --head --fail $1 &>/dev/null; }
+	is_intranet() { is_available_url http://download.devel.redhat.com; }
+	is_intranet && toolsurl=http://download.devel.redhat.com/qa/rhts/lookaside/kiss-vm-ns
+	echo -e "[INFO] install kiss-netns ..."
+	sudo curl -s -o /usr/bin/netns -L ${toolsurl}/kiss-netns
+	sudo chmod +x /usr/bin/netns
+}
+
+faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
+warnlog() { echo -e "\033[41m{TEST:WARN} $*\033[0m"; }
+
 getIp() {
   local ret
   local nic=$1
@@ -49,9 +62,6 @@ getDefaultIp() {
   getIp "$nic" "$@"
 }
 
-faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
-warnlog() { echo -e "\033[41m{TEST:WARN} $*\033[0m"; }
-
 NSCNT=10
 prefix=nfs-stress
 serv=$(getDefaultIp)
@@ -72,11 +82,7 @@ firewall-cmd --add-service=nfs --add-service=mountd --add-service=rpc-bind
 #create a series network namespaces
 sysctl -w net.ipv4.conf.all.forwarding=1
 modprobe -r veth
-which netns || {
-	netnsurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master/kiss-netns
-	curl -s -o /usr/bin/netns -L $netnsurl
-	chmod +x /usr/bin/netns
-}
+
 for ((i=0; i<NSCNT; i++)); do
 	ns=ns$i
 	vethif=ve-$ns.h

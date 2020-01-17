@@ -1,8 +1,16 @@
 #!/bin/bash
 
-baseurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master
-curl -s -o /usr/bin/ns -L ${baseurl}/kiss-ns
-chmod +x /usr/bin/ns
+toolsurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master
+faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
+
+which ns &>/dev/null || {
+	is_available_url() { curl --connect-timeout 8 -m 16 --output /dev/null --silent --head --fail $1 &>/dev/null; }
+	is_intranet() { is_available_url http://download.devel.redhat.com; }
+	is_intranet && toolsurl=http://download.devel.redhat.com/qa/rhts/lookaside/kiss-vm-ns
+	echo -e "[INFO] install kiss-ns ..."
+	sudo curl -s -o /usr/bin/ns -L ${toolsurl}/kiss-ns
+	sudo chmod +x /usr/bin/ns
+}
 
 sleeptime=${1:-1}
 ServerIP=192.168.254.1
@@ -10,8 +18,6 @@ Client1IP=192.168.254.11
 Client2IP=192.168.254.12
 ExportDir=/nfsshare
 MountPoint=/mnt/nfs
-faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
-warnlog() { echo -e "\033[41m{TEST:WARN} $*\033[0m"; }
 
 export nsverbose=yes
 ns 2>/dev/null
