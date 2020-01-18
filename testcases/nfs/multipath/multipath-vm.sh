@@ -40,7 +40,7 @@ vm create "$distro" -n clnt --saveimage -p "nfs-utils" --nointeract --net defaul
 S=$(vm -r --getvmname "$distro" -n serv)
 C=$(vm -r --getvmname "$distro" -n clnt)
 Saddr1=$(vm -r ifaddr $S|grep '192.168.122\.')
-Saddr2=$(vm -r ifaddr $S|grep '192.168.11\.')
+Saddr2=$(vm -r ifaddr $S|grep "192.168.${subnet}\\.")
 
 vm exec -v $S -- mkdir -p $ExportDir
 vm exec -v $S -- touch $ExportDir/testfile
