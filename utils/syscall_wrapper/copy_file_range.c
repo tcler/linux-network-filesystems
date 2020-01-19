@@ -44,8 +44,8 @@ int main(int argc, char **argv)
 	if (argc < 3) {
 		fprintf(stderr, "Usage: %s <destination[:offset]> <<source|->[:offset]> [len]\n", argv[0]);
 		fprintf(stderr, "`note: source is '-' means that 'fd_in' equal 'fd_out' # see copy_file_range(2)\n");
-		fprintf(stderr, "  e.g1: %s testfile:256  -  64", argv[0]);
-		fprintf(stderr, "  e.g2: %s fileout  filein  1024", argv[0]);
+		fprintf(stderr, "  e.g1: %s testfile:256  -  64\n", argv[0]);
+		fprintf(stderr, "  e.g2: %s fileout  filein  1024\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 			perror("copy_file_range");
 			exit(EXIT_FAILURE);
 		}
-	        printf("ret=%d\n",ret);
+	        printf("ret=%d, len=%zu\n", ret, len);
 		if (ret == 0)
 			break;
 		len -= ret;
