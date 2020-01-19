@@ -1,4 +1,8 @@
 #!/usr/bin/python
+#
+# a syscall wrapper in python for copy_file_range(2) test
+# author: Jianhong Yin <yin-jianhong@163.com>
+#
 
 import sys
 import os

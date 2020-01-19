@@ -1,3 +1,8 @@
+/*
+ * a syscall wrapper in C for copy_file_range(2) test
+ * author: Jianhong Yin <yin-jianhong@163.com>
+ */
+
 #define _GNU_SOURCE
 #include <fcntl.h>
 #include <stdio.h>
