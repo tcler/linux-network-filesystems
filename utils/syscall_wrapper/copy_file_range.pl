@@ -39,23 +39,27 @@ if ($fd_in == $fd_out && $off_out eq "") {
 }
 $off_out = 0 if ($off_out eq "");
 $off_in = 0 if ($off_in eq "");
-$len = 0 + $ARGV[2] if ($argc >= 3);
+
+$off_in = pack("Q",$off_in);
+$off_out = pack("Q",$off_out);
+$len = sprintf("%zu", $ARGV[2]) if ($argc >= 3);  #must convert to Integer
 
 say STDOUT "[debug]: fd_in=$fd_in fd_out=$fd_out off_in=$off_in off_out=$off_out len=$len";
 #copy_file_range
 my $ret = 0;
-do {
+while ($len > 0) {
 	$ret = syscall(SYS_copy_file_range(),
-			$fd_in, pack("Q",$off_in),
-			$fd_out, pack("Q",$off_out),
+			$fd_in, $off_in,
+			$fd_out, $off_out,
 			$len, 0);
 	die "SYS_copy_file_range fail: $!" if ($ret == -1);
-	say STDOUT "ret = $ret";
-	if ($ret == 0) {
-		break;
-	}
+
+	say STDOUT "ret=$ret, len=$len";
 	$len -= $ret;
-} while ($len > 0);
+	if ($ret == 0) {
+		last;
+	}
+}
 
 close($fd_in);
 close($fd_out) if ($fd_in != $fd_out);

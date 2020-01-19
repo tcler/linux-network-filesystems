@@ -73,10 +73,11 @@ while True:
     if ret < 0:
         print("copy_file_range fail: %s" % os.strerror(get_errno()))
         break
-    if ret == 0:
-        break
-    print("ret=%d" % ret)
+
+    print("ret=%d, len=%d" % (ret, len))
     len -= ret
+    if len <= 0 or ret == 0:
+        break
 
 os.close(fd_in)
 if fd_in != fd_out:
