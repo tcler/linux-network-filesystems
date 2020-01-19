@@ -40,8 +40,14 @@ if len(sys.argv) < 3:
     sys.exit(1)
 
 #parse args
-dst_file, off_out = sys.argv[1].split(':')
-src_file, off_in = sys.argv[2].split(':')
+off_in = 0
+off_out = 0
+dst_file = sys.argv[1]
+src_file = sys.argv[2]
+if dst_file.find(":") != -1:
+    dst_file, off_out = sys.argv[1].split(':')
+if src_file.find(":") != -1:
+    src_file, off_in = sys.argv[2].split(':')
 
 #open test files
 fd_out = os.open(dst_file, os.O_RDWR|os.O_CREAT, 0666)
