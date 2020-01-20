@@ -32,7 +32,7 @@ lsyscall() {
 	local tables=$(curl -s -L $tablefurl)
 
 	if [[ $# = 0 ]]; then
-		echo "$tables"
+		echo "$tables" | sort -n -k2
 	else
 		local call=$1
 		awk -v call=$call '$1 == call || $2 == call' <<<"$tables"
