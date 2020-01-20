@@ -39,4 +39,26 @@ lsyscall() {
 	fi
 }
 
-ausyscall "$@" || lsyscall "$@"
+Usage() {
+	echo "$0 [-h] [-a|-u] [syscall name | syscall num]"
+}
+
+syscalls=()
+for arg; do
+	case "$arg" in
+	-h)    Usage; exit;;
+	-a|-u) ALL=yes;;
+	-*)    echo "{WARN} unkown option '${arg}'" >&2;;
+	*)     syscalls+=($arg);;
+	esac
+done
+
+if [[ "${#syscalls}" = 0 ]]; then
+	if [[ "$ALL" = yes ]]; then
+		lsyscall
+	else
+		ausyscall
+	fi
+else
+	ausyscall "$syscalls" || lsyscall "$syscalls"
+fi
