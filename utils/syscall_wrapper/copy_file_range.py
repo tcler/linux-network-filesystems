@@ -58,7 +58,8 @@ else:
 	fd_in = os.open(src_file, os.O_RDONLY)
 
 #get offset and len
-len = os.stat(src_file).st_size
+fsize = os.stat(src_file).st_size
+len = fsize
 if (fd_in == fd_out and off_out == ""):
     off_out = len
 if (off_out == ""):
@@ -75,14 +76,15 @@ while True:
     ret = copy_file_range(
                     c_int(fd_in), POINTER(c_uint64)(off_in),
                     c_int(fd_out), POINTER(c_uint64)(off_out),
-                    c_uint64(len), 0);
+                    c_size_t(len), 0);
     if ret < 0:
         print("copy_file_range fail: %s" % os.strerror(get_errno()))
         break
 
-    print("ret=%d, len=%d" % (ret, len))
+    print("ret=%d, len=%u" % (ret, len))
     len -= ret
-    if len <= 0 or ret == 0:
+    fsize -= ret
+    if len <= 0 or fsize <= 0:
         break
 
 os.close(fd_in)

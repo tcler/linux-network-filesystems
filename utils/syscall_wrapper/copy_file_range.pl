@@ -42,12 +42,12 @@ $off_in = 0 if ($off_in eq "");
 
 $off_in = pack("Q",$off_in);
 $off_out = pack("Q",$off_out);
-$len = sprintf("%zu", $ARGV[2]) if ($argc >= 3);  #must convert to Integer
+$len = 0+sprintf("%zu", $ARGV[2]) if ($argc >= 3);  #must convert to Integer
 
 say STDOUT "[debug]: fd_in=$fd_in fd_out=$fd_out off_in=$off_in off_out=$off_out len=$len";
 #copy_file_range
 my $ret = 0;
-while ($len > 0) {
+while (1) {
 	$ret = syscall(SYS_copy_file_range(),
 			$fd_in, $off_in,
 			$fd_out, $off_out,
@@ -56,9 +56,8 @@ while ($len > 0) {
 
 	say STDOUT "ret=$ret, len=$len";
 	$len -= $ret;
-	if ($ret == 0) {
-		last;
-	}
+	last if ($len <= 0);
+	last if (eof($fd_in));
 }
 
 close($fd_in);

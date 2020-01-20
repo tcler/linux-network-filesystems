@@ -26,7 +26,10 @@ ssize_t copy_file_range(int fd_in, loff_t *off_in,
 
 int main(int argc, char **argv)
 {
-	unsigned len, ret;
+	ssize_t ret;
+	off_t fsize;
+	size_t len;
+
 	int fd_in;
 	int fd_out;
 	loff_t off_in = 0;
@@ -82,7 +85,8 @@ int main(int argc, char **argv)
 		perror("fstat");
 		exit(EXIT_FAILURE);
 	}
-	len = stat.st_size;
+	fsize = stat.st_size;
+	len = fsize;
 
 	if (fd_in == fd_out && dst_off == NULL)
 		off_out=len;
@@ -91,7 +95,7 @@ int main(int argc, char **argv)
 		len = strtoll(argv[3], &endptr, 0);
 	}
 
-	do {
+	while (1) {
 		ret = copy_file_range(fd_in, &off_in, fd_out, &off_out, len, 0);
 		if (ret == -1) {
 			perror("copy_file_range");
@@ -101,7 +105,10 @@ int main(int argc, char **argv)
 		if (ret == 0)
 			break;
 		len -= ret;
-	} while (len > 0);
+		fsize -= ret;
+		if (len <= 0 || fsize <= 0)
+			break;
+	}
 
 	close(fd_in);
 	if (fd_in != fd_out)
