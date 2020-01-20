@@ -1,10 +1,6 @@
 #!/bin/bash
 
 Arch=$(arch)
-case $1 in
-alpha|arc|arm|arm64|armoabi|avr32|blackfin|c6x|cris|csky|frv|h8300|hexagon|i386|ia64|m32r|m68k|metag|microblaze|mips64|mips64n32|mipso32|mn10300|nds32|nios2|openrisc|parisc|powerpc|powerpc64|riscv32|riscv64|s390|s390x|score|sh|sh64|sparc|sparc64|tile|tile64|unicore32|x32|x86_64|xtensa)
-	Arch=$1; shift;;
-esac
 
 ausyscall() {
 	if [[ $# = 0 ]]; then
@@ -40,7 +36,7 @@ lsyscall() {
 }
 
 Usage() {
-	echo "$0 [-h] [-a|-u] [syscall name | syscall num]"
+	echo "$0 [-h] [-a|-u] [arch] [syscall name | syscall num]"
 }
 
 syscalls=()
@@ -52,13 +48,21 @@ for arg; do
 	*)     syscalls+=($arg);;
 	esac
 done
+set -- "${syscalls[@]}"
 
-if [[ "${#syscalls}" = 0 ]]; then
+case $1 in
+alpha|arc|arm|arm64|armoabi|avr32|blackfin|c6x|cris|csky|frv|h8300|hexagon|i386|ia64|m32r|m68k|metag|microblaze|mips64|mips64n32|mipso32|mn10300|nds32|nios2|openrisc|parisc|powerpc|powerpc64|riscv32|riscv64|s390|s390x|score|sh|sh64|sparc|sparc64|tile|tile64|unicore32|x32|x86_64|xtensa)
+	Arch=$1; shift;;
+ppc|ppc64|ppc64le)
+	Arch=${Arch/ppc/powerpc}; Arch=${Arch%le}; shift;;
+esac
+
+if [[ "${#}" = 0 ]]; then
 	if [[ "$ALL" = yes ]]; then
 		lsyscall
 	else
 		ausyscall
 	fi
 else
-	ausyscall "$syscalls" || lsyscall "$syscalls"
+	ausyscall "$1" || lsyscall "$1"
 fi
