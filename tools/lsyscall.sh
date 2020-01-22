@@ -4,14 +4,14 @@ Arch=$(arch)
 
 ausyscall() {
 	if [[ $# = 0 ]]; then
-		command ausyscall --dump | awk '{print $2, $1}'
+		command ausyscall --dump | awk '{print $2, $1, "local"}'
 	else
 		local call=$1
 		local num=$call
 		local name=
 		read name num < <(command ausyscall $Arch $call 2>/dev/null)
 		if [[ -n "$name" ]]; then
-			echo $name $num
+			echo $name $call local
 		else
 			return 1
 		fi
@@ -25,13 +25,26 @@ lsyscall() {
 	is_intranet && tableurl=http://download.devel.redhat.com/qa/rhts/lookaside/syscalls-table/tables
 
 	local tablefurl=$tableurl/syscalls-${Arch}
-	local tables=$(curl -s -L $tablefurl)
+	local tables=$(curl -s -L $tablefurl | sort -n -k2)
 
 	if [[ $# = 0 ]]; then
-		echo "$tables" | sort -n -k2
+		awk '{
+			if ($2 != "")
+				print($1, $2, "upstream")
+			else
+				print($1, "nil", "upstream")
+			fi
+		}' <<<"$tables"
 	else
 		local call=$1
-		awk -v call=$call '$1 == call || $2 == call' <<<"$tables"
+		awk -v call=$call '
+		$1 == call || $2 == call {
+			if ($2 != "")
+				print($1, $2, "upstream")
+			else
+				print($1, "nil", "upstream")
+			fi
+		}' <<<"$tables"
 	fi
 }
 
