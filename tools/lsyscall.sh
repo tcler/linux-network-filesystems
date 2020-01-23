@@ -11,7 +11,11 @@ ausyscall() {
 		local name=
 		read name num < <(command ausyscall $Arch $call 2>/dev/null)
 		if [[ -n "$name" ]]; then
-			echo $name $call local
+			if [[ -n "$num" ]]; then
+				echo $name $num local
+			else
+				echo $name $call local
+			fi
 		else
 			return 1
 		fi
