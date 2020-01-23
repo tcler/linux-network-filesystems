@@ -69,6 +69,7 @@ serv=$(getDefaultIp)
 expdir=/nfsshare-$prefix
 nfsmp=/mnt/nfsmp-$prefix
 nfsshare=$serv:$expdir
+startNetAddr=128
 
 #configure nfs server
 mkdir -p $expdir $nfsmp
@@ -84,7 +85,7 @@ sysctl -w net.ipv4.conf.all.forwarding=1
 modprobe -r veth
 
 for ((n=0; n<NSCNT; n++)); do
-	i=$((100+n))
+	i=$((startNetAddr+n))
 	ns=netns$i
 	vethif=ve-$ns.h
 	vethif_peer=ve-$ns.n
@@ -176,9 +177,9 @@ while [[ true ]]; do
 done
 EOF
 
-runcnt=10
+runcnt=${1:-15}
 for ((n=0; n<NSCNT; n++)); do
-	j=$((100+n))
+	j=$((startNetAddr+n))
 	ns=netns$j
 	mp=$nfsmp/${ns}mp
 	mkdir -p $mp
