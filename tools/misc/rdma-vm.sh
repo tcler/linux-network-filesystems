@@ -72,6 +72,10 @@ cat >pci_0000_04_00_2.xml <<EOF
 EOF
 virsh nodedev-detach pci_0000_04_00_2
 virsh attach-device win2019-cifs-nfs  pci_0000_04_00_2.xml
+# download windows driver
+# ref: https://cn.mellanox.com/products/adapter-software/ethernet/windows/winof-2
+# ref: http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_52000_All_win2019_x64.exe
+
 
 # guest:
 : <<EOF
