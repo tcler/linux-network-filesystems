@@ -40,13 +40,14 @@ lspci | grep Mellanox
 systemctl start opensm #need confirm
 ip a s
 
+# install RHEL-8.1 vm
 which vm 2>/dev/null || {
 	which git &>/dev/null || yum install -y git
 	git clone https://github.com/tcler/kiss-vm-ns
 	make -C kiss-vm-ns
 }
 vm RHEL-8.1.1-updates-20200116.1 --nointeract -p "rdma opensm infiniband-diags librdmacm-utils"
-cat >hd.xml <<EOF
+cat >pci_0000_04_00_1.xml <<EOF
 <hostdev mode='subsystem' type='pci' managed='no'>
 <driver name='vfio'/>
 <source>
@@ -55,8 +56,22 @@ cat >hd.xml <<EOF
 </hostdev>
 EOF
 virsh nodedev-detach pci_0000_04_00_1
-virsh attach-device root-rhel-811-updates-202001161  hd.xml
+virsh attach-device root-rhel-811-updates-202001161  pci_0000_04_00_1.xml
 
+# install windows server vm
+git clone https://github.com/tcler/make-windows-vm
+cd make-windows-vm
+./make-win-vm.sh --image /var/lib/libvirt/images/Win2019-Evaluation.iso     --os-variant win2k19 --vmname win2019-cifs-nfs --domain cifs-nfs.test -p ~Ocgxyz     --cpus 4 --ram 4096 --disk-size 60 --vncport 7799  ./answerfiles-cifs-nfs/* --enable-kdc
+cat >pci_0000_04_00_2.xml <<EOF
+<hostdev mode='subsystem' type='pci' managed='no'>
+<driver name='vfio'/>
+<source>
+    <address domain='0x0000' bus='0x04' slot='0x00' function='0x2'/>
+</source>
+</hostdev>
+EOF
+virsh nodedev-detach pci_0000_04_00_2
+virsh attach-device win2019-cifs-nfs  pci_0000_04_00_2.xml
 
 # guest:
 : <<EOF
