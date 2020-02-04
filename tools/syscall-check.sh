@@ -1,4 +1,7 @@
 
+# install dependency
+yum install -y gcc strace
+
 # check if syscall is implemented
 while read snum sname; do [[ $snum != [0-9]* || $sname = vhangup ]] && continue;  echo -e '#define _GNU_SOURCE\n#include <unistd.h>\n#include <sys/syscall.h>\nint main (void) { syscall ('$snum', 0, 0, 0, 0, 0, 0, 0, 0); }'|LANG=C gcc -x c -; LANG=C timeout 2 strace -e $sname ./a.out ;  done < <(ausyscall --dump)  |& grep ENOSYS
 
