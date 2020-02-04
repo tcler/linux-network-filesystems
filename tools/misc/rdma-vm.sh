@@ -5,6 +5,13 @@
 
 LANG=C
 
+# add kernel option "intel_iommu=on iommu=pt" and reboot
+: <<\COMM
+yum install -y grubby
+grubby --args="intel_iommu=on iommu=pt" --update-kernel="$(/sbin/grubby --default-kernel)"
+reboot
+COMM
+
 # download driver and install dependency
 yum install lsof pciutils elfutils-libelf-devel kernel-rpm-macros python36-devel createrepo -y
 yum install tk gcc-gfortran tcsh -y
