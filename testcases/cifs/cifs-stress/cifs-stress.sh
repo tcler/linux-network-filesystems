@@ -141,8 +141,8 @@ cat <<'EOF' >$expdir/cifsstress.sh
 
 CIFSSHARE="${1}"
 TestUser=${2}
-NSIP=${3}
-Ver=${4}
+Ver=${3}
+expdir=${4}
 [[ -n "$Ver" ]] && VerOpt=vers=${Ver},
 read CIFS_SRV _  <<<"${CIFSSHARE//\// }"
 
@@ -184,7 +184,7 @@ while [[ true ]]; do
 
 	#cifscreds
 	echo "[cifs-stress] cifscreds add -u $TestUser $HOSTNAME"
-	su $TestUser --session-command='expect -c "spawn cifscreds add -u '"$TestUser $NSIP"'
+	su $TestUser --session-command='expect -c "spawn cifscreds add -u '"$TestUser $CIFS_SRV"'
 		expect {
 			{Password:} {
 				send \"redhat\\r\"
@@ -198,20 +198,20 @@ while [[ true ]]; do
 	'
 	[[ $? != 0 ]] && break
 
-	mkdir -p $LocalDIR
-	chmod 777 $LocalDIR
-	[[ -d $RemoteDIR ]] || mkdir -p $RemoteDIR
-	chown -R $TestUser $RemoteDIR
-
 	file_name=file_$$.txt
 	file_size=$(get_random 1024)
 	bs_size=$(get_random 104857)
 
+	mkdir -p $LocalDIR && chmod 777 $LocalDIR
+	mkdir -p $RemoteDIR && chown -R $TestUser $RemoteDIR
+	chmod 777 $RemoteDIR
+	chmod 777 -R $expdir
+
 	echo " - - - - - - - - - - - - - - - - - - - - - - - -  "
 	echo "[cifs-stress] permission check"
-	su $TestUser --session-command="ls -ld ${MOUNT_POINT}"
-	su $TestUser --session-command="ls -l ${MOUNT_POINT}"
-	su $TestUser --session-command="ls -ld ${RemoteDIR}"
+	su $TestUser --session-command="ls -Zld ${MOUNT_POINT}"
+	su $TestUser --session-command="ls -Zl ${MOUNT_POINT}"
+	su $TestUser --session-command="ls -Zld ${RemoteDIR}"
 	su $TestUser --session-command="touch ${RemoteDIR}/testfile"
 
 	echo " - - - - - - - - - - - - - - - - - - - - - - - -  "
@@ -233,6 +233,11 @@ while [[ true ]]; do
 	echo " - - - - - - - - - - - - - - - - - - - - - - - -  "
 	echo "[cifs-stress] {$TestUser} Moving file from Remote-->Local"
 	su $TestUser --session-command="time mv ${RemoteDIR:?}/$file_name $LocalDIR/."
+	echo " - - - - - - - - - - - - - - - - - - - - - - - -  "
+
+	echo " - - - - - - - - - - - - - - - - - - - - - - - -  "
+	echo "[cifs-stress] {$TestUser} list all Remote file"
+	su $TestUser --session-command="time ls -lZ ${RemoteDIR:?}"
 	echo " - - - - - - - - - - - - - - - - - - - - - - - -  "
 
 	echo "[cifs-stress] Removing local file"
@@ -264,7 +269,7 @@ for ((n=0; n<NSCNT; n++)); do
 	for V in 3.11 3.02 3.0 2.1 2.0 1.0 ; do
 		for U in tuser{1..3}; do
 			for ((i=0; i<runcnt; i++)) do
-				netns exec -v $ns -- "tmux -L $ns-test new -d '$mp/cifsstress.sh $cifsshare $U $NSIP $V &>/tmp/$ns-cifs-$V-stress-$i-$U.log'"
+				netns exec -v $ns -- "tmux -L $ns-test new -d '$mp/cifsstress.sh $cifsshare $U $V $expdir &>/tmp/$ns-cifs-$V-stress-$i-$U.log'"
 				sleep 1
 			done
 		done
