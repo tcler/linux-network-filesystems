@@ -141,7 +141,8 @@ cat <<'EOF' >$expdir/cifsstress.sh
 
 CIFSSHARE="${1}"
 TestUser=${2}
-Ver=${3}
+NSIP=${3}
+Ver=${4}
 [[ -n "$Ver" ]] && VerOpt=vers=${Ver},
 read CIFS_SRV _  <<<"${CIFSSHARE//\// }"
 
@@ -183,17 +184,18 @@ while [[ true ]]; do
 
 	#cifscreds
 	echo "[cifs-stress] cifscreds add -u $TestUser $HOSTNAME"
-	expect -c "spawn cifscreds add -u $TestUser $HOSTNAME
+	su $TestUser --session-command='expect -c "spawn cifscreds add -u '"$TestUser $NSIP"'
 		expect {
-		{Password:} {
-			send \"redhat\\r\"
-			expect eof
-		}
-		{You already *} {exit 0}
+			{Password:} {
+				send \"redhat\\r\"
+				expect eof
+			}
+			{You already *} {exit 0}
 		}
 		foreach {pid spawnid os_error_flag value} [wait] break
 		exit \$value
 	"
+	'
 	[[ $? != 0 ]] && break
 
 	mkdir -p $LocalDIR
@@ -204,6 +206,13 @@ while [[ true ]]; do
 	file_name=file_$$.txt
 	file_size=$(get_random 1024)
 	bs_size=$(get_random 104857)
+
+	echo " - - - - - - - - - - - - - - - - - - - - - - - -  "
+	echo "[cifs-stress] permission check"
+	su $TestUser --session-command="ls -ld ${MOUNT_POINT}"
+	su $TestUser --session-command="ls -l ${MOUNT_POINT}"
+	su $TestUser --session-command="ls -ld ${RemoteDIR}"
+	su $TestUser --session-command="touch ${RemoteDIR}/testfile"
 
 	echo " - - - - - - - - - - - - - - - - - - - - - - - -  "
 	echo "[cifs-stress] Creating  $file_size file on local machine"
@@ -244,6 +253,7 @@ for ((n=0; n<NSCNT; n++)); do
 	ns=netns$j
 	mp=$cifsmp/${ns}mp
 	mkdir -p $mp
+	NSIP=192.168.$j.2
 
 	echo "{INFO} Test in namespace $ns ..."
 	#don't use vers=1.0, will cause stale file
@@ -254,7 +264,7 @@ for ((n=0; n<NSCNT; n++)); do
 	for V in 3.11 3.02 3.0 2.1 2.0 1.0 ; do
 		for U in tuser{1..3}; do
 			for ((i=0; i<runcnt; i++)) do
-				netns exec -v $ns -- "tmux -L $ns-test new -d '$mp/cifsstress.sh $cifsshare $U &>/tmp/$ns-cifs-$V-stress-$i-$U.log'"
+				netns exec -v $ns -- "tmux -L $ns-test new -d '$mp/cifsstress.sh $cifsshare $U $NSIP $V &>/tmp/$ns-cifs-$V-stress-$i-$U.log'"
 				sleep 1
 			done
 		done
