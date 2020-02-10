@@ -194,8 +194,11 @@ done
 
 sleep $testTime
 ps aux | grep -v grep | grep nfsstress.sh
+
+#kill all nfsstress.sh process
 pkill nfsstress.sh
 
+#destroy all netns
 for ((n=0; n<NSCNT; n++)); do
 	k=$((startNetAddr+n))
 	ns=netns$k
