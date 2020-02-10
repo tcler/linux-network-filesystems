@@ -73,6 +73,7 @@ cifsmp=/mnt/cifsmp-$prefix
 sharename=cifsshare
 cifsshare=//$serv/$sharename
 startNetAddr=128
+testTime=$((60*60))
 
 #configure cifs server
 mkdir -p $expdir $cifsmp
@@ -271,8 +272,9 @@ for ((n=0; n<NSCNT; n++)); do
 	done
 done
 
-for ((i=0; i<40; i++)); do
-	sleep 10
+periodTime=10
+for ((i=0; i<(testTime/periodTime); i++)); do
+	sleep $periodTime
 	pgrep cifsstress.sh >/dev/null || break
 done
 ps aux | grep -v grep | grep cifsstress.sh

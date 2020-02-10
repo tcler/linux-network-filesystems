@@ -192,7 +192,11 @@ for ((n=0; n<NSCNT; n++)); do
 	netns exec -v $ns -- "tmux -L $ns-test new -d '$mp/nfsstress.sh $nfsshare &>/tmp/$ns-nfs-stress.log'"
 done
 
-sleep $testTime
+periodTime=10
+for ((i=0; i<(testTime/periodTime); i++)); do
+	sleep $periodTime
+	pgrep nfsstress.sh >/dev/null || break
+done
 ps aux | grep -v grep | grep nfsstress.sh
 
 #kill all nfsstress.sh process
