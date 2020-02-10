@@ -215,7 +215,7 @@ while [[ true ]]; do
 
 	echo " - - - - - - - - - - - - - - - - - - - - - - - -  "
 	echo "[cifs-stress] {$TestUser} Creating a file on Remote machine"
-	su $TestUser --session-command="time dd if=/dev/zero of=$RemoteDIR/$file_name count=1024 bs=1048576"
+	su $TestUser --session-command="time dd if=/dev/zero of=$RemoteDIR/$file_name count=1024 bs=${bs_size}"
 
 	echo " - - - - - - - - - - - - - - - - - - - - - - - -  "
 	echo "[cifs-stress] {$TestUser} Moving file from Remote-->Local"

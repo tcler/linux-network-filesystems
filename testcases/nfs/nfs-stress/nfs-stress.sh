@@ -146,7 +146,7 @@ while [[ true ]]; do
 
 	echo " - - - - - - - - - - - - - - - - - - - - - - - -  "
 	echo "[nfs-stress] Creating a file on Remote machine"
-	time dd if=/dev/zero of=$RemoteDIR/$file_name count=1024 bs=1048576
+	time dd if=/dev/zero of=$RemoteDIR/$file_name count=1024 bs=${bs_size}
 
 	echo " - - - - - - - - - - - - - - - - - - - - - - - -  "
 	echo "[nfs-stress] Copying file from Remote-->Local"
