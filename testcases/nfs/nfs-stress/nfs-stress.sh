@@ -70,6 +70,7 @@ expdir=/nfsshare-$prefix
 nfsmp=/mnt/nfsmp-$prefix
 nfsshare=$serv:$expdir
 startNetAddr=128
+testTime=$((60*60))
 
 #configure nfs server
 mkdir -p $expdir $nfsmp
@@ -83,19 +84,6 @@ firewall-cmd --add-service=nfs --add-service=mountd --add-service=rpc-bind
 #create a series network namespaces
 sysctl -w net.ipv4.conf.all.forwarding=1
 modprobe -r veth
-
-for ((n=0; n<NSCNT; n++)); do
-	i=$((startNetAddr+n))
-	ns=netns$i
-	vethif=ve-$ns.h
-	vethif_peer=ve-$ns.n
-	hostip=192.168.$i.1
-	nsip=192.168.$i.2
-
-	netns host,$vethif,$hostip---$ns,$vethif_peer,$nsip
-	netns exec -v "$ns" -- ip route add default via $hostip dev $vethif_peer
-	iptables -A POSTROUTING -s 192.168.$i.0/24 -j MASQUERADE -t nat
-done
 
 touch $expdir/nfsstress.sh
 chmod +x $expdir/nfsstress.sh
@@ -177,7 +165,19 @@ while [[ true ]]; do
 done
 EOF
 
-runcnt=${1:-15}
+for ((n=0; n<NSCNT; n++)); do
+	i=$((startNetAddr+n))
+	ns=netns$i
+	vethif=ve-$ns.h
+	vethif_peer=ve-$ns.n
+	hostip=192.168.$i.1
+	nsip=192.168.$i.2
+
+	netns host,$vethif,$hostip---$ns,$vethif_peer,$nsip
+	netns exec -v "$ns" -- ip route add default via $hostip dev $vethif_peer
+	iptables -A POSTROUTING -s 192.168.$i.0/24 -j MASQUERADE -t nat
+done
+
 for ((n=0; n<NSCNT; n++)); do
 	j=$((startNetAddr+n))
 	ns=netns$j
@@ -189,18 +189,20 @@ for ((n=0; n<NSCNT; n++)); do
 	netns exec -vx0 $ns -- mount -vv $nfsshare $mp
 	netns exec -v   $ns -- mount -t nfs4
 
-	echo "- {INFO} Running nfsstress.sh script $runcnt instance from client $ns"
-	for ((i=0; i<runcnt; i++)) do
-		netns exec -v $ns -- "tmux -L $ns-test new -d '$mp/nfsstress.sh $nfsshare &>/tmp/$ns-nfs-stress$i.log'"
-		sleep 1
-	done
-	sleep 400
-	ps aux | grep -v grep | grep nfsstress.sh
-	netns exec -v $ns -- pkill nfsstress.sh
+	netns exec -v $ns -- "tmux -L $ns-test new -d '$mp/nfsstress.sh $nfsshare &>/tmp/$ns-nfs-stress.log'"
+done
+
+sleep $testTime
+ps aux | grep -v grep | grep nfsstress.sh
+pkill nfsstress.sh
+
+for ((n=0; n<NSCNT; n++)); do
+	k=$((startNetAddr+n))
+	ns=netns$k
 	netns exec -v $ns -- umount -a -f -t nfs4
 	netns del $ns
-
-	if dmesg | egrep '\[[ .[0-9]]+\] WARNING:'; then
-		:
-	fi
 done
+
+if dmesg | egrep '\[[ .[0-9]]+\] WARNING:'; then
+	:
+fi
