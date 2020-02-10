@@ -120,19 +120,6 @@ firewall-cmd --add-service=samba
 sysctl -w net.ipv4.conf.all.forwarding=1
 modprobe -r veth
 
-for ((n=0; n<NSCNT; n++)); do
-	i=$((startNetAddr+n))
-	ns=netns$i
-	vethif=ve-$ns.h
-	vethif_peer=ve-$ns.n
-	hostip=192.168.$i.1
-	nsip=192.168.$i.2
-
-	netns host,$vethif,$hostip---$ns,$vethif_peer,$nsip
-	netns exec -v "$ns" -- ip route add default via $hostip dev $vethif_peer
-	iptables -A POSTROUTING -s 192.168.$i.0/24 -j MASQUERADE -t nat
-done
-
 touch $expdir/cifsstress.sh
 chmod +x $expdir/cifsstress.sh
 chcon -R -t samba_share_t $expdir
@@ -203,8 +190,7 @@ while [[ true ]]; do
 	bs_size=$(get_random 104857)
 
 	mkdir -p $LocalDIR && chmod 777 $LocalDIR
-	mkdir -p $RemoteDIR && chown -R $TestUser $RemoteDIR
-	chmod 777 $RemoteDIR
+	mkdir -p $RemoteDIR && chmod 777 $RemoteDIR
 	chmod 777 -R $expdir
 
 	echo " - - - - - - - - - - - - - - - - - - - - - - - -  "
@@ -252,7 +238,19 @@ while [[ true ]]; do
 done
 EOF
 
-runcnt=${1:-3}
+for ((n=0; n<NSCNT; n++)); do
+	i=$((startNetAddr+n))
+	ns=netns$i
+	vethif=ve-$ns.h
+	vethif_peer=ve-$ns.n
+	hostip=192.168.$i.1
+	nsip=192.168.$i.2
+
+	netns host,$vethif,$hostip---$ns,$vethif_peer,$nsip
+	netns exec -v "$ns" -- ip route add default via $hostip dev $vethif_peer
+	iptables -A POSTROUTING -s 192.168.$i.0/24 -j MASQUERADE -t nat
+done
+
 for ((n=0; n<NSCNT; n++)); do
 	j=$((startNetAddr+n))
 	ns=netns$j
@@ -265,28 +263,29 @@ for ((n=0; n<NSCNT; n++)); do
 	netns exec -vx0 $ns -- mount $cifsshare $mp -o vers=2.1,multiuser,password=redhat,file_mode=0777,dir_mode=0777,rsize=65536,wsize=65536
 	netns exec -v   $ns -- mount -t cifs
 
-	echo "- {INFO} Running cifsstress.sh script $runcnt instance from client $ns"
 	for V in 3.11 3.02 3.0 2.1 2.0 1.0 ; do
 		for U in tuser{1..3}; do
-			for ((i=0; i<runcnt; i++)) do
-				netns exec -v $ns -- "tmux -L $ns-test new -d '$mp/cifsstress.sh $cifsshare $U $V $expdir &>/tmp/$ns-cifs-$V-stress-$i-$U.log'"
-				sleep 1
-			done
+			netns exec -v $ns -- "tmux -L $ns-test new -d '$mp/cifsstress.sh $cifsshare $U $V $expdir &>/tmp/$ns-cifs-$V-stress-$i-$U.log'"
+			sleep 1
 		done
 	done
+done
 
-	for ((i=0; i<40; i++)); do
-		sleep 10
-		pgrep cifsstress.sh >/dev/null || break
-	done
+for ((i=0; i<40; i++)); do
+	sleep 10
+	pgrep cifsstress.sh >/dev/null || break
+done
+ps aux | grep -v grep | grep cifsstress.sh
 
-	ps aux | grep -v grep | grep cifsstress.sh
-	netns exec -v $ns -- pkill cifsstress.sh
+#kill all cifsstress.sh process
+pkill cifsstress.sh
+
+#destroy all netns
+for ((n=0; n<NSCNT; n++)); do
+	k=$((startNetAddr+n))
+	ns=netns$k
+
 	netns exec -v $ns -- umount -a -f -t cifs
 	netns del $ns
 	netns ls
-
-	if dmesg | egrep '\[[ .[0-9]]+\] WARNING:'; then
-		:
-	fi
 done
