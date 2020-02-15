@@ -3,7 +3,8 @@
 argv=()
 for arg; do
 	case "$arg" in
-	-h)   echo "Usage: $0 [-h] [distro]";;
+	-net=*) NET=${arg#*=};;
+	-h)   echo "Usage: $0 [-h] [distro] [-net=netname]";;
 	-*)   echo "{WARN} unkown option '${arg}'";;
 	*)    argv+=($arg);;
 	esac
@@ -37,31 +38,47 @@ COMM
 
 #---------------------------------------------------------------
 #create virt network nfsnet
-netaddr=77
-vm net netname=nfsnet brname=nfsbr0 subnet=$netaddr #tftproot=/var/lib/tftpboot bootpfile=pxelinux/pxelinux.0
+if [[ -z "$NET" ]]; then
+	netaddr=77
+	NET=nfsnet
+	vm -r net netname=nfsnet brname=nfsbr0 subnet=$netaddr #tftproot=/var/lib/tftpboot bootpfile=pxelinux/pxelinux.0
+fi
 
 
 #---------------------------------------------------------------
 #create nfs share
 nfsshare=/nfsshare
-vm $distro -n nfsserv -p nfs-utils --net nfsnet --nointeract --force
-vmnfsserv=$(vm --getvmname $distro -n nfsserv)
-vm -v exec $vmnfsserv -- systemctl stop firewalld
-vm -v exec $vmnfsserv -- mkdir -p $nfsshare
-vm -v exec $vmnfsserv -- "echo '$nfsshare *(rw,no_root_squash,security_label)' >/etc/exports"
-vm -v exec $vmnfsserv -- systemctl restart nfs-server
-vm -v exec $vmnfsserv -- touch $nfsshare/testfile
-vm -v exec $vmnfsserv -- ls -lZ $nfsshare/testfile
-scontextServ=$(vm -v exec $vmnfsserv -- ls -lZ $nfsshare/testfile)
+nfsshare2=/usr/bin
+vm -r $distro -n nfsserv -p nfs-utils --net $NET --nointeract --force
+vmnfsserv=$(vm -r --getvmname $distro -n nfsserv)
+vm -rv exec $vmnfsserv -- systemctl stop firewalld
+vm -rv exec $vmnfsserv -- mkdir -p $nfsshare $nfsshare2
+vm -rv exec $vmnfsserv -- "echo '$nfsshare *(rw,no_root_squash,security_label)' >/etc/exports"
+vm -rv exec $vmnfsserv -- "echo '$nfsshare2 *(ro,no_root_squash,security_label)' >>/etc/exports"
+vm -rv exec $vmnfsserv -- systemctl restart nfs-server
+vm -rv exec $vmnfsserv -- touch $nfsshare/testfile
+vm -rv exec $vmnfsserv -- ls -lZ $nfsshare/testfile $nfsshare2/bash
 
 
 nfsmp=/mnt/nfsmp
-vm $distro -n nfsclnt -p nfs-utils --net nfsnet --nointeract --force
-vmnfsclnt=$(vm --getvmname $distro -n nfsclnt)
-vmnfsservaddr=$(vm if $vmnfsserv)
-vm -v exec $vmnfsclnt -- mkdir -p $nfsmp
-vm -v exec $vmnfsclnt -- mount $vmnfsservaddr:$nfsshare $nfsmp -overs=4.2,actimeo=1,sync
-vm -v exec $vmnfsclnt -- ls -lZ $nfsmp/testfile
-scontextClnt=$(vm -v exec $vmnfsclnt -- ls -lZ $nfsmp/testfile)
-vm -v exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'"
+nfsmp2=/mnt/nfsmp2
+vm -r $distro -n nfsclnt -p nfs-utils --net $NET --nointeract --force
+vmnfsclnt=$(vm -r --getvmname $distro -n nfsclnt)
+vm -rv exec $vmnfsclnt -- systemctl stop firewalld
+vmnfsservaddr=$(vm -r if $vmnfsserv)
+vm -rv exec $vmnfsclnt -- mkdir -p $nfsmp $nfsmp2
+vm -rvx exec $vmnfsclnt -- mount $vmnfsservaddr:$nfsshare $nfsmp -overs=4.2,actimeo=1,sync
+vm -rvx exec $vmnfsclnt -- mount $vmnfsservaddr:$nfsshare2 $nfsmp2 -overs=4.2,actimeo=1,sync,ro
+vm -rvx exec $vmnfsserv -- ls -lZ $nfsshare/testfile $nfsshare2/bash
+vm -rvx exec $vmnfsclnt -- ls -lZ $nfsmp/testfile $nfsmp2/bash
+
+vm -rv exec $vmnfsclnt -- sleep 1
+
+scontextServ=$(vm -rv exec $vmnfsserv -- stat -c %C $nfsshare/testfile)
+scontextClnt=$(vm -rv exec $vmnfsclnt -- stat -c %C $nfsmp/testfile)
+vm -rvx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'"
+
+scontextServ2=$(vm -rv exec $vmnfsserv -- stat -c %C $nfsshare2/bash)
+scontextClnt2=$(vm -rv exec $vmnfsclnt -- stat -c %C $nfsmp2/bash)
+vm -rvx exec $vmnfsclnt -- "test '$scontextServ2' = '$scontextClnt2'"
 
