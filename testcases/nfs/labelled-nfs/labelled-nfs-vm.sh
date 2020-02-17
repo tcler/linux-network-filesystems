@@ -41,16 +41,16 @@ COMM
 if [[ -z "$NET" ]]; then
 	netaddr=77
 	NET=nfsnet
-	vm -r net netname=nfsnet brname=nfsbr0 subnet=$netaddr #tftproot=/var/lib/tftpboot bootpfile=pxelinux/pxelinux.0
+	vm net netname=nfsnet brname=nfsbr0 subnet=$netaddr #tftproot=/var/lib/tftpboot bootpfile=pxelinux/pxelinux.0
 fi
 
 
 #---------------------------------------------------------------
 #create nfs server and client VMs
-vm -r $distro -n nfsserv -p nfs-utils --net $NET --nointeract --force
-vmnfsserv=$(vm -r --getvmname $distro -n nfsserv)
-vm -r $distro -n nfsclnt -p nfs-utils --net $NET --nointeract --force
-vmnfsclnt=$(vm -r --getvmname $distro -n nfsclnt)
+vm $distro -n nfsserv -p nfs-utils --net $NET --nointeract --force
+vmnfsserv=$(vm --getvmname $distro -n nfsserv)
+vm $distro -n nfsclnt -p nfs-utils --net $NET --nointeract --force
+vmnfsclnt=$(vm --getvmname $distro -n nfsclnt)
 vm -v exec $vmnfsserv -- systemctl stop firewalld
 vm -v exec $vmnfsclnt -- systemctl stop firewalld
 
@@ -66,7 +66,7 @@ vm -v exec $vmnfsserv -- systemctl restart nfs-server
 vm -v exec $vmnfsserv -- touch $nfsshare/testfile
 
 nfsmp=/mnt/nfsmp
-vmnfsservaddr=$(vm -r if $vmnfsserv)
+vmnfsservaddr=$(vm if $vmnfsserv)
 vm -v exec $vmnfsclnt -- mkdir -p $nfsmp
 vm -vx exec $vmnfsclnt -- mount $vmnfsservaddr:$nfsshare $nfsmp -overs=4.2,actimeo=1,sync
 echo
@@ -77,8 +77,8 @@ vm -v exec $vmnfsclnt -- sleep 1
 vm -vx exec $vmnfsclnt -- ls -lZ $nfsmp/testfile
 vm -vx exec $vmnfsserv -- ls -lZ $nfsshare/testfile
 
-scontextServ=$(vm -rv exec $vmnfsserv -- stat -c %C $nfsshare/testfile)
-scontextClnt=$(vm -rv exec $vmnfsclnt -- stat -c %C $nfsmp/testfile)
+scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C $nfsshare/testfile)
+scontextClnt=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/testfile)
 vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'"
 
 echo
@@ -97,7 +97,7 @@ vm -vx exec $vmnfsserv -- cp $nfsshare/bin/bash $nfsshare/bin/bash2
 vm -vx exec $vmnfsserv -- ls -lZ $nfsshare/bin/bash $nfsshare/bin/bash2
 
 nfsmp=/mnt/nfsusr
-vmnfsservaddr=$(vm -r if $vmnfsserv)
+vmnfsservaddr=$(vm if $vmnfsserv)
 vm -v exec $vmnfsclnt -- mkdir -p $nfsmp
 vm -vx exec $vmnfsclnt -- mount $vmnfsservaddr:$nfsshare $nfsmp -overs=4.2,actimeo=1,sync
 echo
@@ -108,12 +108,12 @@ vm -v exec $vmnfsclnt -- sleep 1
 vm -vx exec $vmnfsclnt -- ls -lZ $nfsmp/bin/bash $nfsmp/bin/bash2
 vm -vx exec $vmnfsserv -- ls -lZ $nfsshare/bin/bash $nfsshare/bin/bash2
 
-scontextServ=$(vm -rv exec $vmnfsserv -- stat -c %C $nfsshare/bin/bash)
-scontextClnt=$(vm -rv exec $vmnfsclnt -- stat -c %C $nfsmp/bin/bash)
+scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C $nfsshare/bin/bash)
+scontextClnt=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/bin/bash)
 vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'  #bash context compare"
 
-scontextServ=$(vm -rv exec $vmnfsserv -- stat -c %C $nfsshare/bin/bash2)
-scontextClnt=$(vm -rv exec $vmnfsclnt -- stat -c %C $nfsmp/bin/bash2)
+scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C $nfsshare/bin/bash2)
+scontextClnt=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/bin/bash2)
 vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'  #bash2 context compare"
 
 echo
@@ -137,7 +137,7 @@ vm -v exec $vmnfsserv -- ls -lZ $nfsshare2/testfile $nfsshareusr/bin/bash
 nfsmp=/mnt/nfsmp
 nfsusr=/mnt/nfsusr
 vm -v exec $vmnfsclnt -- systemctl stop firewalld
-vmnfsservaddr=$(vm -r if $vmnfsserv)
+vmnfsservaddr=$(vm if $vmnfsserv)
 vm -v exec $vmnfsclnt -- mkdir -p $nfsmp $nfsusr
 vm -vx exec $vmnfsclnt -- mount $vmnfsservaddr:$nfsshare2 $nfsmp -overs=4.2,actimeo=1,sync
 vm -vx exec $vmnfsclnt -- mount $vmnfsservaddr:$nfsshareusr $nfsusr -overs=4.2,actimeo=1,sync,ro
@@ -149,11 +149,11 @@ vm -v exec $vmnfsclnt -- sleep 1
 vm -vx exec $vmnfsclnt -- ls -lZ $nfsmp/testfile $nfsusr/bin/bash
 vm -vx exec $vmnfsserv -- ls -lZ $nfsshare2/testfile $nfsshareusr/bin/bash
 
-scontextServ=$(vm -rv exec $vmnfsserv -- stat -c %C $nfsshare2/testfile)
-scontextClnt=$(vm -rv exec $vmnfsclnt -- stat -c %C $nfsmp/testfile)
+scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C $nfsshare2/testfile)
+scontextClnt=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/testfile)
 vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'"
 
-scontextServ2=$(vm -rv exec $vmnfsserv -- stat -c %C $nfsshareusr/bin/bash)
-scontextClnt2=$(vm -rv exec $vmnfsclnt -- stat -c %C $nfsusr/bin/bash)
+scontextServ2=$(vm -v exec $vmnfsserv -- stat -c %C $nfsshareusr/bin/bash)
+scontextClnt2=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsusr/bin/bash)
 vm -vx exec $vmnfsclnt -- "test '$scontextServ2' = '$scontextClnt2'"
 
