@@ -90,7 +90,6 @@ vm -vx exec $vmnfsclnt -- umount $nfsmp
 nfsshare=/usr
 echo -e "\n"
 echo "Test 1: export $nfsshare" | GREP_COLORS='ms=44' grep --color=always .
-vm -v exec $vmnfsserv -- systemctl stop firewalld
 vm -v exec $vmnfsserv -- "echo '$nfsshare *(ro,no_root_squash,security_label)' >/etc/exports"
 vm -v exec $vmnfsserv -- systemctl restart nfs-server
 vm -vx exec $vmnfsserv -- cp $nfsshare/bin/bash $nfsshare/bin/bash2
@@ -136,7 +135,6 @@ vm -v exec $vmnfsserv -- ls -lZ $nfsshare2/testfile $nfsshareusr/bin/bash
 
 nfsmp=/mnt/nfsmp
 nfsusr=/mnt/nfsusr
-vm -v exec $vmnfsclnt -- systemctl stop firewalld
 vmnfsservaddr=$(vm if $vmnfsserv)
 vm -v exec $vmnfsclnt -- mkdir -p $nfsmp $nfsusr
 vm -vx exec $vmnfsclnt -- mount $vmnfsservaddr:$nfsshare2 $nfsmp -overs=4.2,actimeo=1,sync
