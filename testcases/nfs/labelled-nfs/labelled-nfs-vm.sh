@@ -4,7 +4,8 @@ argv=()
 for arg; do
 	case "$arg" in
 	-net=*) NET=${arg#*=};;
-	-h)   echo "Usage: $0 [-h] [distro] [-net=netname]";;
+	-upk) VMOPT+=" --brewinstall=upk";;
+	-h)   echo "Usage: $0 [-h] [distro] [-net=netname] [-upk]"; exit;;
 	-*)   echo "{WARN} unkown option '${arg}'";;
 	*)    argv+=($arg);;
 	esac
@@ -47,9 +48,9 @@ fi
 
 #---------------------------------------------------------------
 #create nfs server and client VMs
-vm $distro -n nfsserv -p nfs-utils --net $NET --nointeract --saveimage --force
+vm $distro -n nfsserv -p nfs-utils --net $NET --nointeract --saveimage --force $VMOPT
 vmnfsserv=$(vm --getvmname $distro -n nfsserv)
-vm $distro -n nfsclnt -p nfs-utils --net $NET --nointeract --saveimage --force
+vm $distro -n nfsclnt -p nfs-utils --net $NET --nointeract --saveimage --force $VMOPT
 vmnfsclnt=$(vm --getvmname $distro -n nfsclnt)
 vm -v exec $vmnfsserv -- systemctl stop firewalld
 vm -v exec $vmnfsclnt -- systemctl stop firewalld
