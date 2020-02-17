@@ -47,9 +47,9 @@ fi
 
 #---------------------------------------------------------------
 #create nfs server and client VMs
-vm $distro -n nfsserv -p nfs-utils --net $NET --nointeract --force
+vm $distro -n nfsserv -p nfs-utils --net $NET --nointeract --saveimage --force
 vmnfsserv=$(vm --getvmname $distro -n nfsserv)
-vm $distro -n nfsclnt -p nfs-utils --net $NET --nointeract --force
+vm $distro -n nfsclnt -p nfs-utils --net $NET --nointeract --saveimage --force
 vmnfsclnt=$(vm --getvmname $distro -n nfsclnt)
 vm -v exec $vmnfsserv -- systemctl stop firewalld
 vm -v exec $vmnfsclnt -- systemctl stop firewalld
