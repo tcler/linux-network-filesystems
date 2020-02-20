@@ -6,7 +6,7 @@ for arg; do
 	-net=*) NET=${arg#*=};;
 	-upk) VMOPT+=" --brewinstall=upk";;
 	-f|-force) FORCE_OPT="-f";;
-	-h)   echo "Usage: $0 [-h] [distro] [-net=netname] [-upk]"; exit;;
+	-h)   echo "Usage: $0 [-h] [distro] [-net=netname] [-upk] [-force|-f]"; exit;;
 	-*)   echo "{WARN} unkown option '${arg}'";;
 	*)    argv+=($arg);;
 	esac
