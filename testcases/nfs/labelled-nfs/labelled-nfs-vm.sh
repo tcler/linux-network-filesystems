@@ -54,182 +54,64 @@ vm $distro -n nfsclnt -p nfs-utils --net $NET --nointeract --saveimage --force $
 vmnfsclnt=$(vm --getvmname $distro -n nfsclnt)
 vm -v exec $vmnfsserv -- systemctl stop firewalld
 vm -v exec $vmnfsclnt -- systemctl stop firewalld
-
-#---------------------------------------------------------------
-# test0
-nfsshare=/nfsshare
-echo -e "\n"
-echo "Test 0: export $nfsshare" | GREP_COLORS='ms=44' grep --color=always .
-vm -v exec $vmnfsserv -- rm -rf $nfsshare
-vm -v exec $vmnfsserv -- mkdir -p $nfsshare
-vm -v exec $vmnfsserv -- "echo '$nfsshare *(rw,no_root_squash,security_label)' >/etc/exports"
-vm -v exec $vmnfsserv -- systemctl restart nfs-server
-vm -v exec $vmnfsserv -- touch $nfsshare/testfile
-
-nfsmp=/mnt/nfsmp
 vmnfsservaddr=$(vm if $vmnfsserv)
-vm -v exec $vmnfsclnt -- mkdir -p $nfsmp
-vm -vx exec $vmnfsclnt -- mount $vmnfsservaddr:$nfsshare $nfsmp -overs=4.2,actimeo=1,sync
-echo
-vm -vx exec $vmnfsclnt -- ls -lZ $nfsmp/testfile
-vm -vx exec $vmnfsserv -- ls -lZ $nfsshare/testfile
-echo
-vm -v exec $vmnfsclnt -- sleep 1
-vm -vx exec $vmnfsclnt -- ls -lZ $nfsmp/testfile
-vm -vx exec $vmnfsserv -- ls -lZ $nfsshare/testfile
 
-scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C $nfsshare/testfile)
-scontextClnt=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/testfile)
-vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'"
+tests=(
+	/:+testfile,usr/bin/bash
+	+/nfsshare1:+testfile
+	/boot:grub2
+	/etc:nfs.conf
+	/home:foo
+	/tmp:+labelled-nfs.txt
+	/usr:bin/bash
+	/var:lib
 
-echo
-vm -vx exec $vmnfsclnt -- umount $nfsmp
+	/usr/lib64:gawk
+	/usr/lib:systemd
+	/usr/bin:bash
+	/usr/sbin:rpc.nfsd
+)
 
+for key in "${!tests[@]}"; do
+	read sharepath files <<<"${tests[$key]/:/ }"
+	echo "Test $key: export $sharepath" | GREP_COLORS='ms=44' grep --color=always .
 
-#---------------------------------------------------------------
-# test1
-nfsshare=/usr
-echo -e "\n"
-echo "Test 1: export $nfsshare" | GREP_COLORS='ms=44' grep --color=always .
-vm -v exec $vmnfsserv -- "echo '$nfsshare *(ro,no_root_squash,security_label)' >/etc/exports"
-vm -v exec $vmnfsserv -- systemctl restart nfs-server
-vm -vx exec $vmnfsserv -- cp $nfsshare/bin/bash $nfsshare/bin/bash2
-vm -vx exec $vmnfsserv -- ls -lZ $nfsshare/bin/bash $nfsshare/bin/bash2
+	#server side
+	[[ $sharepath = +* ]] && {
+		sharepath=${sharepath#+}
+		vm -v exec $vmnfsserv -- mkdir -p $sharepath
+	}
+	vm -vx exec $vmnfsserv -- "echo '$sharepath *(rw,no_root_squash,security_label)' >/etc/exports"
+	vm -vx exec $vmnfsserv -- systemctl restart nfs-server
+	for f in ${files//,/ }; do
+		[[ $f = +* ]] && vm -vx exec $vmnfsserv -- touch $sharepath/${f#+}
+		vm -vx exec $vmnfsserv -- ls -ldZ $sharepath/${f#+}
+	done
 
-nfsmp=/mnt/nfsusr
-vmnfsservaddr=$(vm if $vmnfsserv)
-vm -v exec $vmnfsclnt -- mkdir -p $nfsmp
-vm -vx exec $vmnfsclnt -- mount $vmnfsservaddr:$nfsshare $nfsmp -overs=4.2,actimeo=1,sync
-echo
-vm -vx exec $vmnfsclnt -- ls -lZ $nfsmp/bin/bash $nfsmp/bin/bash2
-vm -vx exec $vmnfsserv -- ls -lZ $nfsshare/bin/bash $nfsshare/bin/bash2
-echo
-vm -v exec $vmnfsclnt -- sleep 1
-vm -vx exec $vmnfsclnt -- ls -lZ $nfsmp/bin/bash $nfsmp/bin/bash2
-vm -vx exec $vmnfsserv -- ls -lZ $nfsshare/bin/bash $nfsshare/bin/bash2
+	#client side
+	nfsmp=/mnt/nfsmp$key
+	vm -vx exec $vmnfsclnt -- mkdir -p $nfsmp
+	vm -vx exec $vmnfsclnt -- mount $vmnfsservaddr:$sharepath $nfsmp -overs=4.2,actimeo=1,sync
 
-scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C $nfsshare/bin/bash)
-scontextClnt=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/bin/bash)
-vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'  #bash context compare"
+	echo
+	for f in ${files//,/ }; do
+		vm -vx exec $vmnfsclnt -- ls -ldZ $nfsmp/${f#+}
+	done
+	echo
+	vm -v exec $vmnfsclnt -- sleep 1
+	for f in ${files//,/ }; do
+		vm -vx exec $vmnfsclnt -- ls -ldZ $nfsmp/${f#+}
+	done
+	echo
+	for f in ${files//,/ }; do
+		scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C $sharepath/${f#+})
+		scontextClnt=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/${f#+})
+		vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'"
+	done
 
-scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C $nfsshare/bin/bash2)
-scontextClnt=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/bin/bash2)
-vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'  #bash2 context compare"
-
-echo
-vm -vx exec $vmnfsclnt -- umount $nfsmp
-
-
-#---------------------------------------------------------------
-# test2
-nfsshare2=/nfsshare2
-nfsshareusr=/usr
-echo -e "\n"
-echo "Test 2: export both $nfsshare2 and $nfsshareusr" | GREP_COLORS='ms=44' grep --color=always .
-vm -v exec $vmnfsserv -- mkdir -p $nfsshare2
-vm -v exec $vmnfsserv -- "echo '$nfsshare2 *(rw,no_root_squash,security_label)' >/etc/exports"
-vm -v exec $vmnfsserv -- "echo '$nfsshareusr *(ro,no_root_squash,security_label)' >>/etc/exports"
-vm -v exec $vmnfsserv -- systemctl restart nfs-server
-vm -v exec $vmnfsserv -- touch $nfsshare2/testfile
-vm -v exec $vmnfsserv -- ls -lZ $nfsshare2/testfile $nfsshareusr/bin/bash
-
-
-nfsmp=/mnt/nfsmp
-nfsusr=/mnt/nfsusr
-vmnfsservaddr=$(vm if $vmnfsserv)
-vm -v exec $vmnfsclnt -- mkdir -p $nfsmp $nfsusr
-vm -vx exec $vmnfsclnt -- mount $vmnfsservaddr:$nfsshare2 $nfsmp -overs=4.2,actimeo=1,sync
-vm -vx exec $vmnfsclnt -- mount $vmnfsservaddr:$nfsshareusr $nfsusr -overs=4.2,actimeo=1,sync
-echo
-vm -vx exec $vmnfsclnt -- ls -lZ $nfsmp/testfile $nfsusr/bin/bash
-vm -vx exec $vmnfsserv -- ls -lZ $nfsshare2/testfile $nfsshareusr/bin/bash
-echo
-vm -v exec $vmnfsclnt -- sleep 1
-vm -vx exec $vmnfsclnt -- ls -lZ $nfsmp/testfile $nfsusr/bin/bash
-vm -vx exec $vmnfsserv -- ls -lZ $nfsshare2/testfile $nfsshareusr/bin/bash
-
-scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C $nfsshare2/testfile)
-scontextClnt=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/testfile)
-vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'"
-
-scontextServ2=$(vm -v exec $vmnfsserv -- stat -c %C $nfsshareusr/bin/bash)
-scontextClnt2=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsusr/bin/bash)
-vm -vx exec $vmnfsclnt -- "test '$scontextServ2' = '$scontextClnt2'"
-
-echo
-vm -vx exec $vmnfsclnt -- umount $nfsmp
-vm -vx exec $vmnfsclnt -- umount $nfsusr
-
-
-#---------------------------------------------------------------
-# test3
-nfsshare3=/nfsshare3
-nfssharebin=/usr/bin
-echo -e "\n"
-echo "Test 3: export both $nfsshare3 and $nfssharebin" | GREP_COLORS='ms=44' grep --color=always .
-vm -v exec $vmnfsserv -- mkdir -p $nfsshare3
-vm -v exec $vmnfsserv -- "echo '$nfsshare3 *(rw,no_root_squash,security_label)' >/etc/exports"
-vm -v exec $vmnfsserv -- "echo '$nfssharebin *(ro,no_root_squash,security_label)' >>/etc/exports"
-vm -v exec $vmnfsserv -- systemctl restart nfs-server
-vm -v exec $vmnfsserv -- touch $nfsshare3/testfile
-vm -v exec $vmnfsserv -- ls -lZ $nfsshare3/testfile $nfssharebin/bash
-
-
-nfsmp=/mnt/nfsmp
-nfsbin=/mnt/nfsbin
-vmnfsservaddr=$(vm if $vmnfsserv)
-vm -v exec $vmnfsclnt -- mkdir -p $nfsmp $nfsbin
-vm -vx exec $vmnfsclnt -- mount $vmnfsservaddr:$nfsshare3 $nfsmp -overs=4.2,actimeo=1,sync
-vm -vx exec $vmnfsclnt -- mount $vmnfsservaddr:$nfssharebin $nfsbin -overs=4.2,actimeo=1,sync
-echo
-vm -vx exec $vmnfsclnt -- ls -lZ $nfsmp/testfile $nfsbin/bash
-vm -vx exec $vmnfsserv -- ls -lZ $nfsshare3/testfile $nfssharebin/bash
-echo
-vm -v exec $vmnfsclnt -- sleep 1
-vm -vx exec $vmnfsclnt -- ls -lZ $nfsmp/testfile $nfsbin/bash
-vm -vx exec $vmnfsserv -- ls -lZ $nfsshare3/testfile $nfssharebin/bash
-
-scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C $nfsshare3/testfile)
-scontextClnt=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/testfile)
-vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'"
-
-scontextServ2=$(vm -v exec $vmnfsserv -- stat -c %C $nfssharebin/bash)
-scontextClnt2=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsbin/bash)
-vm -vx exec $vmnfsclnt -- "test '$scontextServ2' = '$scontextClnt2'"
-
-echo
-vm -vx exec $vmnfsclnt -- umount $nfsmp
-vm -vx exec $vmnfsclnt -- umount $nfsbin
-
-
-#---------------------------------------------------------------
-# test4
-nfsshare4=/
-echo -e "\n"
-echo "Test 4: export $nfsshare4" | GREP_COLORS='ms=44' grep --color=always .
-vm -v exec $vmnfsserv -- "echo '$nfsshare4 *(rw,no_root_squash,security_label)' >/etc/exports"
-vm -v exec $vmnfsserv -- systemctl restart nfs-server
-vm -v exec $vmnfsserv -- touch ${nfsshare4%/}/testfile
-vm -v exec $vmnfsserv -- ls -lZ ${nfsshare4%/}/testfile ${nfsshare4%/}/bin/bash
-
-
-nfsmp=/mnt/nfsmp
-vmnfsservaddr=$(vm if $vmnfsserv)
-vm -v exec $vmnfsclnt -- mkdir -p $nfsmp
-vm -vx exec $vmnfsclnt -- mount $vmnfsservaddr:${nfsshare4%/} $nfsmp -overs=4.2,actimeo=1,sync
-echo
-vm -vx exec $vmnfsclnt -- ls -lZ $nfsmp/testfile $nfsmp/bin/bash
-vm -vx exec $vmnfsserv -- ls -lZ ${nfsshare4%/}/testfile ${nfsshare4%/}/bin/bash
-echo
-vm -v exec $vmnfsclnt -- sleep 1
-vm -vx exec $vmnfsclnt -- ls -lZ $nfsmp/testfile $nfsmp/bin/bash
-vm -vx exec $vmnfsserv -- ls -lZ ${nfsshare4%/}/testfile ${nfsshare4%/}/bin/bash
-
-scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C ${nfsshare4%/}/testfile)
-scontextClnt=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/testfile)
-vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'"
-
-scontextServ2=$(vm -v exec $vmnfsserv -- stat -c %C ${nfsshare4%/}/bin/bash)
-scontextClnt2=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/bin/bash)
-vm -vx exec $vmnfsclnt -- "test '$scontextServ2' = '$scontextClnt2'"
+	echo
+	vm -vx exec $vmnfsclnt -- umount $nfsmp
+	echo
+	echo
+done
 
