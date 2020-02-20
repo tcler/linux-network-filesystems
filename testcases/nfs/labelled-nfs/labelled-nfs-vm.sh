@@ -5,6 +5,7 @@ for arg; do
 	case "$arg" in
 	-net=*) NET=${arg#*=};;
 	-upk) VMOPT+=" --brewinstall=upk";;
+	-f|-force) FORCE_OPT="-f";;
 	-h)   echo "Usage: $0 [-h] [distro] [-net=netname] [-upk]"; exit;;
 	-*)   echo "{WARN} unkown option '${arg}'";;
 	*)    argv+=($arg);;
@@ -48,13 +49,16 @@ fi
 
 #---------------------------------------------------------------
 #create nfs server and client VMs
-vm $distro -n nfsserv -p nfs-utils --net $NET --nointeract --saveimage --force $VMOPT
+vm $distro -n nfsserv -p nfs-utils --net $NET --nointeract --saveimage $VMOPT $FORCE_OPT
 vmnfsserv=$(vm --getvmname $distro -n nfsserv)
-vm $distro -n nfsclnt -p nfs-utils --net $NET --nointeract --saveimage --force $VMOPT
+vm $distro -n nfsclnt -p nfs-utils --net $NET --nointeract --saveimage $VMOPT $FORCE_OPT
 vmnfsclnt=$(vm --getvmname $distro -n nfsclnt)
 vm -v exec $vmnfsserv -- systemctl stop firewalld
 vm -v exec $vmnfsclnt -- systemctl stop firewalld
 vmnfsservaddr=$(vm if $vmnfsserv)
+vm -v exec $vmnfsserv -- ln -sf /opt /optlink
+#vm -v exec $vmnfsserv -- ln -sf /crash /var/crash
+#vm -v exec $vmnfsserv -- rm /crash
 
 tests=(
 	/:+testfile,usr/bin/bash
@@ -70,6 +74,12 @@ tests=(
 	/usr/lib:systemd
 	/usr/bin:bash
 	/usr/sbin:rpc.nfsd
+	/usr/share:awk
+
+	/home/foo:+testfile
+
+	/opt:+testfile
+	/var/crash:+testfile
 )
 
 for key in "${!tests[@]}"; do
