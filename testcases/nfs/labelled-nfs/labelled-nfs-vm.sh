@@ -80,6 +80,10 @@ tests=(
 
 	/opt:+testfile
 	/var/crash:+testfile
+
+	+/opt/nfsshare:+testfile
+	+/home/nonuser:+testfile
+	+/nfsshare/share1:+testfile
 )
 
 for key in "${!tests[@]}"; do
