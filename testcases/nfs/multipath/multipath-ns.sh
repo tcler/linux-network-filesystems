@@ -39,9 +39,9 @@ ns exec -v   c1 -- systemctl stop firewalld
 ns exec -v   c1 -- mkdir -p $MountPoint
 
 ns exec -vx0 c1 -- showmount -e $ServerIP1
-ns exec -vx0 c1 -- mount -vvv $ServerIP1:/ $MountPoint
+ns exec -vx0 c1 -- mount -v $ServerIP1:/ $MountPoint #-onconnect
 ns exec -vx0 c1 -- showmount -e $ServerIP2
-ns exec -vx0 c1 -- mount -vvv $ServerIP2:/ $MountPoint
+ns exec -vx0 c1 -- mount -v $ServerIP2:/ $MountPoint -onconnect
 
 ns exec -v   c1 -- "mount -l | grep nfs4"
 
