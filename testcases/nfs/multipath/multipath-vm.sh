@@ -49,10 +49,11 @@ vm exec -v $S -- systemctl restart nfs-server
 
 vm exec -v   $C -- mkdir -p $MountPoint
 vm exec -vx0 $C -- showmount -e $Saddr1
-vm exec -vx0 $C -- mount -v $Saddr1:/ $MountPoint #-onconnect
+vm exec -vx0 $C -- mount -v $Saddr1:/ $MountPoint -onconnect=16
 vm exec -vx0 $C -- showmount -e $Saddr2
-vm exec -vx0 $C -- mount -v $Saddr2:/ $MountPoint -onconnect
+vm exec -vx0 $C -- mount -v $Saddr2:/ $MountPoint -onconnect=16
 
+vm exec -v   $C -- mount -t nfs
 vm exec -v   $C -- mount -t nfs4
 vm exec -vx0 $C -- umount $MountPoint
 vm exec -vx0 $C -- umount $MountPoint

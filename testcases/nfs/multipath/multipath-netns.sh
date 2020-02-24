@@ -29,8 +29,11 @@ systemctl restart nfs-server
 
 netns 2>/dev/null
 netns host,veth0.X,$ServerIP1---netns0,veth0.Y,$ClientIP1  host,veth1.X,$ServerIP2---netns0,veth1.Y,$ClientIP2
-netns exec -vx0 netns0 -- mount -v $ServerIP1:$ExportDir $MountPoint #-onconnect
-netns exec -vx0 netns0 -- mount -v $ServerIP2:$ExportDir $MountPoint -onconnect
+netns exec -vx0 netns0 -- showmount -e $ServerIP1
+netns exec -vx0 netns0 -- mount -v $ServerIP1:$ExportDir $MountPoint -onconnect=16
+netns exec -vx0 netns0 -- showmount -e $ServerIP2
+netns exec -vx0 netns0 -- mount -v $ServerIP2:$ExportDir $MountPoint -onconnect=16
+netns exec -v   netns0 -- mount -t nfs
 netns exec -v   netns0 -- mount -t nfs4
 netns exec -vx0 netns0 -- umount $MountPoint
 netns exec -vx0 netns0 -- umount $MountPoint

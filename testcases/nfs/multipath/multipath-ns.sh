@@ -39,11 +39,13 @@ ns exec -v   c1 -- systemctl stop firewalld
 ns exec -v   c1 -- mkdir -p $MountPoint
 
 ns exec -vx0 c1 -- showmount -e $ServerIP1
-ns exec -vx0 c1 -- mount -v $ServerIP1:/ $MountPoint #-onconnect
+ns exec -vx0 c1 -- mount -v $ServerIP1:/ $MountPoint -onconnect=16
 ns exec -vx0 c1 -- showmount -e $ServerIP2
-ns exec -vx0 c1 -- mount -v $ServerIP2:/ $MountPoint -onconnect
+ns exec -vx0 c1 -- mount -v $ServerIP2:/ $MountPoint -onconnect=16
 
 ns exec -v   c1 -- "mount -l | grep nfs4"
+ns exec -v   c1 -- mount -t nfs
+ns exec -v   c1 -- mount -t nfs4
 
 #ns exec -v serv -- dd if=/dev/zero of=$ExportDir/testimage bs=1M count=1024
 
