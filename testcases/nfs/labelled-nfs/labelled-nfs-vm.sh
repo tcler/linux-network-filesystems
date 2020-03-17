@@ -83,7 +83,7 @@ tests=(
 
 	+/opt/nfsshare:+testfile
 	+/home/nonuser:+testfile
-	+/nfsshare/share1:+testfile
+	@/nfsshare/share1:+testfile
 )
 
 for key in "${!tests[@]}"; do
@@ -94,6 +94,13 @@ for key in "${!tests[@]}"; do
 	[[ $sharepath = +* ]] && {
 		sharepath=${sharepath#+}
 		vm -v exec $vmnfsserv -- mkdir -p $sharepath
+	}
+	[[ $sharepath = @* ]] && {
+		sharepath=${sharepath#@}
+		vm -v exec $vmnfsserv -- mkdir -p $sharepath
+		vm -v exec $vmnfsserv -- dd if=/dev/zero of=/nfsshare.img bs=1M count=500
+		vm -v exec $vmnfsserv -- mkfs.xfs -f /nfsshare.img
+		vm -v exec $vmnfsserv -- mount -oloop /nfsshare.img $sharepath
 	}
 	vm -vx exec $vmnfsserv -- "echo '$sharepath *(rw,no_root_squash,security_label)' >/etc/exports"
 	vm -vx exec $vmnfsserv -- systemctl restart nfs-server
