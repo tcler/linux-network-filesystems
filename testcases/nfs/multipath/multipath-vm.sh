@@ -21,7 +21,7 @@ which vm &>/dev/null || {
 
 ExportDir=/nfsshare
 MountPoint=/mnt/nfs
-distro=${distro:-$1}
+distro=$1; shift
 MOUNT_OPTS="$*"
 
 subnet1=12
@@ -32,7 +32,7 @@ brname2=vm-vbr$subnet2
 netname2=net$subnet2
 
 [[ -z "$distro" ]] && {
-	echo "Usage: $0 <distro>"
+	echo "Usage: $0 <distro> [mount options]"
 	exit 1
 }
 
