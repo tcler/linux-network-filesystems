@@ -22,9 +22,14 @@ which vm &>/dev/null || {
 ExportDir=/nfsshare
 MountPoint=/mnt/nfs
 distro=${distro:-$1}
-subnet=11
-brname=vm-vbr$subnet
-netname=net$subnet
+MOUNT_OPTS="$*"
+
+subnet1=12
+brname1=vm-vbr$subnet1
+netname1=net$subnet1
+subnet2=13
+brname2=vm-vbr$subnet2
+netname2=net$subnet2
 
 [[ -z "$distro" ]] && {
 	echo "Usage: $0 <distro>"
@@ -33,14 +38,18 @@ netname=net$subnet
 
 vm --prepare
 
-vm net netname=$netname brname=$brname subnet=$subnet
-vm netinfo $netname
-vm create "$distro" -n serv --saveimage -p "nfs-utils" --nointeract --net default --net $netname -f
-vm create "$distro" -n clnt --saveimage -p "nfs-utils" --nointeract --net default --net $netname -f
+vm net netname=$netname1 brname=$brname1 subnet=$subnet1
+vm net netname=$netname2 brname=$brname2 subnet=$subnet2
+vm netinfo $netname1
+vm netinfo $netname2
+
+vm create "$distro" -n serv --saveimage -p "nfs-utils" --nointeract --net default --net $netname1 --net $netname2 -f
+vm create "$distro" -n clnt --saveimage -p "nfs-utils" --nointeract --net default --net $netname1 --net $netname2 -f
 S=$(vm -r --getvmname "$distro" -n serv)
 C=$(vm -r --getvmname "$distro" -n clnt)
-Saddr1=$(vm -r ifaddr $S|grep '192.168.122\.')
-Saddr2=$(vm -r ifaddr $S|grep "192.168.${subnet}\\.")
+Saddr0=$(vm -r ifaddr $S|grep '192.168.122\.')
+Saddr1=$(vm -r ifaddr $S|grep "192.168.${subnet1}\\.")
+Saddr2=$(vm -r ifaddr $S|grep "192.168.${subnet2}\\.")
 
 vm exec -v $S -- mkdir -p $ExportDir
 vm exec -v $S -- touch $ExportDir/testfile
@@ -48,10 +57,12 @@ vm exec -v $S -- "echo '$ExportDir *(rw,no_root_squash,security_label)' >/etc/ex
 vm exec -v $S -- systemctl restart nfs-server
 
 vm exec -v   $C -- mkdir -p $MountPoint
+vm exec -vx0 $C -- showmount -e $Saddr0
+vm exec -vx0 $C -- mount -v $Saddr0:/ $MountPoint -onconnect=2 $MOUNT_OPTS
 vm exec -vx0 $C -- showmount -e $Saddr1
-vm exec -vx0 $C -- mount -v $Saddr1:/ $MountPoint -onconnect=16
+vm exec -vx0 $C -- mount -v $Saddr1:/ $MountPoint -onconnect=2 $MOUNT_OPTS
 vm exec -vx0 $C -- showmount -e $Saddr2
-vm exec -vx0 $C -- mount -v $Saddr2:/ $MountPoint -onconnect=16
+vm exec -v   $C -- mount -v $Saddr2:/ $MountPoint -onconnect=2 $MOUNT_OPTS
 
 vm exec -v   $C -- mount -t nfs
 vm exec -v   $C -- mount -t nfs4
@@ -61,4 +72,5 @@ vm exec -vx0 $C -- umount $MountPoint
 #please clean test env:
 vm del $C
 vm del $S
-vm netdel $netname
+vm netdel $netname1
+vm netdel $netname2
