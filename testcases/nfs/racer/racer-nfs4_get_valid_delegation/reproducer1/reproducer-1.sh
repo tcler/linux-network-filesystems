@@ -6,7 +6,7 @@ mkdir -p /nfsshare
 echo "/nfsshare *(rw,no_root_squash)" >/etc/exports
 systemctl start nfs-server
 
-vm $distro -n nfsclient --kdump -f -p "vim gcc make kernel-devel"
+vm $distro -n nfsclient --kdump -f -p "vim gcc make kernel-devel" --nointeract
 vm exec nfsclient -- mkdir /mnt/nfs
 vm exec nfsclient -- mount 192.168.122.1:/nfsshare /mnt/nfs
 
