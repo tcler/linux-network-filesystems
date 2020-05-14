@@ -3,7 +3,7 @@
 distro=$1
 
 [[ -z "$distro" ]] && {
-	echo "Usage: Prog <distro>"
+	echo "Usage: $0 <distro> #e.g: $0 RHEL-8.2.0-20200404.0"
 	exit
 }
 
@@ -15,4 +15,4 @@ vm $distro -n nfsclient2 cpus=2 -msize=4000 --kdump -f -p "gcc make kernel-devel
 vm exec nfsclient2 -- mkdir /mnt/nfs
 scp -o Batchmode=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -r nfsv4-open-race root@nfsclient2:
 
-vm exec nfsclient2 -- 'cd nfsv4-open-race && ./run.sh 192.168.122.1:/nfsshare /mnt/nfs 0x306'
+vm -v exec nfsclient2 -- 'cd nfsv4-open-race && ./run.sh 192.168.122.1:/nfsshare /mnt/nfs 281 #fix 281 if need'
