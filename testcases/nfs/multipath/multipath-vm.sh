@@ -47,9 +47,13 @@ vm create "$distro" -n serv --saveimage -p "nfs-utils" --nointeract --net defaul
 vm create "$distro" -n clnt --saveimage -p "nfs-utils" --nointeract --net default --net $netname1 --net $netname2 -f
 S=$(vm -r --getvmname "$distro" -n serv)
 C=$(vm -r --getvmname "$distro" -n clnt)
-Saddr0=$(vm -r ifaddr $S|grep '192.168.122\.')
-Saddr1=$(vm -r ifaddr $S|grep "192.168.${subnet1}\\.")
-Saddr2=$(vm -r ifaddr $S|grep "192.168.${subnet2}\\.")
+
+servIpAddrs=$(vm exec -v $S -- ip a s)
+echo "$servIpAddrs"
+
+Saddr0=$(vm -r ifaddr $S|grep '192.168.122\.' || echo "$servIpAddrs" | awk -F'[/ ]+' '/inet 192.168.122.[0-9]+/{print $3}')
+Saddr1=$(vm -r ifaddr $S|grep "192.168.${subnet1}\\." || echo "$servIpAddrs" | awk -F'[/ ]+' "/inet 192.168.$subnet1.[0-9]+/{print \$3}")
+Saddr2=$(vm -r ifaddr $S|grep "192.168.${subnet2}\\." || echo "$servIpAddrs" | awk -F'[/ ]+' "/inet 192.168.$subnet2.[0-9]+/{print \$3}")
 
 vm exec -v $S -- mkdir -p $ExportDir
 vm exec -v $S -- touch $ExportDir/testfile
