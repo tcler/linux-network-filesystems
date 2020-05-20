@@ -57,16 +57,16 @@ Saddr2=$(vm -r ifaddr $S|grep "192.168.${subnet2}\\." || echo "$servIpAddrs" | a
 
 vm exec -v $S -- mkdir -p $ExportDir
 vm exec -v $S -- touch $ExportDir/testfile
-vm exec -v $S -- "echo '$ExportDir *(rw,no_root_squash,security_label)' >/etc/exports"
+vm exec -v $S -- "echo '$ExportDir *(rw,no_root_squash,insecure,security_label)' >/etc/exports"
 vm exec -v $S -- systemctl restart nfs-server
 
 vm exec -v   $C -- mkdir -p $MountPoint
 vm exec -vx0 $C -- showmount -e $Saddr0
-vm exec -vx0 $C -- mount -v $Saddr0:/ $MountPoint -onconnect=2 $MOUNT_OPTS
+vm exec -vx0 $C -- mount -v $Saddr0:$ExportDir $MountPoint -onconnect=2 $MOUNT_OPTS
 vm exec -vx0 $C -- showmount -e $Saddr1
-vm exec -vx0 $C -- mount -v $Saddr1:/ $MountPoint -onconnect=2 $MOUNT_OPTS
+vm exec -vx0 $C -- mount -v $Saddr1:$ExportDir $MountPoint -onconnect=2 $MOUNT_OPTS
 vm exec -vx0 $C -- showmount -e $Saddr2
-vm exec -v   $C -- mount -v $Saddr2:/ $MountPoint -onconnect=2 $MOUNT_OPTS
+vm exec -v   $C -- mount -v $Saddr2:$ExportDir $MountPoint -onconnect=2 $MOUNT_OPTS
 
 vm exec -v   $C -- mount -t nfs
 vm exec -v   $C -- mount -t nfs4
