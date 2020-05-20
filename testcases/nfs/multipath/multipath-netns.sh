@@ -41,6 +41,8 @@ netns exec -vx0 netns0 -- mount -v $ServerIP2:$ExportDir $MountPoint -onconnect=
 netns exec -vx0 netns0 -- showmount -e $ServerIP3
 netns exec -v   netns0 -- mount -v $ServerIP3:$ExportDir $MountPoint -onconnect=2 $MOUNT_OPTS
 
+netns exec -v   netns0 -- ss -nt
+
 netns exec -v   netns0 -- mount -t nfs
 netns exec -v   netns0 -- mount -t nfs4
 netns exec -vx0 netns0 -- umount $MountPoint
