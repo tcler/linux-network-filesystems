@@ -46,6 +46,8 @@ netns exec -v   netns0 -- mount  $ServerIP3:$ExportDir $MountPoint3 $MOUNT_OPTS
 netns exec -v   netns0 -- ss -nt "dst $ServerIP1"
 netns exec -v   netns0 -- ss -nt "dst $ServerIP2"
 netns exec -v   netns0 -- ss -nt "dst $ServerIP3"
+netns exec -v   netns0 -- cat /proc/self/mountstats
+
 
 netns exec -v   netns0 -- mount -t nfs,nfs4
 netns exec -vx0 netns0 -- umount -t nfs,nfs4 -a
