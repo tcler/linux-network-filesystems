@@ -21,32 +21,35 @@ ServerIP3=192.168.8.1
 ClientIP3=192.168.8.2
 
 ExportDir=/nfsshare
-MountPoint=/mnt/netns0/nfs
+MountPoint1=/mnt/netns0/nfs1
+MountPoint2=/mnt/netns0/nfs2
+MountPoint3=/mnt/netns0/nfs3
 MOUNT_OPTS="$*"
 
 systemctl stop firewalld
-mkdir -p $ExportDir $MountPoint
+mkdir -p $ExportDir $MountPoint1 $MountPoint2 $MountPoint3
 touch $ExportDir/testfile
-echo "$ExportDir *(rw,no_root_squash,security_label)" >/etc/exports
+echo "$ExportDir *(rw,no_root_squash,insecure,security_label)" >/etc/exports
 systemctl restart nfs-server
 
 netns 2>/dev/null
 netns host,veth0.X,$ServerIP1---netns0,veth0.Y,$ClientIP1  host,veth1.X,$ServerIP2---netns0,veth1.Y,$ClientIP2  host,veth2.X,$ServerIP3---netns0,veth2.Y,$ClientIP3
 netns exec -vx0 netns0 -- showmount -e $ServerIP1
-netns exec -vx0 netns0 -- mount -v $ServerIP1:$ExportDir $MountPoint -onconnect=2 $MOUNT_OPTS
+netns exec -vx0 netns0 -- mount  $ServerIP1:$ExportDir $MountPoint1 $MOUNT_OPTS
 
 netns exec -vx0 netns0 -- showmount -e $ServerIP2
-netns exec -vx0 netns0 -- mount -v $ServerIP2:$ExportDir $MountPoint -onconnect=2 $MOUNT_OPTS
+netns exec -vx0 netns0 -- mount  $ServerIP2:$ExportDir $MountPoint2 $MOUNT_OPTS
 
 netns exec -vx0 netns0 -- showmount -e $ServerIP3
-netns exec -v   netns0 -- mount -v $ServerIP3:$ExportDir $MountPoint -onconnect=2 $MOUNT_OPTS
+netns exec -v   netns0 -- mount  $ServerIP3:$ExportDir $MountPoint3 $MOUNT_OPTS
 
-netns exec -v   netns0 -- ss -nt
+netns exec -v   netns0 -- ss -nt "dst $ServerIP1"
+netns exec -v   netns0 -- ss -nt "dst $ServerIP2"
+netns exec -v   netns0 -- ss -nt "dst $ServerIP3"
 
-netns exec -v   netns0 -- mount -t nfs
-netns exec -v   netns0 -- mount -t nfs4
-netns exec -vx0 netns0 -- umount $MountPoint
-netns exec -vx0 netns0 -- umount $MountPoint
+netns exec -v   netns0 -- mount -t nfs,nfs4
+netns exec -vx0 netns0 -- umount -t nfs,nfs4 -a
+netns exec -v   netns0 -- mount -t nfs,nfs4
 
 #dd if=/dev/zero of=$ExportDir/testimage bs=1M count=1024
 
