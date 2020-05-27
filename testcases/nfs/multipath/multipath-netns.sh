@@ -21,13 +21,14 @@ ServerIP3=192.168.8.1
 ClientIP3=192.168.8.2
 
 ExportDir=/nfsshare
+MountPoint=/mnt/netns0/nfs
 MountPoint1=/mnt/netns0/nfs1
 MountPoint2=/mnt/netns0/nfs2
 MountPoint3=/mnt/netns0/nfs3
 MOUNT_OPTS="$*"
 
 systemctl stop firewalld
-mkdir -p $ExportDir $MountPoint1 $MountPoint2 $MountPoint3
+mkdir -p $ExportDir $MountPoint $MountPoint1 $MountPoint2 $MountPoint3
 touch $ExportDir/testfile
 echo "$ExportDir *(rw,no_root_squash,insecure,security_label)" >/etc/exports
 systemctl restart nfs-server
@@ -35,25 +36,36 @@ systemctl restart nfs-server
 netns 2>/dev/null
 netns host,veth0.X,$ServerIP1---netns0,veth0.Y,$ClientIP1  host,veth1.X,$ServerIP2---netns0,veth1.Y,$ClientIP2  host,veth2.X,$ServerIP3---netns0,veth2.Y,$ClientIP3
 netns exec -vx0 netns0 -- showmount -e $ServerIP1
-netns exec -vx0 netns0 -- mount  $ServerIP1:$ExportDir $MountPoint1 $MOUNT_OPTS
+netns exec -vx0 netns0 -- mount  $ServerIP1:$ExportDir $MountPoint $MOUNT_OPTS
 
 netns exec -vx0 netns0 -- showmount -e $ServerIP2
-netns exec -vx0 netns0 -- mount  $ServerIP2:$ExportDir $MountPoint2 $MOUNT_OPTS
+netns exec -vx0 netns0 -- mount  $ServerIP2:$ExportDir $MountPoint $MOUNT_OPTS
 
 netns exec -vx0 netns0 -- showmount -e $ServerIP3
-netns exec -v   netns0 -- mount  $ServerIP3:$ExportDir $MountPoint3 $MOUNT_OPTS
+netns exec -v   netns0 -- mount  $ServerIP3:$ExportDir $MountPoint $MOUNT_OPTS
 
 netns exec -v   netns0 -- ss -nt "dst $ServerIP1"
 netns exec -v   netns0 -- ss -nt "dst $ServerIP2"
 netns exec -v   netns0 -- ss -nt "dst $ServerIP3"
 netns exec -v   netns0 -- cat /proc/self/mountstats
 
+netns exec -v   netns0 -- mount -t nfs,nfs4
+
+netns exec -v   netns0 -- ip a s
+which tshark 2>/dev/null || yum install -y /usr/bin/tshark >/dev/null
+for ((i=0; i<10; i++)); do
+	sleep 1
+	netns exec netns0 -- dd if=/dev/urandom of=$MountPoint/testimage oflag=dsync bs=100M count=5
+	[[ $i = 9 ]] && netns exec netns0 -- pkill -SIGKILL tshark
+done &
+ifname=veth2.Y
+pcapf=/tmp/multipath-test.pcap
+netns exec -v   netns0 -- tshark -ni $ifname -w $pcapf
+tshark -r $pcapf -ntad -Y nfs | wc -l
 
 netns exec -v   netns0 -- mount -t nfs,nfs4
 netns exec -vx0 netns0 -- umount -t nfs,nfs4 -a
 netns exec -v   netns0 -- mount -t nfs,nfs4
-
-#dd if=/dev/zero of=$ExportDir/testimage bs=1M count=1024
 
 #please clean test env:
 netns del netns0
