@@ -2,7 +2,7 @@
 
 server_distro=RHEL-7.8
 nfsserv=nfsserverX
-vm $server_distro -msize=4000 -f -n $nfsserv -xdisk 16 --kdump --nointeract
+vm $server_distro -msize=4096 -f -n $nfsserv -xdisk 16 --kdump --nointeract
 vm exec $nfsserv -- mkdir /data
 vm exec $nfsserv -- mkfs.xfs /dev/vdb
 vm exec $nfsserv -- 'echo "/dev/vdb                /data      xfs    defaults        0 0" >>/etc/fstab'
@@ -13,7 +13,7 @@ vm exec $nfsserv -- 'time for i in $(seq 1 4000); do dd if=/dev/zero of=/data/fi
 
 client_distro=${1:-RHEL-7.7}
 nfsclnt=nfsclientX
-vm $client_distro -cpus=8 -msize=7000 -f -n $nfsclnt -xdisk 4 -xdisk 4 --kdump -p "mdadm cachefilesd vim" --nointeract
+vm $client_distro -cpus=8 -msize=4096 -f -n $nfsclnt -xdisk 4 -xdisk 4 --kdump -p "mdadm cachefilesd vim" --nointeract
 vm exec $nfsclnt -- 'mdadm --create /dev/md0 --level=0 --raid-devices=2 /dev/vd[bc]'
 vm exec $nfsclnt -- mkfs -t ext4 /dev/md0
 vm exec $nfsclnt -- 'echo "/dev/md0                /var/cache/fscache      ext4    defaults        0 0" >>/etc/fstab'
