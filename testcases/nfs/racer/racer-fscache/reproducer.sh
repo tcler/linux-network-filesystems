@@ -38,3 +38,4 @@ scp -o Batchmode=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
 rm -f dd-ioload.sh
 vm exec $nfsclnt -- "while true; do date; time bash ./dd-ioload.sh; done"
 
+vm exec -vx1-255 $nfsclnt -- ls /var/crach/*/vmcore
