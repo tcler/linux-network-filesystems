@@ -34,8 +34,13 @@ for i in $(seq 1 2000); do
 done
 wait
 EOF
-scp -o Batchmode=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no dd-ioload.sh root@$nfsclnt:
+
+nfsclntip=$(vm ifaddr $nfsclnt)
+while ! scp -o Batchmode=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no dd-ioload.sh root@$nfsclntip:; do
+	sleep 1
+done
+vm exec $nfsclnt -- ls dd-ioload.sh || exit 1
 rm -f dd-ioload.sh
 vm exec $nfsclnt -- "while true; do date; time bash ./dd-ioload.sh; done"
 
-vm exec -vx1-255 $nfsclnt -- ls /var/crach/*/vmcore
+vm exec -vx1-255 $nfsclnt -- ls /var/crash/*/vmcore
