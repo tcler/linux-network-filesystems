@@ -17,6 +17,8 @@ if [[ $OSVER < 8 ]]; then
 		echo "[WARN] does not support rhel-5 and before."
 		;;
 	esac
+else
+	sudo yum install -y python3-pip
 fi
 
 #install module ply
