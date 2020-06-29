@@ -11,9 +11,7 @@ if [[ $OSVER < 8 ]]; then
 		sudo yum install -y python36 python36-pip
 		;;
 	6)
-		sudo yum install -y python34
-		sudo yum install -y python34-setuptools
-		sudo easy_install-3.4 pip
+		sudo yum install -y python34 python34-pip
 		;;
 	5)
 		echo "[WARN] does not support rhel-5 and before."
