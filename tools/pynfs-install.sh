@@ -21,8 +21,13 @@ else
 	sudo yum install -y python3-pip
 fi
 
+#install dependency
+yum install -y gcc krb5-devel python-devel swig
+yum install -y platform-python-devel
+
 #install module ply
 yes | pip3 install ply
+yes | pip3 install gssapi
 
 #git clone pynfs
 sudo yum install -y git
