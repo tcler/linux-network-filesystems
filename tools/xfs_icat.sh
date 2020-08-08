@@ -85,7 +85,7 @@ case $coreformat in
 2)
         INFO=$(xfs_db -r $dev \
                 -c "inode 0" -c "type sb" -c 'print blocksize' \
-                -c "inode $inum" -c "type inode" -c "print u.bmx")
+                -c "inode $inum" -c "print u.bmx")
         {
         read key eq blocksize
         read key eq sum extents
