@@ -13,6 +13,8 @@ ftypes[8]=file
 ftypes[10]=symlink
 ftypes[12]=socket
 bmxField=u.bmx
+dataForkOffset=100
+
 inode_ver() {
 	local _dev=$1
 	local _inum=$2
@@ -31,6 +33,27 @@ g_iver=$(inode_ver $dev $inum)
 test -n "$debug" && echo "core.version = $g_iver" >&2
 [[ "$g_iver" = 3 ]] && {
 	bmxField=u3.bmx
+	dataForkOffset=176
+}
+
+inode_extent_array() {
+	local _dev=$1
+	local _inum=$2
+	IFS=' ()' read ioffsetX ioffsetD < <(xfs_db -r $_dev -c "convert inode $_inum fsbyte" -c "inode $_inum")
+	local _extentNum=$(dd status=none if=$_dev bs=1 skip=$((ioffsetD+76)) count=4 | hexdump -e '4/1 "%02x"')
+	_extentNum=$((16#$_extentNum))
+
+	echo "BMX[0-$((_extentNum-1))] = [startoff,startblock,blockcount,extentflag]"
+	local extentX= extent1B= flag= startoff= startblock= blockcount=
+	for ((i=0; i<_extentNum; i++)); do
+		extentX=$(dd status=none if=$_dev bs=1 skip=$((ioffsetD+dataForkOffset+i*16)) count=16 | hexdump -e '16/1 "%02x"')
+		extent1B=$(echo "ibase=16;obase=2;1${extentX^^}"|BC_LINE_LENGTH=256 bc)
+		flag=${extent1B:1:1}
+		startoff=$(echo "ibase=2;obase=A;${extent1B:2:54}"|bc)
+		startblock=$(echo "ibase=2;obase=A;${extent1B:56:52}"|bc)
+		blockcount=$(echo "ibase=2;obase=A;${extent1B:108:21}"|bc)
+		echo " ${i}:[$startoff,$startblock,$blockcount,$flag]"
+	done
 }
 
 [[ "$g_iver" = 3 ]] && {
@@ -87,7 +110,6 @@ extents_cat() {
 		read idx startoff startblock blockcount extentflag  <<< "${extent//[:,\][]/ }"
 		extentSize=$((blockcount * g_blocksize))
 		ddcount=$blockcount
-		#[[ $g_iver = 3 ]] && startblock=$((startblock - 12288))
 
 		if [[ $extentSize -gt $left ]]; then
 			ddcount=$((left/g_blocksize))
@@ -110,16 +132,19 @@ extents_cat() {
 case $coreformat in
 2)
 	[[ "$g_iver" = 3 ]] && {
-		INFO=$(xfs_db -r $dev \
+		INFOo=$(xfs_db -r $dev \
 			-c "inode 0" -c "type sb" -c 'print blocksize' \
 			-c "inode $inum"                  -c "print $bmxField")
+		INFO=$(xfs_db -r $dev -c "inode 0" -c "type sb" -c 'print blocksize')
+		INFO+=$'\n'"$(inode_extent_array $dev $inum)"
 	} || {
 		INFO=$(xfs_db -r $dev \
 			-c "inode 0" -c "type sb" -c 'print blocksize' \
 			-c "inode $inum" -c "type inode" -c "print $bmxField")
 	}
 	read key eq g_blocksize < <(grep blocksize <<<"$INFO")
-	read key eq sum extents < <(sed -n '/bmx/,${p}' <<<"$INFO"|xargs)
+	read key eq sum extents < <(sed -rn '/bmx|BMX/,${p}' <<<"$INFO"|xargs)
+	test -n "$debug" && echo "$INFOo" >&2
 	test -n "$debug" && echo "$INFO" >&2
 
 	#output file content to stdout
@@ -131,14 +156,13 @@ case $coreformat in
 	esac
 	;;
 1)
-	case $g_iver in (1) localoffset=100;; (2) localoffset=100;; (3) localoffset=176;; esac
 	INFO=$(xfs_db -r $dev -c "convert inode $inum fsbyte" -c "inode $inum")
 	IFS=' ()' read ioffsetX ioffsetD <<<"$INFO"
 	case $ftype in
 	dir)
-		dd status=none if=$dev bs=1 skip=$((ioffsetD+localoffset)) count=$((fsize)) | hexdump -C;;
+		dd status=none if=$dev bs=1 skip=$((ioffsetD+dataForkOffset)) count=$((fsize)) | hexdump -C;;
 	file|symlink)
-		dd status=none if=$dev bs=1 skip=$((ioffsetD+localoffset)) count=$((fsize));;
+		dd status=none if=$dev bs=1 skip=$((ioffsetD+dataForkOffset)) count=$((fsize));;
 	symlink2)
 		xfs_db -r $dev -c "inode $inum" -c "type inode" -c "print u.symlink";;
 	*)
