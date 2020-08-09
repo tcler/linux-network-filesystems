@@ -1,5 +1,6 @@
 #!/bin/bash
 #auth: yin-jianhong@163.com
+#just for learn xfs and funny
 
 dev=$1
 inum=$2
@@ -37,6 +38,7 @@ test -n "$debug" && echo "core.version = $g_iver" >&2
 }
 
 inode_extent_array() {
+	#ref: https://xfs.org/docs/xfsdocs-xml-dev/XFS_Filesystem_Structure/tmp/en-US/html/Data_Extents.html
 	local _dev=$1
 	local _inum=$2
 	IFS=' ()' read ioffsetX ioffsetD < <(xfs_db -r $_dev -c "convert inode $_inum fsbyte" -c "inode $_inum")
