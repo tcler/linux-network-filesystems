@@ -1,6 +1,7 @@
 #!/bin/bash
 #auth: yin-jianhong@163.com
-#just for learn xfs and funny
+#just for learning xfs and funny
+#test pass on RHEL-7.3,RHEL-7.4,RHEL-7.9,RHEL-8.2,RHEL-8.3
 #
 #ref: https://xfs.org/docs/xfsdocs-xml-dev/XFS_Filesystem_Structure/tmp/en-US/html/Data_Extents.html
 #ref: https://righteousit.wordpress.com/2018/05/23/xfs-part-2-inodes
