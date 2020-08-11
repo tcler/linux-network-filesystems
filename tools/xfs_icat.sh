@@ -71,7 +71,7 @@ inode_extent_array() {
 			agnumLen=$((52-agshift))
 			agnum=$(echo "ibase=2;obase=A;${startblockB:0:${agnumLen}}"|bc)
 			relativeblock=$(echo "ibase=2;obase=A;${startblockB:${agnumLen}:${agshift}}"|bc)
-			echo " ${i}:[$startoff,$((agnum*agblocks+relativeblock)),$blockcount,$flag]"
+			echo " ${i}:[$startoff,$((agnum*agblocks+relativeblock)),$blockcount,$flag,$startblock]"
 
 			test -n "$debug" && echo "agshift: $agshift" >&2
 			test -n "$debug" && echo "agnumLen: $agnumLen" >&2
@@ -137,7 +137,7 @@ extents_cat() {
 	local left=$_fsize
 	for extent; do
 		test -n "$debug" && echo "{extexts_cat} extent: $extent" >&2
-		read idx startoff startblock blockcount extentflag  <<< "${extent//[:,\][]/ }"
+		read idx startoff startblock blockcount extentflag orig_startblock <<< "${extent//[:,\][]/ }"
 		extentSize=$((blockcount * blocksize))
 		ddcount=$blockcount
 
