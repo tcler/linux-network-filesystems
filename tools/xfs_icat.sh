@@ -9,6 +9,7 @@
 dev=$1
 inum=$2
 debug=$3
+realsize=$4
 
 ftypes[1]=fifo
 ftypes[2]=chardrv
@@ -49,7 +50,7 @@ _startblock2fsblock() {
 		return
 	}
 
-	local startblockB=$(echo "obase=2; ibase=A; $startblock"|bc|xargs printf "%52s"|sed s/\ /0/)
+	local startblockB=$(echo "obase=2; ibase=A; $startblock"|bc|xargs printf "%52s"|sed s/\ /0/g)
 	local agnumLen=$((52-agshift))
 	local agnum=$(echo "ibase=2;obase=A;${startblockB:0:${agnumLen}}"|bc)
 	local relativeblock=$(echo "ibase=2;obase=A;${startblockB:${agnumLen}:${agshift}}"|bc)
@@ -99,7 +100,25 @@ inode_extent_btree() {
 	local _dev=$1
 	local _inum=$2
 
-	#fixme:
+	local fsblocks
+	btree_node=$(xfs_db -r $_dev -c inode\ $_inum -c p\ u3.bmbt 2>/dev/null)
+	read key eq fsblocks < <(egrep 'ptrs\[[0-9-]+] =' <<<"$btree_node")
+
+	walkbtree() {
+		local nodeinfo=
+		local fsblock=
+
+		for _fsblock; do
+			read idx fsblock <<<"${_fsblock/:/ }"
+			nodeinfo=$(xfs_db -r $_dev -c fsblock\ $fsblock -c type\ bmapbta -c p)
+			if echo "$nodeinfo"|grep -q 'level = 0'; then
+				echo "$nodeinfo"|egrep '^[0-9]+:'
+			else
+				walkbtree $(echo "$nodeinfo"|sed -rn '/ptrs\[[0-9-]+] =/{s///; p}')
+			fi
+		done
+	}
+	walkbtree $fsblocks
 }
 
 [[ "${g_iver:-3}" = 3 ]] && {
@@ -135,32 +154,44 @@ extents_cat() {
 	local agshift=${#agblocksB}
 
 	local left=$_fsize
-	for extent; do
-		test -n "$debug" && echo "{extexts_cat} extent: $extent" >&2
-		read idx startoff startblock blockcount extentflag orig_startblock <<< "${extent//[:,\][]/ }"
-		startblock=$(_startblock2fsblock $startblock $agshift)
-		extentSize=$((blockcount * blocksize))
-		ddcount=$blockcount
+	while read line; do
+		for extent in $line; do
+			test -n "$debug" && echo "{extexts_cat} extent: $extent" >&2
+			read idx startoff startblock blockcount extentflag orig_startblock <<< "${extent//[:,\][]/ }"
+			[[ $startblock =~ ^[0-9]+$ ]] || continue
+			startblock=$(_startblock2fsblock $startblock $agshift)
+			extentSize=$((blockcount * blocksize))
+			ddcount=$blockcount
 
-		if [[ $extentSize -gt $left ]]; then
-			ddcount=$((left/blocksize))
-			mod=$((left%blocksize))
 
-			test -n "$debug" && echo "{extexts_cat} left=$left, extentSize=$extentSize; ddcount=$ddcount, mod=$mod" >&2
-			echo dd status=none if=$_dev bs=$blocksize skip=$startblock count=$ddcount >&2
-			dd status=none if=$_dev bs=$blocksize skip=$startblock count=$ddcount
-			echo dd status=none if=$_dev bs=1 skip=$(((startblock+ddcount)*blocksize)) count=$mod >&2
-			dd status=none if=$_dev bs=1 skip=$(((startblock+ddcount)*blocksize)) count=$mod
-			break
-		else
-			dd status=none if=$_dev bs=$blocksize skip=$startblock count=$ddcount
-		fi
+			if [[ $extentSize -gt $left ]]; then
+				ddcount=$((left/blocksize))
+				mod=$((left%blocksize))
 
-		((left-=(ddcount*blocksize)))
+				test -n "$debug" && echo "{extexts_cat} left=$left, extentSize=$extentSize; ddcount=$ddcount, mod=$mod" >&2
+				echo dd status=none if=$_dev bs=$blocksize skip=$startblock count=$ddcount >&2
+				dd status=none if=$_dev bs=$blocksize skip=$startblock count=$ddcount
+				[[ $mod != 0 ]] && {
+					echo dd status=none if=$_dev bs=1 skip=$(((startblock+ddcount)*blocksize)) count=$mod >&2
+					dd status=none if=$_dev bs=1 skip=$(((startblock+ddcount)*blocksize)) count=$mod
+				}
+				break 2
+			else
+				[[ $ddcount != 0 ]] &&
+					dd status=none if=$_dev bs=$blocksize skip=$startblock count=$ddcount
+			fi
+
+			((left-=(ddcount*blocksize)))
+		done
 	done
 }
 
 case $coreformat in
+3)
+	size=4096
+	[[ -n "$realsize" ]] && size=$fsize
+	extents_cat $dev $size < <(inode_extent_btree $dev $inum)
+	;;
 2)
 	extentINFO=$(inode_extent_array $dev $inum)
 	read key eq sum extents < <(sed -rn '/bmx|BMX/,${p}' <<<"$extentINFO"|xargs)
@@ -169,9 +200,9 @@ case $coreformat in
 	#output file content to stdout
 	case $ftype in
 	dir)
-		extents_cat $dev $fsize $extents | hexdump -C;;
+		extents_cat $dev $fsize <<<"$extents" | hexdump -C;;
 	file|symlink)
-		extents_cat $dev $fsize $extents;;
+		extents_cat $dev $fsize <<<"$extents";;
 	esac
 	;;
 1)
