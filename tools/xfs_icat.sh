@@ -41,7 +41,7 @@ test -n "$debug" && echo "core.version = $g_iver" >&2
 	dataForkOffset=100
 }
 
-_startblock2fsblock() {
+_fsbno2blockno() {
 	local startblock=$1
 	local agshift=$2
 
@@ -56,7 +56,7 @@ _startblock2fsblock() {
 	local relativeblock=$(echo "ibase=2;obase=A;${startblockB:${agnumLen}:${agshift}}"|bc)
 	echo -n $((agnum*agblocks+relativeblock))
 }
-startblock2fsblock() {
+fsbno2blockno() {
 	local startblock=$1
 	local dev=$2
 
@@ -66,7 +66,7 @@ startblock2fsblock() {
 	local agblocksB=$(echo "obase=2;$agblocks"|bc)
 	local agshift=${#agblocksB}
 
-	_startblock2fsblock $startblocks $agshift
+	_fsbno2blockno $startblock $agshift
 }
 
 inode_extent_array() {
@@ -158,7 +158,7 @@ extents_cat() {
 			test -n "$debug" && echo "{extexts_cat} extent: $extent" >&2
 			read idx startoff startblock blockcount extentflag orig_startblock <<< "${extent//[:,\][]/ }"
 			[[ $startblock =~ ^[0-9]+$ ]] || continue
-			startblock=$(_startblock2fsblock $startblock $agshift)
+			startblock=$(_fsbno2blockno $startblock $agshift)
 			extentSize=$((blockcount * blocksize))
 			ddcount=$blockcount
 
