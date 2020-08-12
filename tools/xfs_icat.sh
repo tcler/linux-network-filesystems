@@ -43,12 +43,15 @@ test -n "$debug" && echo "core.version = $g_iver" >&2
 
 _fsbno2blockno() {
 	local startblock=$1
-	local agshift=$2
+	local agblocks=$2
 
 	[[ "${g_iver:-3}" != 3 ]] && {
 		echo -n "$startblock"
 		return
 	}
+
+	local agblocksB=$(echo "obase=2;$agblocks"|bc)
+	local agshift=${#agblocksB}
 
 	local startblockB=$(echo "obase=2; ibase=A; $startblock"|bc|xargs printf "%52s"|sed s/\ /0/g)
 	local agnumLen=$((52-agshift))
@@ -63,10 +66,8 @@ fsbno2blockno() {
 	local agblocks=
 	local sbINFO=$(xfs_db -r $dev -c "inode 0" -c "type sb" -c 'print agblocks' 2>/dev/null)
 	read key eq agblocks < <(grep agblocks <<<"$sbINFO")
-	local agblocksB=$(echo "obase=2;$agblocks"|bc)
-	local agshift=${#agblocksB}
 
-	_fsbno2blockno $startblock $agshift
+	_fsbno2blockno $startblock $agblocks
 }
 
 inode_extent_array() {
@@ -146,11 +147,10 @@ extents_cat() {
 	local _fsize=$2
 	shift 2
 
+	local agblocks=
 	local sbINFO=$(xfs_db -r $_dev -c "inode 0" -c "type sb" -c 'print blocksize agblocks' 2>/dev/null)
 	read key eq blocksize < <(grep blocksize <<<"$sbINFO")
 	read key eq agblocks < <(grep agblocks <<<"$sbINFO")
-	local agblocksB=$(echo "obase=2;$agblocks"|bc)
-	local agshift=${#agblocksB}
 
 	local left=$_fsize
 	while read line; do
@@ -158,7 +158,7 @@ extents_cat() {
 			test -n "$debug" && echo "{extexts_cat} extent: $extent" >&2
 			read idx startoff startblock blockcount extentflag orig_startblock <<< "${extent//[:,\][]/ }"
 			[[ $startblock =~ ^[0-9]+$ ]] || continue
-			startblock=$(_fsbno2blockno $startblock $agshift)
+			startblock=$(_fsbno2blockno $startblock $agblocks)
 			extentSize=$((blockcount * blocksize))
 			ddcount=$blockcount
 
