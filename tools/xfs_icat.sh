@@ -78,7 +78,6 @@ inode_extent_array() {
 	local _extentNum=$(dd status=none if=$_dev bs=1 skip=$((ioffsetD+76)) count=4 | hexdump -e '4/1 "%02x"')
 	_extentNum=$((16#$_extentNum))
 
-	echo "BMX[0-$((_extentNum-1))] = [startoff,startblock,blockcount,extentflag]"
 	local extentX= extent1B= flag= startoff= startblock= blockcount=
 	for ((i=0; i<_extentNum; i++)); do
 		extentX=$(dd status=none if=$_dev bs=1 skip=$((ioffsetD+dataForkOffset+i*16)) count=16 | hexdump -e '16/1 "%02x"')
@@ -92,7 +91,7 @@ inode_extent_array() {
 
 		blockcount=$(echo "ibase=2;obase=A;${extent1B:108:21}"|bc)
 
-		echo " ${i}:[$startoff,$startblock,$blockcount,$flag]"
+		echo "${i}:[$startoff,$startblock,$blockcount,$flag]"
 	done
 }
 
@@ -193,16 +192,11 @@ case $coreformat in
 	extents_cat $dev $size < <(inode_extent_btree $dev $inum)
 	;;
 2)
-	extentINFO=$(inode_extent_array $dev $inum)
-	read key eq sum extents < <(sed -rn '/bmx|BMX/,${p}' <<<"$extentINFO"|xargs)
-	test -n "$debug" && echo "$extentINFO" >&2
-
-	#output file content to stdout
 	case $ftype in
 	dir)
-		extents_cat $dev $fsize <<<"$extents" | hexdump -C;;
+		extents_cat $dev $fsize < <(inode_extent_array $dev $inum) | hexdump -C;;
 	file|symlink)
-		extents_cat $dev $fsize <<<"$extents";;
+		extents_cat $dev $fsize < <(inode_extent_array $dev $inum);;
 	esac
 	;;
 1)
