@@ -101,7 +101,7 @@ inode_extent_btree() {
 	local _inum=$2
 
 	local fsblocks
-	btree_node=$(xfs_db -r $_dev -c inode\ $_inum -c p\ u3.bmbt 2>/dev/null)
+	btree_node=$(xfs_db -r $_dev -c inode\ $_inum -c p 2>/dev/null)
 	read key eq fsblocks < <(egrep 'ptrs\[[0-9-]+] =' <<<"$btree_node")
 
 	walkbtree() {
