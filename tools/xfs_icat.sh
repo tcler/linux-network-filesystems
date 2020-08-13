@@ -81,17 +81,12 @@ inode_extent_array() {
 
 	local extentX= extent1B= flag= startoff= startblock= blockcount=
 	for ((i=0; i<_extentNum; i++)); do
-		extentX=$(dd status=none if=$_dev bs=1 skip=$((ioffsetD+dataForkOffset+i*16)) count=16 | hexdump -e '16/1 "%02x"')
-		extent1B=$(echo "ibase=16;obase=2;1${extentX^^}"|BC_LINE_LENGTH=256 bc)
-
+		extentX=$(dd status=none if=$_dev bs=1 skip=$((ioffsetD+dataForkOffset+i*16)) count=16 | hexdump -e '16/1 "%02X"')
+		extent1B=$(echo "ibase=16;obase=2;1${extentX}"|BC_LINE_LENGTH=256 bc)
 		flag=${extent1B:1:1}
-
 		startoff=$(echo "ibase=2;obase=A;${extent1B:2:54}"|bc)
-
 		startblock=$(echo "ibase=2;obase=A;${extent1B:56:52}"|bc)
-
 		blockcount=$(echo "ibase=2;obase=A;${extent1B:108:21}"|bc)
-
 		echo "${i}:[$startoff,$startblock,$blockcount,$flag]"
 	done
 }
@@ -105,6 +100,7 @@ inode_extent_btree() {
 	read key eq fsblocks < <(egrep 'ptrs\[[0-9-]+] =' <<<"$btree_node")
 
 	walkbtree() {
+		local _dev=$1
 		local nodeinfo=
 		local fsblock=
 
@@ -114,19 +110,107 @@ inode_extent_btree() {
 			if echo "$nodeinfo"|grep -q 'level = 0'; then
 				echo "$nodeinfo"|egrep '^[0-9]+:'
 			else
-				walkbtree $(echo "$nodeinfo"|sed -rn '/ptrs\[[0-9-]+] =/{s///; p}')
+				walkbtree $_dev $(echo "$nodeinfo"|sed -rn '/ptrs\[[0-9-]+] =/{s///; p}')
 			fi
 		done
 	}
-	walkbtree $fsblocks
+	walkbtree $_dev $fsblocks
+}
+inode_extent_btree2() {
+	local _dev=$1
+	local _inum=$2
+
+	local fsbnos=
+	IFS=' ()' read ioffsetX ioffsetD < <(xfs_db -r $_dev -c "convert inode $_inum fsbyte")
+	local levelX=$(dd if=$_dev skip=$((ioffsetD+dataForkOffset)) bs=1 count=2 status=none|hexdump -e '2/1 "%02X"')
+	local level=$((16#$levelX))
+	local numX=$(dd if=$_dev skip=$((ioffsetD+dataForkOffset+2)) bs=1 count=2 status=none|hexdump -e '2/1 "%02X"')
+	local num=$((16#$numX))
+
+	local ptroffset=$((ioffsetD+dataForkOffset+4+ 8*num +24))
+	for ((i=0; i< num; i++)); do
+		fsblocknumX=$(dd if=$_dev skip=$((ptroffset+8*i)) bs=1 count=8 status=none|hexdump -e '8/1 "%02X"')
+		fsbnos+="$((i+1)):$((16#$fsblocknumX)) "
+	done
+
+	local blocksize= agblocks=
+	local sbINFO=$(xfs_db -r $_dev -c "inode 0" -c "type sb" -c 'print blocksize agblocks' 2>/dev/null)
+	read key eq agblocks < <(grep agblocks <<<"$sbINFO")
+	read key eq blocksize < <(grep blocksize <<<"$sbINFO")
+
+	_treenodeinfo() {
+		local _dev=$1
+		local fsbno=$2
+		local _agblocks=$3
+		local _blocksize=$4
+
+		local fsbnos=
+		local blockno=$(_fsbno2blockno $fsbno $_agblocks)
+		local offset=$((blockno*_blocksize))
+
+		local magic=$(dd if=$_dev skip=$((offset)) bs=1 count=4 status=none|hexdump -e '4/1 "%c"')
+
+		local levelX= level= numX= num= _fsbno=
+		if [[ $magic != BMA3 ]]; then
+			echo "warning: not BMA3 block" >&2
+		fi
+
+		levelX=$(dd if=$_dev skip=$((offset+4)) bs=1 count=2 status=none|hexdump -e '2/1 "%02X"')
+		level=$((16#$levelX))
+		numX=$(dd if=$_dev skip=$((offset+4+2)) bs=1 count=2 status=none|hexdump -e '2/1 "%02X"')
+		num=$((16#$numX))
+		echo "level = $level"
+
+		if [[ $level != 0 ]]; then
+			local ptroffset=$((offset+8 + 64 + num*8))
+
+			for ((i=0; i<num; i++)); do
+				_fsbno=$(dd if=$_dev skip=$((ptroffset+i*8)) bs=1 count=8 status=none|hexdump -e '8/1 "%02X"')
+				fsbnos+="$((i+1)):$((16#$_fsbno)) "
+			done
+			echo "ptrs[1-$num] = $fsbnos"
+		else
+			local extentX= extentB= flag= startoff= startblock= blockcount=
+			local recsoffset=$((offset+8 + 64))
+
+			echo "recs[1-$num] ="
+			for ((i=0; i<num; i++)); do
+				extentX=$(dd if=$_dev skip=$((recsoffset+i*16)) bs=1 count=16 status=none|hexdump -e '16/1 "%02X"')
+				extent1B=$(echo "ibase=16;obase=2;1${extentX}"|BC_LINE_LENGTH=256 bc)
+				flag=${extent1B:1:1}
+				startoff=$(echo "ibase=2;obase=A;${extent1B:2:54}"|bc)
+				startblock=$(echo "ibase=2;obase=A;${extent1B:56:52}"|bc)
+				blockcount=$(echo "ibase=2;obase=A;${extent1B:108:21}"|bc)
+				echo "${i}:[$startoff,$startblock,$blockcount,$flag]"
+			done
+		fi
+	}
+
+	walkbtree() {
+		local _dev=$1
+		local agblocks=$2
+		local blocksize=$3
+		shift 3
+
+		local nodeinfo=
+		for _fsblock; do
+			read idx _fsbno <<<"${_fsblock/:/ }"
+			nodeinfo=$(_treenodeinfo $_dev $_fsbno   $agblocks $blocksize)
+			if echo "$nodeinfo"|grep -q 'level = 0'; then
+				echo "$nodeinfo"|egrep '^[0-9]+:'
+			else
+				walkbtree $_dev $agblocks $blocksize $(echo "$nodeinfo"|sed -rn '/ptrs\[[0-9-]+] =/{s///; p}')
+			fi
+		done
+	}
+	walkbtree $_dev $agblocks $blocksize $fsbnos
 }
 
-[[ "${g_iver:-3}" = 3 ]] && {
+if [[ "${g_iver:-3}" = 3 ]]; then
 	INFO=$(xfs_db -r $dev -c "inode $inum"                 -c "print core.format core.mode core.size" -c "version")
-} || {
+else
 	INFO=$(xfs_db -r $dev -c "inode $inum" -c "type inode" -c "print core.format core.mode core.size" -c "version")
-}
-
+fi
 {
 read key eq coreformat desc
 read key eq mode desc
@@ -189,7 +273,8 @@ case $coreformat in
 3)
 	size=4096
 	[[ -n "$realsize" ]] && size=$fsize
-	extents_cat $dev $size < <(inode_extent_btree $dev $inum)
+	extents_cat $dev $size < <(inode_extent_btree2 $dev $inum)
+	trap "pkill ${0##*/}" EXIT
 	;;
 2)
 	case $ftype in
@@ -215,3 +300,4 @@ case $coreformat in
 	;;
 esac
 echo >&2
+exit
