@@ -5,6 +5,7 @@
 #
 #ref: https://xfs.org/docs/xfsdocs-xml-dev/XFS_Filesystem_Structure/tmp/en-US/html/Data_Extents.html
 #ref: https://righteousit.wordpress.com/2018/05/23/xfs-part-2-inodes
+#ref: https://zorrozou.github.io/docs/xfs/XFS%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E7%BB%93%E6%9E%84.html
 
 dev=$1
 inum=$2
