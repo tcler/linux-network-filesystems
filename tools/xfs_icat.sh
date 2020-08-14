@@ -274,7 +274,7 @@ case $coreformat in
 	size=4096
 	[[ -n "$realsize" ]] && size=$fsize
 	extents_cat $dev $size < <(inode_extent_btree2 $dev $inum)
-	trap "pkill ${0##*/}" EXIT
+	trap "pkill ${0##*/} &" EXIT
 	;;
 2)
 	case $ftype in
