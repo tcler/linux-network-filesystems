@@ -27,9 +27,8 @@ MOUNT_OPTS="$*"
 subnet1=12
 brname1=vm-vbr$subnet1
 netname1=net$subnet1
-subnet2=13
-brname2=vm-vbr$subnet2
-netname2=net$subnet2
+S=serv
+C=clnt
 
 [[ -z "$distro" ]] && {
 	echo "Usage: $0 <distro> [mount options]"
@@ -39,42 +38,36 @@ netname2=net$subnet2
 vm --prepare
 
 vm net netname=$netname1 brname=$brname1 subnet=$subnet1
-vm net netname=$netname2 brname=$brname2 subnet=$subnet2
 vm netinfo $netname1
-vm netinfo $netname2
 
-vm create "$distro" -n serv --saveimage -p "nfs-utils" --nointeract --net default --net $netname1 --net $netname2 -f
-vm create "$distro" -n clnt --saveimage -p "nfs-utils" --nointeract --net default --net $netname1 --net $netname2 -f
-S=$(vm -r --getvmname "$distro" -n serv)
-C=$(vm -r --getvmname "$distro" -n clnt)
+vm create "$distro" -n $S --saveimage -p "nfs-utils" --nointeract --net default --net $netname1 -f
+vm create "$distro" -n $C --saveimage -p "nfs-utils" --nointeract --net default --net $netname1 -f
 
 servIpAddrs=$(vm exec -v $S -- ip a s)
 echo "$servIpAddrs"
 
 Saddr0=$(vm -r ifaddr $S|grep '192.168.122\.' || echo "$servIpAddrs" | awk -F'[/ ]+' '/inet 192.168.122.[0-9]+/{print $3}')
 Saddr1=$(vm -r ifaddr $S|grep "192.168.${subnet1}\\." || echo "$servIpAddrs" | awk -F'[/ ]+' "/inet 192.168.$subnet1.[0-9]+/{print \$3}")
-Saddr2=$(vm -r ifaddr $S|grep "192.168.${subnet2}\\." || echo "$servIpAddrs" | awk -F'[/ ]+' "/inet 192.168.$subnet2.[0-9]+/{print \$3}")
 
-vm exec -v $S -- mkdir -p $ExportDir
-vm exec -v $S -- touch $ExportDir/testfile
-vm exec -v $S -- "echo '$ExportDir *(rw,no_root_squash,insecure,security_label)' >/etc/exports"
-vm exec -v $S -- systemctl restart nfs-server
+vm exec -v   $S -- mkdir -p $ExportDir
+vm exec -v   $S -- touch $ExportDir/testfile
+vm exec -v   $S -- "echo '$ExportDir *(rw,no_root_squash,insecure,security_label)' >/etc/exports"
+vm exec -v   $S -- systemctl restart nfs-server
 
 vm exec -v   $C -- mkdir -p $MountPoint
 vm exec -vx0 $C -- showmount -e $Saddr0
-vm exec -vx0 $C -- mount -v $Saddr0:$ExportDir $MountPoint -onconnect=2 $MOUNT_OPTS
+vm exec -vx0 $C -- mount -v -onconnect=2 $MOUNT_OPTS $Saddr0:$ExportDir $MountPoint
 vm exec -vx0 $C -- showmount -e $Saddr1
-vm exec -vx0 $C -- mount -v $Saddr1:$ExportDir $MountPoint -onconnect=2 $MOUNT_OPTS
-vm exec -vx0 $C -- showmount -e $Saddr2
-vm exec -v   $C -- mount -v $Saddr2:$ExportDir $MountPoint -onconnect=2 $MOUNT_OPTS
+vm exec -v   $C -- mount -v -onconnect=2 $MOUNT_OPTS $Saddr1:$ExportDir $MountPoint
 
-vm exec -v   $C -- mount -t nfs
-vm exec -v   $C -- mount -t nfs4
-vm exec -vx0 $C -- umount $MountPoint
-vm exec -vx0 $C -- umount $MountPoint
+vm exec -v   $C -- mount -t nfs,nfs4
+vm exec -v   $C -- grep xprt /proc/self/mountstats
+vm exec -v   $C -- ss -nt "dst $ServerIP1"
+
+vm exec -v   $C -- mount -t nfs,nfs4
+vm exec -vx0 $C -- umount -t nfs,nfs4 -a
 
 #please clean test env:
 vm del $C
 vm del $S
 vm netdel $netname1
-vm netdel $netname2
