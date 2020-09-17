@@ -41,9 +41,9 @@ ns exec -v   c1 -- systemctl stop firewalld
 ns exec -v   c1 -- mkdir -p $MountPoint
 
 ns exec -vx0 c1 -- showmount -e $ServerIP1
-ns exec -vx0 c1 -- mount -v $MOUNT_OPTS $ServerIP1:/ $MountPoint
+ns exec -vx0 c1 -- mount $MOUNT_OPTS $ServerIP1:/ $MountPoint
 ns exec -vx0 c1 -- showmount -e $ServerIP2
-ns exec -v   c1 -- mount -v $MOUNT_OPTS $ServerIP2:/ $MountPoint
+ns exec -v   c1 -- mount $MOUNT_OPTS $ServerIP2:/ $MountPoint
 
 ns exec -v   c1 -- mount -t nfs,nfs4
 ns exec -v   c1 -- grep xprt /proc/self/mountstats
