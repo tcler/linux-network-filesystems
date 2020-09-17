@@ -23,6 +23,7 @@ ExportDir=/nfsshare
 MountPoint=/mnt/nfs
 distro=$1; shift
 MOUNT_OPTS="$*"
+MOUNT_OPTS=${MOUNT_OPTS:--onconnect=16}
 
 subnet1=12
 brname1=vm-vbr$subnet1
@@ -56,9 +57,9 @@ vm exec -v   $S -- systemctl restart nfs-server
 
 vm exec -v   $C -- mkdir -p $MountPoint
 vm exec -vx0 $C -- showmount -e $Saddr0
-vm exec -vx0 $C -- mount -v -onconnect=2 $MOUNT_OPTS $Saddr0:$ExportDir $MountPoint
+vm exec -vx0 $C -- mount -v $MOUNT_OPTS $Saddr0:$ExportDir $MountPoint
 vm exec -vx0 $C -- showmount -e $Saddr1
-vm exec -v   $C -- mount -v -onconnect=2 $MOUNT_OPTS $Saddr1:$ExportDir $MountPoint
+vm exec -v   $C -- mount -v $MOUNT_OPTS $Saddr1:$ExportDir $MountPoint
 
 vm exec -v   $C -- mount -t nfs,nfs4
 vm exec -v   $C -- grep xprt /proc/self/mountstats

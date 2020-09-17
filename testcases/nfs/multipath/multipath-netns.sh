@@ -19,6 +19,7 @@ ClientIP1=192.168.6.2
 ExportDir=/nfsshare
 MountPoint=/mnt/netns0/nfs
 MOUNT_OPTS="$*"
+MOUNT_OPTS=${MOUNT_OPTS:--onconnect=16}
 
 systemctl stop firewalld
 mkdir -p $ExportDir $MountPoint
@@ -29,7 +30,7 @@ systemctl restart nfs-server
 netns 2>/dev/null
 netns host,veth0.X,$ServerIP1---netns0,veth0.Y,$ClientIP1
 netns exec -vx0 netns0 -- showmount -e $ServerIP1
-netns exec -vx0 netns0 -- mount -onconnect=32 $ServerIP1:$ExportDir $MountPoint $MOUNT_OPTS
+netns exec -vx0 netns0 -- mount $ServerIP1:$ExportDir $MountPoint $MOUNT_OPTS
 netns exec -v   netns0 -- mount -t nfs,nfs4
 
 netns exec -v   netns0 -- cat /proc/self/mountstats
