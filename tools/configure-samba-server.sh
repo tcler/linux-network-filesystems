@@ -124,6 +124,6 @@ EOF
 service smb restart
 
 ## test/verify
-smbclient -L //localhost -U root%redhat
+smbclient -L //localhost -U root%$PASSWORD
 echo
 tree $PREFIX
