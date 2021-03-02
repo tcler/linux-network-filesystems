@@ -14,15 +14,22 @@ switchroot;
 
 yum install -y samba samba-common cifs-utils /usr/bin/firewall-cmd expect
 
-toolsurl=https://raw.githubusercontent.com/tcler/kiss-vm-ns/master
-which netns &>/dev/null || {
-	is_available_url() { curl --connect-timeout 8 -m 16 --output /dev/null --silent --head --fail $1 &>/dev/null; }
-	is_intranet() { is_available_url http://download.devel.redhat.com; }
-	is_intranet && toolsurl=http://download.devel.redhat.com/qa/rhts/lookaside/kiss-vm-ns
-	echo -e "[INFO] install kiss-netns ..."
-	sudo curl -s -o /usr/bin/netns -L ${toolsurl}/kiss-netns
-	sudo chmod +x /usr/bin/netns
+install-kiss-vm-ns() {
+	local _name=$1
+	local KissUrl=https://github.com/tcler/kiss-vm-ns
+	which vm &>/dev/null || {
+		echo -e "{info} installing kiss-vm-ns ..."
+		which git &>/dev/null || yum install -y git
+		while true; do
+			git clone --depth=1 "$KissUrl" && make -C kiss-vm-ns
+			which vm && break
+			sleep 5
+			echo -e "{warn} installing kiss-vm-ns  fail, try again ..."
+		done
+	}
+	[[ "$_name"x = "vm"x ]] && vm --prepare
 }
+install-kiss-vm-ns
 
 faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
 warnlog() { echo -e "\033[41m{TEST:WARN} $*\033[0m"; }

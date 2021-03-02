@@ -48,11 +48,23 @@ systemctl start opensm #need confirm
 ip a s
 
 # install RHEL-8.1 vm
-which vm 2>/dev/null || {
-	which git &>/dev/null || yum install -y git
-	git clone https://github.com/tcler/kiss-vm-ns
-	make -C kiss-vm-ns
+install-kiss-vm-ns() {
+	local _name=$1
+	local KissUrl=https://github.com/tcler/kiss-vm-ns
+	which vm &>/dev/null || {
+		echo -e "{info} installing kiss-vm-ns ..."
+		which git &>/dev/null || yum install -y git
+		while true; do
+			git clone --depth=1 "$KissUrl" && make -C kiss-vm-ns
+			which vm && break
+			sleep 5
+			echo -e "{warn} installing kiss-vm-ns  fail, try again ..."
+		done
+	}
+	[[ "$_name"x = "vm"x ]] && vm --prepare
 }
+install-kiss-vm-ns vm
+
 vm RHEL-8.1.1-updates-20200116.1 --nointeract -p "rdma opensm infiniband-diags librdmacm-utils"
 cat >pci_0000_04_00_1.xml <<EOF
 <hostdev mode='subsystem' type='pci' managed='no'>

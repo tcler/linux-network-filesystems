@@ -15,18 +15,24 @@ set -- "${argv[@]}"
 
 distro=${1:-RHEL-8.1.0}
 
-
 #---------------------------------------------------------------
 #install kiss-vm
-which vm &>/dev/null || {
-	is_available_url() { curl --connect-timeout 8 -m 16 --output /dev/null --silent --head --fail $1 &>/dev/null; }
-	is_intranet() { is_available_url http://download.devel.redhat.com; }
-	is_intranet && toolsurl=http://download.devel.redhat.com/qa/rhts/lookaside/kiss-vm-ns
-	echo -e "[INFO] install kiss-vm ..."
-	sudo curl -s -o /usr/bin/vm -L ${toolsurl}/kiss-vm
-	sudo chmod +x /usr/bin/vm
+install-kiss-vm-ns() {
+	local _name=$1
+	local KissUrl=https://github.com/tcler/kiss-vm-ns
+	which vm &>/dev/null || {
+		echo -e "{info} installing kiss-vm-ns ..."
+		which git &>/dev/null || yum install -y git
+		while true; do
+			git clone --depth=1 "$KissUrl" && make -C kiss-vm-ns
+			which vm && break
+			sleep 5
+			echo -e "{warn} installing kiss-vm-ns  fail, try again ..."
+		done
+	}
+	[[ "$_name"x = "vm"x ]] && vm --prepare
 }
-vm --prepare
+install-kiss-vm-ns vm
 
 #---------------------------------------------------------------
 : <<COMM
