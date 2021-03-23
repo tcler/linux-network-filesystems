@@ -42,16 +42,19 @@ yum install -y nfs-utils &>/dev/null
 
 
 ## create nfs export directorys
-mkdir -p $PREFIX/{ro,rw,async,labelled-nfs}
-touch $PREFIX/{ro,rw,async,labelled-nfs}/testfile
+mkdir -p $PREFIX/{ro,rw,async,labelled-nfs,krb5-nfs1,krb5-nfs2}
+touch $PREFIX/{ro,rw,async,labelled-nfs,krb5-nfs1,krb5-nfs2}/testfile
+chmod -R 777 $PREFIX
 
 
 ## generate exports config file
 cat <<EOF >/etc/exports
-/nfsshare/ro *(ro)
-/nfsshare/rw *(rw,no_root_squash)
-/nfsshare/async *(rw,no_root_squash,async)
-/nfsshare/labelled-nfs *(rw,no_root_squash,security_label)
+$PREFIX/ro *(ro)
+$PREFIX/rw *(rw,no_root_squash)
+$PREFIX/async *(rw,no_root_squash,async)
+$PREFIX/labelled-nfs *(rw,no_root_squash,security_label)
+$PREFIX/krb5-nfs1 *(rw,no_root_squash,sec=sys:krb5:krb5i:krb5p)
+$PREFIX/krb5-nfs2 *(rw,no_root_squash,sec=sys:krb5:krb5i:krb5p)
 EOF
 
 
