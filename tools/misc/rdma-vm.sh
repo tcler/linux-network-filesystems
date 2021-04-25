@@ -61,7 +61,7 @@ install-kiss-vm-ns() {
 			echo -e "{warn} installing kiss-vm-ns  fail, try again ..."
 		done
 	}
-	[[ "$_name"x = "vm"x ]] && vm --prepare
+	[[ "$_name"x = "vm"x ]] && vm prepare
 }
 install-kiss-vm-ns vm
 
