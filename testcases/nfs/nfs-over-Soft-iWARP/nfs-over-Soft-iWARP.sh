@@ -43,5 +43,5 @@ servAddr=$(vm ifaddr $vmserv|head -1)
 vm exec -v -x $vmclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049 -v
 vm exec -v -x $vmclnt -- mount -t nfs4
 
-vm exec -v $vmserv -- tmux new -s listen -d "'ib_send_bw -d siw0'"
-vm exec -v $vmclnt -- ib_send_bw -d siw0 $servAddr
+vm exec -v $vmserv -- tmux new -s listen -d "'ib_write_bw -d siw0 -R -n 5 -s 1500'"
+vm exec -v $vmclnt -- ib_write_bw -d siw0 -R -n 5 -s 1500 $servAddr
