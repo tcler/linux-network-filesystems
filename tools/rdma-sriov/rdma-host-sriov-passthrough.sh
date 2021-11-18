@@ -12,18 +12,19 @@ grubby --args="intel_iommu=on iommu=pt" --update-kernel="$(/sbin/grubby --defaul
 reboot
 COMM
 
-# install dependency and download MLNX_OFED driver
-yum install -y lsof pciutils elfutils-libelf-devel \
-	kernel-rpm-macros python36-devel createrepo \
-	tk tcsh gcc-gfortran
+# download MLNX_OFED driver
 wget http://fs-qe.usersys.redhat.com/ftp/pub/jiyin/MLNX_OFED_LINUX-4.9-4.0.8.0-rhel8.4-x86_64.tgz
 
 # install MLNX_OFED driver
 tar zxf MLNX_OFED_LINUX-4.9-4.0.8.0-rhel8.4-x86_64.tgz
 pushd MLNX_OFED_LINUX-4.9-4.0.8.0-rhel8.4-x86_64
-	./mlnxofedinstall --add-kernel-support
+	# install dependency
+	yum install -y tcsh tcl tk python36 gcc-gfortran lsof
+
+	./mlnxofedinstall #--add-kernel-support
 	lspci | grep Mellanox
 
+	# restart openibd
 	systemctl stop opensm
 	/etc/init.d/opensmd stop
 	modprobe -r rpcrdma ib_srpt ib_isert
@@ -46,7 +47,7 @@ for mdev in $mdevs; do
 	mlxconfig -d $mdev set SRIOV_EN=1 NUM_OF_VFS=16
 done
 
-# reboot and confirm #seems no need
+# reboot to take effect
 reboot
 COMM
 
@@ -54,7 +55,7 @@ COMM
 systemctl stop opensm
 /etc/init.d/opensmd stop
 modprobe -r rpcrdma ib_srpt ib_isert
-echo "options mlx4_core port_type_array=1,1 num_vfs=8 probe_vf=0" >/etc/modprobe.d/mlx4_core.conf
+echo "options mlx4_core port_type_array=1,1 num_vfs=16 probe_vf=8" >/etc/modprobe.d/mlx4_core.conf
 /etc/init.d/openibd restart
 lspci | grep Mellanox
 systemctl start opensm #need confirm
@@ -81,7 +82,7 @@ install-kiss-vm-ns vm
 # create RHEL-8.4 vm
 vm create RHEL-8.4.0 -n rhel-8-rdma --nointeract \
 	-p "rdma opensm infiniband-diags librdmacm-utils" \
-	--hostdev=pci_0000_04_00_1
+	--hostif=ib4
 : <<\COMM
 cat >pci_0000_04_00_1.xml <<EOF
 <hostdev mode='subsystem' type='pci' managed='no'>
@@ -103,7 +104,7 @@ cd make-windows-vm
 	--domain cifs-nfs.test -p ~Ocgxyz \
 	--cpus 4 --ram 4096 --disk-size 60 --vncport 7799 \
 	--enable-kdc \
-	--hostdev=pci_0000_04_00_2 \
+	--hostif=ib6 \
 	./answerfiles-cifs-nfs/*
 : <<\COMM
 cat >pci_0000_04_00_2.xml <<EOF
