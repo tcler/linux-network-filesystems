@@ -21,8 +21,14 @@ pushd MLNX_OFED_LINUX-4.9-4.0.8.0-rhel8.4-x86_64
 	# install dependency
 	yum install -y tcsh tcl tk python36 gcc-gfortran lsof
 
-	./mlnxofedinstall #--add-kernel-support
-	lspci | grep Mellanox
+	#:if OSVER = 8.4
+	  ./mlnxofedinstall
+	  lspci | grep Mellanox
+	#:else #always get fail, don't try
+	  #yum install -y createrepo rpm-build gdb-headless python36-devel kernel-devel kernel-rpm-macros elfutils-libelf-devel pciutils
+	  #echo skip-distro-check >distro
+	  #./mlnxofedinstall --add-kernel-support
+	#:fi
 
 	# restart openibd
 	systemctl stop opensm
