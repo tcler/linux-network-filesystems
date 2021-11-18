@@ -106,7 +106,7 @@ COMM
 git clone https://github.com/tcler/make-windows-vm
 cd make-windows-vm
 ./make-win-vm.sh --image /var/lib/libvirt/images/Win2019-Evaluation.iso \
-	--os-variant win2k19 --vmname win2019-cifs-nfs \
+	--os-variant win2k19 --vmname win2019-rdma \
 	--domain cifs-nfs.test -p ~Ocgxyz \
 	--cpus 4 --ram 4096 --disk-size 60 --vncport 7799 \
 	--enable-kdc \
@@ -122,7 +122,7 @@ cat >pci_0000_04_00_2.xml <<EOF
 </hostdev>
 EOF
 virsh nodedev-detach pci_0000_04_00_2
-virsh attach-device win2019-cifs-nfs  pci_0000_04_00_2.xml
+virsh attach-device win2019-rdma  pci_0000_04_00_2.xml
 COMM
 # download windows driver
 # ref: https://cn.mellanox.com/products/adapter-software/ethernet/windows/winof-2
