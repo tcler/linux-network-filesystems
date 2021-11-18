@@ -65,7 +65,7 @@ echo "options mlx4_core port_type_array=1,1 num_vfs=16 probe_vf=8" >/etc/modprob
 /etc/init.d/openibd restart
 lspci | grep Mellanox
 systemctl start opensm #need confirm
-ip a s
+ip -br -c a s
 
 # install kiss-vm tool
 install-kiss-vm-ns() {
@@ -105,6 +105,9 @@ COMM
 # create windows server vm
 git clone https://github.com/tcler/make-windows-vm
 cd make-windows-vm
+yum install -y libvirt libvirt-client virt-install virt-viewer \
+	qemu-kvm dosfstools openldap-clients dos2unix unix2dos \
+	glibc-common expect
 ./make-win-vm.sh --image /var/lib/libvirt/images/Win2019-Evaluation.iso \
 	--os-variant win2k19 --vmname win2019-rdma \
 	--domain win-rdma.test -p ~Ocgxyz \
@@ -112,7 +115,7 @@ cd make-windows-vm
 	--enable-kdc \
 	--hostif=ib6 \
 	./answerfiles-cifs-nfs/*
-: <<\COMM
+: <<'COMM'
 cat >pci_0000_04_00_2.xml <<EOF
 <hostdev mode='subsystem' type='pci' managed='no'>
 <driver name='vfio'/>
