@@ -89,6 +89,7 @@ install-kiss-vm-ns vm
 vm create RHEL-8.4.0 -n rhel-8-rdma --nointeract \
 	-p "rdma opensm infiniband-diags librdmacm-utils" \
 	--hostif=ib4
+#method to attach host dev to Guest VM, if no --hostdev,--hostif option
 : <<\COMM
 cat >pci_0000_04_00_1.xml <<EOF
 <hostdev mode='subsystem' type='pci' managed='no'>
@@ -114,22 +115,13 @@ yum install -y libvirt libvirt-client virt-install virt-viewer \
 	--cpus 4 --ram 4096 --disk-size 60 --vncport 7799 \
 	--enable-kdc \
 	--hostif=ib6 \
+	--driver-url=http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_54000_All_win2019_x64.exe \
 	./answerfiles-cifs-nfs/*
-: <<'COMM'
-cat >pci_0000_04_00_2.xml <<EOF
-<hostdev mode='subsystem' type='pci' managed='no'>
-<driver name='vfio'/>
-<source>
-    <address domain='0x0000' bus='0x04' slot='0x00' function='0x2'/>
-</source>
-</hostdev>
-EOF
-virsh nodedev-detach pci_0000_04_00_2
-virsh attach-device win2019-rdma  pci_0000_04_00_2.xml
-COMM
 # download windows driver
-# ref: https://cn.mellanox.com/products/adapter-software/ethernet/windows/winof-2
-# ref: http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_52000_All_win2019_x64.exe
+# ref: https://www.mellanox.com/products/adapter-software/ethernet/windows/winof-2
+# ref: http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_54000_All_win2019_x64.exe
+# ref: http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_53000_All_Win2016_x64.exe
+# ref: http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_53000_All_Win2012R2_x64.exe
 
 
 # guest:
