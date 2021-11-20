@@ -115,7 +115,7 @@ yum install -y libvirt libvirt-client virt-install virt-viewer \
 	--enable-kdc \
 	--hostif=ib6 \
 	--driver-url=http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_54000_All_win2019_x64.exe \
-	./answerfiles-cifs-nfs/*
+	./answerfiles-cifs-nfs/*  --force
 # download windows driver
 # ref: https://www.mellanox.com/products/adapter-software/ethernet/windows/winof-2
 # ref: http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_54000_All_win2019_x64.exe
