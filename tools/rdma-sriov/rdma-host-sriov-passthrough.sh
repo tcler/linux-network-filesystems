@@ -111,7 +111,7 @@ yum install -y libvirt libvirt-client virt-install virt-viewer \
 ./make-win-vm.sh --image /var/lib/libvirt/images/Win2019-Evaluation.iso \
 	--os-variant win2k19 --vmname win2019-rdma \
 	--domain win-rdma.test -p ~Ocgxyz \
-	--cpus 4 --ram 4096 --disk-size 60 --vncport 7799 \
+	--cpus 4 --ram 8192 --disk-size 80 --vncport 7799 \
 	--enable-kdc \
 	--hostif=ib6 \
 	--driver-url=http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_54000_All_win2019_x64.exe \
