@@ -130,6 +130,7 @@ yum install -y libvirt libvirt-client virt-install virt-viewer \
 yum install -y rdma opensm infiniband-diags librdmacm-utils
 sed -i -e '/rdma/s/^#//' -e 's/rdma=n/rdma=y/' /etc/nfs.conf
 systemctl start nfs-server
+modprobe mlx4_ib
 systemctl start opensm
 lspci
 ibstat
