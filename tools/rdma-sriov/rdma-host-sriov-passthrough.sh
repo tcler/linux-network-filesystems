@@ -86,7 +86,7 @@ install-kiss-vm-ns vm
 
 # create RHEL-8.4 vm
 vm create RHEL-8.4.0 -n rhel-8-rdma --nointeract \
-	-p "rdma opensm infiniband-diags librdmacm-utils" \
+	-p "kernel-modules-extra rdma opensm infiniband-diags librdmacm-utils" \
 	--hostif=ib4
 #method to attach host dev to Guest VM, if no --hostdev,--hostif option
 : <<\COMM
@@ -133,7 +133,7 @@ systemctl start nfs-server
 systemctl start opensm
 lspci
 ibstat
-ip link set dev ib1 up
-ip addr add 192.168.1.100/24 dev ib1
+ip link set dev ib0 up
+ip addr add 192.168.1.100/24 dev ib0
 ping 192.168.1.1  #bare-metal peer address
 EOF
