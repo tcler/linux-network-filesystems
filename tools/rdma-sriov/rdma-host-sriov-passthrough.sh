@@ -108,6 +108,7 @@ cd make-windows-vm
 yum install -y libvirt libvirt-client virt-install virt-viewer \
 	qemu-kvm dosfstools openldap-clients dos2unix unix2dos \
 	glibc-common expect
+
 ./make-win-vm.sh --image /var/lib/libvirt/images/Win2019-Evaluation.iso \
 	--os-variant win2k19 --vmname win2019-rdma \
 	--domain win-rdma.test -p ~Ocgxyz \
@@ -118,6 +119,8 @@ yum install -y libvirt libvirt-client virt-install virt-viewer \
 	--run='./MLNX_VPI_WinOF-5_50_54000_All_win2019_x64.exe /S /V"/qb /norestart"' \
 	--run-post='ipconfig /all; ibstat' \
 	./answerfiles-cifs-nfs/*  --force
+
+WIN_RDMA_IP=$(awk '$NF ~ /^169.254/ {print $NF}' /tmp/win2019-rdma.ipconfig.log)
 # download windows driver
 # ref: https://www.mellanox.com/products/adapter-software/ethernet/windows/winof-2
 # ref: http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_54000_All_win2019_x64.exe
@@ -126,15 +129,22 @@ yum install -y libvirt libvirt-client virt-install virt-viewer \
 
 
 # guest:
-: <<EOF
-yum install -y rdma opensm infiniband-diags librdmacm-utils
-sed -i -e '/rdma/s/^#//' -e 's/rdma=n/rdma=y/' /etc/nfs.conf
-systemctl start nfs-server
-modprobe mlx4_ib
-systemctl start opensm
-lspci
-ibstat
-ip link set dev ib0 up
-ip addr add 192.168.1.100/24 dev ib0
-ping 192.168.1.1  #bare-metal peer address
-EOF
+vm exec rhel-serv -- sed -i -e '/rdma/s/^#//' -e 's/rdma=n/rdma=y/' /etc/nfs.conf
+vm exec rhel-serv -- systemctl start nfs-server
+vm exec rhel-serv -- modprobe mlx4_ib
+vm exec rhel-serv -- systemctl start opensm
+vm exec rhel-serv -- lspci
+vm exec rhel-serv -- ibstat
+ibn=$(vm exec rhel-serv -- ip -br a | awk '/^ib.*UP/{print $1}' | tail -n1)
+vm exec rhel-serv -- ip link set dev $ibn up
+vm exec rhel-serv -- ip addr add 169.254.1.100/16 dev $ibn
+vm exec rhel-serv -- ping -c 4 169.254.100.100
+vm exec rhel-serv -- ping -c 4 $WIN_RDMA_IP
+vm exec rhel-serv -- showmount -e $WIN_RDMA_IP
+
+# host:
+ibif=$(ip -br a | awk '/^ib.*UP/ {print $1}' | tail -n1)
+ip addr add 169.254.1.1/16 dev $ibif
+ping -c 4 $WIN_RDMA_IP
+showmount -e $WIN_RDMA_IP
+
