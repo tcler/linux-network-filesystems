@@ -1,31 +1,17 @@
 #!/bin/bash
 #ref: https://packetpushers.net/multipathing-nfs4-1-kvm
 
-warnlog() { echo -e "\033[41m{TEST:WARN} $*\033[0m"; }
 if ! egrep -wo '(vmx|svm)' /proc/cpuinfo -q; then
 	warnlog "this testcase need host support Virtualiztion, but current machine doen't support." >&2
 	exit 1
 fi
-
-faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
-
-ExportDir=/nfsshare
-MountPoint=/mnt/nfs
-distro=$1; shift
-MOUNT_OPTS="$*"
-MOUNT_OPTS=${MOUNT_OPTS:--onconnect=16}
-
-subnet1=12
-brname1=vm-vbr$subnet1
-netname1=net$subnet1
-S=serv
-C=clnt
-
 [[ -z "$distro" ]] && {
 	echo "Usage: $0 <distro> [mount options]"
 	exit 1
 }
 
+warnlog() { echo -e "\033[41m{TEST:WARN} $*\033[0m"; }
+faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
 install-kiss-vm-ns() {
 	local _name=$1
 	local KissUrl=https://github.com/tcler/kiss-vm-ns
@@ -41,6 +27,19 @@ install-kiss-vm-ns() {
 	}
 	[[ "$_name"x = "vm"x ]] && vm prepare
 }
+
+ExportDir=/nfsshare
+MountPoint=/mnt/nfs
+distro=$1; shift
+MOUNT_OPTS="$*"
+MOUNT_OPTS=${MOUNT_OPTS:--onconnect=16}
+
+subnet1=12
+brname1=vm-vbr$subnet1
+netname1=net$subnet1
+S=serv
+C=clnt
+
 install-kiss-vm-ns vm
 
 vm net netname=$netname1 brname=$brname1 subnet=$subnet1
