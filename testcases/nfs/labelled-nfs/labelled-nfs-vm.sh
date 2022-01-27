@@ -49,7 +49,7 @@ COMM
 if [[ -z "$NET" ]]; then
 	netaddr=77
 	NET=nfsnet
-	vm net netname=nfsnet brname=nfsbr0 subnet=$netaddr #tftproot=/var/lib/tftpboot bootpfile=pxelinux/pxelinux.0
+	vm netcreate netname=nfsnet brname=nfsbr0 subnet=$netaddr #tftproot=/var/lib/tftpboot bootpfile=pxelinux/pxelinux.0
 fi
 
 

@@ -42,7 +42,7 @@ C=clnt
 
 install-kiss-vm-ns vm
 
-vm net netname=$netname1 brname=$brname1 subnet=$subnet1
+vm netcreate netname=$netname1 brname=$brname1 subnet=$subnet1
 vm netinfo $netname1
 
 vm create "$distro" -n $S --saveimage -p "nfs-utils" --nointeract --net default --net $netname1 -f
