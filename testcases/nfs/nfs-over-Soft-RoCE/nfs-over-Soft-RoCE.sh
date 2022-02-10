@@ -27,7 +27,7 @@ vm exec -v $vmserv -- modprobe rdma_rxe
 vm exec -v $vmserv -- rdma link add rxe0 type rxe netdev eth0
 vm exec -v $vmserv -- rdma link
 vm exec -v $vmserv -- mkdir -p /expdir
-vm exec -v $vmserv -- echo "'/expdir *(rw,no_root_squash)'" \> /etc/exports
+vm exec -v $vmserv -- echo '/expdir *(rw,no_root_squash)' \> /etc/exports
 vm exec -v $vmserv -- cat /etc/exports
 vm exec -v $vmserv -- sed -i -e '/rdma/s/^#//' -e 's/rdma=n/rdma=y/' /etc/nfs.conf
 vm exec -v $vmserv -- grep -v '^#' /etc/nfs.conf
@@ -43,5 +43,5 @@ servAddr=$(vm ifaddr $vmserv|head -1)
 vm exec -v -x $vmclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049 -v
 vm exec -v -x $vmclnt -- mount -t nfs4
 
-vm exec -v $vmserv -- tmux new -s listen -d "'ib_send_bw -d rxe0'"
+vm exec -v $vmserv -- tmux new -s listen -d 'ib_send_bw -d rxe0'
 vm exec -v $vmclnt -- ib_send_bw -d rxe0 $servAddr
