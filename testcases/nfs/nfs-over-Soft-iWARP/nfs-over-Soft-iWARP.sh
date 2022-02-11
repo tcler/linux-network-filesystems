@@ -27,7 +27,7 @@ vm exec -v $vmserv -- modprobe siw
 vm exec -v $vmserv -- rdma link add siw0 type siw netdev eth0
 vm exec -v $vmserv -- rdma link
 vm exec -v $vmserv -- mkdir -p /expdir
-vm exec -v $vmserv -- echo '/expdir *(rw,no_root_squash)' \> /etc/exports
+vm exec -v $vmserv -- "echo '/expdir *(rw,no_root_squash)' > /etc/exports"
 vm exec -v $vmserv -- cat /etc/exports
 vm exec -v $vmserv -- sed -i -e '/rdma/s/^#//' -e 's/rdma=n/rdma=y/' /etc/nfs.conf
 vm exec -v $vmserv -- grep -v '^#' /etc/nfs.conf
