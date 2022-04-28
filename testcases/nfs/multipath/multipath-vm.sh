@@ -51,8 +51,8 @@ vm create "$distro" -n $C --saveimage -p "nfs-utils" --nointeract --net default 
 servIpAddrs=$(vm exec -v $S -- ip a s)
 echo "$servIpAddrs"
 
-Saddr0=$(vm -r ifaddr $S|grep '192.168.122\.' || echo "$servIpAddrs" | awk -F'[/ ]+' '/inet 192.168.122.[0-9]+/{print $3}')
-Saddr1=$(vm -r ifaddr $S|grep "192.168.${subnet1}\\." || echo "$servIpAddrs" | awk -F'[/ ]+' "/inet 192.168.$subnet1.[0-9]+/{print \$3}")
+Saddr0=$(echo "$servIpAddrs" | awk -F'[/ ]+' '/inet 192.168.122.[0-9]+/{print $3}')
+Saddr1=$(echo "$servIpAddrs" | awk -F'[/ ]+' "/inet 192.168.$subnet1.[0-9]+/{print \$3}")
 
 vm exec -v   $S -- mkdir -p $ExportDir
 vm exec -v   $S -- touch $ExportDir/testfile
