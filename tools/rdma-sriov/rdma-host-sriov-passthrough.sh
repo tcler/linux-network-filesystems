@@ -103,24 +103,21 @@ virsh attach-device rhel-8-rdma pci_0000_04_00_1.xml
 COMM
 
 # create windows server vm
-git clone https://github.com/tcler/make-windows-vm
-cd make-windows-vm
-yum install -y libvirt libvirt-client virt-install virt-viewer \
-	qemu-kvm dosfstools openldap-clients dos2unix unix2dos \
-	glibc-common expect
-
-./make-win-vm.sh --image /var/lib/libvirt/images/Win2019-Evaluation.iso \
-	--os-variant win2k19 --vmname win2019-rdma \
-	--domain win-rdma.test -p ~Ocgxyz \
-	--cpus 4 --ram 8192 --disk-size 80 --vncport 7799 \
-	--enable-kdc \
+vm create Windows-server-2019 -n win2019-rdma \
+	-C $LOOKASIDE_BASE_URL/windows-images/Win2019-Evaluation.iso \
+	--osv win2k19 \
+	--vcpus sockets=1,cores=4 --msize 8192 --dsize 80 \
 	--hostif=ib6 \
-	--driver-url=http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_54000_All_win2019_x64.exe \
-	--run='./MLNX_VPI_WinOF-5_50_54000_All_win2019_x64.exe /S /V"/qb /norestart"' \
-	--run-post='ipconfig /all; ibstat' \
-	./answerfiles-cifs-nfs/*  --force
+	--win-domain win-rdma.test --win-passwd ~Ocgxyz \
+	--win-enable-kdc \
+	--win-download-url=http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_54000_All_win2019_x64.exe \
+	--win-run='./MLNX_VPI_WinOF-5_50_54000_All_win2019_x64.exe /S /V\"/qb /norestart\"' \
+	--win-run-post='ipconfig /all; ibstat' \
+	--win-auto=cifs-nfs --force --wait=22
+vm cpfrom win2019-rdma /postinstall_logs/ipconfig.log /tmp/win2019-rdma.ipconfig.log
+dos2unix /tmp/win2019-rdma.ipconfig.log
 
-WIN_RDMA_IP=$(awk '$NF ~ /^169.254/ {print $NF}' /tmp/win2019-rdma.ipconfig.log)
+WIN_RDMA_IP=$(awk -v RS='\r?\n' '$NF ~ /^169.254/ {print $NF}' /tmp/win2019-rdma.ipconfig.log)
 # download windows driver
 # ref: https://www.mellanox.com/products/adapter-software/ethernet/windows/winof-2
 # ref: http://www.mellanox.com/downloads/WinOF/MLNX_VPI_WinOF-5_50_54000_All_win2019_x64.exe
