@@ -3,7 +3,7 @@
 # a syscall wrapper in perl for copy_file_range(2) test
 # author: Jianhong Yin <yin-jianhong@163.com>
 #
-# ref: https://github.com/tcler/linux-network-filesystems/blob/master/tools/h2ph.sh
+# ref: https://github.com/tcler/linux-network-filesystems/blob/master/utils/h2ph.sh
 require 'syscall.ph';  # may need to run h2ph first ^^^
 use POSIX ();
 
