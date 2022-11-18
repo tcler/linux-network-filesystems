@@ -237,8 +237,14 @@ local_lock=mechanism
 
 proto=netid
 
-	确定与 NFS Server 通信的传输层协议，由于 NFSv4 版本强制要求TCP 所以可选为TCP/TCPv6/RDMA
+	确定与 NFS Server 通信的传输层协议，由于 NFSv4 版本强制要求 TCP 所以可选为tcp/tcp6/rdma/rdma6. tcp6 use IPv6 addresses 
+	and is only available if support for TI-RPC is built in.
 
+minorversion=n
+
+	NFSv4 introduces "minor versioning", where NFS protocol enhancements can be introduced without bumping the NFS 
+	protocol version number. vers=4,minorversion=1
+	#已经没啥用了，直接 vers=4.1 就好了
 port=n
 
 	指定 NFSv4 协议使用的端口，如果不指定使用默认的2049端口，如果指定为0使用rpcbind 返回的服务端 NFS 端口
@@ -247,7 +253,7 @@ cto / nocto
 
 	跟v2/v3的有什么不同? TBD
 
-clientaddr=n.n.n.n
+clientaddr=n.n.n.n / clientaddr=n:n:...:n
 
 	only affect nfs4.0, no use for nfs4.1 or later
 
