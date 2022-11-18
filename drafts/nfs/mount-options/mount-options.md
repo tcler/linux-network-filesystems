@@ -63,7 +63,7 @@ rsize=n / wsize=n
 	#define NFS_DEF_FILE_IO_SIZE    (4096U)
 	#define NFS_MIN_FILE_IO_SIZE    (1024U)
 
-sync / async
+sync / async  #mark: 新版 man page 已删除
 
 	这个影响的是客户端的IO策略，exportfs 的sync/async影响的是服务端的IO，不存在冲突
 
@@ -84,6 +84,27 @@ ac / noac
 bg / fg
 
 	bg mount 的使用场景是系统初始化时 防止 /etc/fstab 中的 nfs mount 问题导致系统启动缓慢或无法启动
+
+nconnect=n
+
+	When using a connection oriented protocol such as TCP, it may sometimes be advantageous to set up 
+	multiple connections between the client and server. For instance, if your clients and/or servers 
+	are equipped with multiple network interface cards (NICs), using multiple connections to spread 
+	the load may improve overall performance. In such cases, the nconnect option allows the user to 
+	specify the number of connections that should be established between the client and server up to 
+	a limit of 16.
+
+	Note that the nconnect option may also be used by some pNFS drivers to decide how many connections 
+	to set up to the data servers.
+
+max_connect=n
+
+	While nconnect option sets a limit on the number of connections that can be established to a given 
+	server IP, max_connect option allows the user to specify maximum numner of connections to different 
+	server IPs that belong to the same NFSv4.1+ server (session trunkable connections) up to a limit of 
+	16. When client discovers that it established a client ID to an already existing server, instead of 
+	dropping the newly created network transport, the client will add this new connection to the list of 
+	available transports for that RPC client.
 
 rdirplus / nordirplus
 
