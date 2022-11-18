@@ -143,8 +143,12 @@ lookupcache=mode
 fsc / nofsc
 
 	Enable/Disables the cache of (read-only) data pages to the local disk using the FS-Cache facility.
-	See cachefilesd(8) and <kernel_soruce>/Documentation/filesys‐tems/caching for detail on how to configure the FS-Cache facility.
-	Default value is nofsc.
+	See cachefilesd(8) and <kernel_soruce>/Documentation/filesys‐tems/caching for detail on how to configure 
+	the FS-Cache facility. Default value is nofsc.
+
+sloppy
+
+	The sloppy option is an alternative to specifying mount.nfs -s option.
 
 
 #Options for NFS versions 2 and 3 only
