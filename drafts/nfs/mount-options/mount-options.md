@@ -17,6 +17,22 @@ soft / hard
 	hard: 死循环，不退出
 	soft: 超时退出
 
+softreval / nosoftreval
+
+	In cases where the NFS server is down, it may be useful to allow the NFS client to 
+	continue to serve up paths and attributes from cache after retrans attempts to revalidate 
+	that cache have timed out. This may, for instance, be helpful when trying to unmount a 
+	filesystem tree from a server that is permanently down.
+	#在server没有应答的情况下还可以从cache里获取路径和属性信息，主要应用场景是 server down 了后能 umount
+	
+	It is possible to combine softreval with the soft mount option, in which case operations 
+	that cannot be served up from cache will time out and return an error after retrans attempts. 
+	The combination with the default hard mount option implies those uncached operations will 
+	continue to retry until a response is received from the server.
+	
+	Note: the default mount option is nosoftreval which disallows fallback to cache when revalidation 
+	fails, and instead follows the behavior dictated by the hard or soft mount option.
+
 intr / nointr
 
 	This option is provided for backward compatibility. It is ignored after kernel 2.6.25.
