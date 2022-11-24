@@ -63,9 +63,28 @@ rsize=n / wsize=n
 	#define NFS_DEF_FILE_IO_SIZE    (4096U)
 	#define NFS_MIN_FILE_IO_SIZE    (1024U)
 
-sync / async  #mark: 新版 man page 已删除
+sync / async  #mark: 新版 man page 这段内容挪到了 "DATA AND METADATA COHERENCE" -> "The sync mount option"
 
-	这个影响的是客户端的IO策略，exportfs 的sync/async影响的是服务端的IO，不存在冲突
+	这个影响的是客户端的IO策略，exportfs 的sync/async影响的是服务端的IO，不存在冲突  
+	
+	The NFS client treats the sync mount option differently than some other file systems (refer to mount(8) 
+	for a description of the generic sync and async mount options). If neither sync nor async is specified 
+	(or if the async option is specified), the NFS client delays sending application writes to the server 
+	until any of these events occur:
+	  - Memory pressure forces reclamation of system memory resources.
+	  - An application flushes file data explicitly with sync(2), msync(2), or fsync(3).
+	  - An application closes a file with close(2).
+	  - The file is locked/unlocked via fcntl(2).
+
+	In other words, under normal circumstances, data written by an application may not immediately appear 
+	on the server that hosts the file. 
+	
+	If the sync option is specified on a mount point, any system call that writes data to files on that 
+	mount point causes that data to be flushed to the server before the system call returns control to 
+	user space. This provides greater data cache coherence among clients, but at a significant performance cost.
+	
+	Applications can use the O_SYNC open flag to force application writes to individual files to go to the 
+	server immediately without the use of the sync mount option.
 
 ac / noac
 
