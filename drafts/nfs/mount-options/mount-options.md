@@ -65,7 +65,9 @@ rsize=n / wsize=n
 
 sync / async  #mark: 新版 man page 这段内容挪到了 "DATA AND METADATA COHERENCE" -> "The sync mount option"
 
-	这个影响的是客户端的IO策略，exportfs 的sync/async影响的是服务端的IO，不存在冲突  
+	#COHERENCE/coherence: 一致性
+	这个影响的是客户端的IO策略，exportfs 的sync/async影响的是服务端的IO，不存在冲突
+	默认 async; 如果程序打开文件时用 O_SYNC flag，跟使用 mount.nfs -osync 效果一样.
 	
 	The NFS client treats the sync mount option differently than some other file systems (refer to mount(8) 
 	for a description of the generic sync and async mount options). If neither sync nor async is specified 
