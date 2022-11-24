@@ -1,6 +1,8 @@
 #!/bin/bash
 #ref: https://packetpushers.net/multipathing-nfs4-1-kvm
 
+. /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+
 if ! egrep -wo '(vmx|svm)' /proc/cpuinfo -q; then
 	warnlog "this testcase need host support Virtualiztion, but current machine doen't support." >&2
 	exit 1
@@ -12,21 +14,6 @@ fi
 
 warnlog() { echo -e "\033[41m{TEST:WARN} $*\033[0m"; }
 faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
-install-kiss-vm-ns() {
-	local _name=$1
-	local KissUrl=https://github.com/tcler/kiss-vm-ns
-	which vm &>/dev/null || {
-		echo -e "{info} installing kiss-vm-ns ..."
-		which git &>/dev/null || yum install -y git
-		while true; do
-			git clone --depth=1 "$KissUrl" && make -C kiss-vm-ns
-			which vm && break
-			sleep 5
-			echo -e "{warn} installing kiss-vm-ns  fail, try again ..."
-		done
-	}
-	[[ "$_name"x = "vm"x ]] && vm prepare
-}
 
 ExportDir=/nfsshare
 MountPoint=/mnt/nfs
@@ -39,8 +26,6 @@ brname1=vm-vbr$subnet1
 netname1=net$subnet1
 S=serv
 C=clnt
-
-install-kiss-vm-ns vm
 
 vm netcreate netname=$netname1 brname=$brname1 subnet=$subnet1
 vm netinfo $netname1

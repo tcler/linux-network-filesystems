@@ -2,6 +2,8 @@
 #author: Jianhong Yin <yin-jianhong@163.com>
 #example of nfs over Soft-iWARP on RHEL-8.2 and after
 
+. /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+
 distro=${1:-CentOS-8-stream}
 
 Cleanup() {

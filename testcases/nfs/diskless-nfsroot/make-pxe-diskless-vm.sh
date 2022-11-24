@@ -4,22 +4,7 @@
 #ref3: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/virtualization_host_configuration_and_guest_installation_guide/chap-virtualization_host_configuration_and_guest_installation_guide-libvirt_network_booting#chap-Virtualization_Host_Configuration_and_Guest_Installation_Guide-Libvirt_network_booting-PXE_boot_private_network
 #ref4: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/storage_administration_guide/ch-disklesssystems
 
-install-kiss-vm-ns() {
-	local _name=$1
-	local KissUrl=https://github.com/tcler/kiss-vm-ns
-	which vm &>/dev/null || {
-		echo -e "{info} installing kiss-vm-ns ..."
-		which git &>/dev/null || yum install -y git
-		while true; do
-			git clone --depth=1 "$KissUrl" && make -C kiss-vm-ns
-			which vm && break
-			sleep 5
-			echo -e "{warn} installing kiss-vm-ns  fail, try again ..."
-		done
-	}
-	[[ "$_name"x = "vm"x ]] && vm prepare
-}
-install-kiss-vm-ns vm
+. /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
 argv=()
 extrapkgs=()
@@ -37,7 +22,7 @@ for arg; do
 done
 set -- "${argv[@]}"
 
-distro=${1:-RHEL-8.1.0}
+distro=${1:-RHEL-8.7.0}
 
 
 #---------------------------------------------------------------

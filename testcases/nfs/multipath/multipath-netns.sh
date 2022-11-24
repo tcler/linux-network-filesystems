@@ -1,24 +1,8 @@
 #!/bin/bash
 #ref: https://packetpushers.net/multipathing-nfs4-1-kvm
 
+. /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
-
-install-kiss-vm-ns() {
-	local _name=$1
-	local KissUrl=https://github.com/tcler/kiss-vm-ns
-	which vm &>/dev/null || {
-		echo -e "{info} installing kiss-vm-ns ..."
-		which git &>/dev/null || yum install -y git
-		while true; do
-			git clone --depth=1 "$KissUrl" && make -C kiss-vm-ns
-			which vm && break
-			sleep 5
-			echo -e "{warn} installing kiss-vm-ns  fail, try again ..."
-		done
-	}
-	[[ "$_name"x = "vm"x ]] && vm prepare
-}
-install-kiss-vm-ns
 
 ServerIP1=192.168.6.1
 ClientIP1=192.168.6.2

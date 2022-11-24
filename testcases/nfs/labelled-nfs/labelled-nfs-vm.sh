@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+
 argv=()
 for arg; do
 	case "$arg" in
@@ -13,26 +15,7 @@ for arg; do
 done
 set -- "${argv[@]}"
 
-distro=${1:-RHEL-8.1.0}
-
-#---------------------------------------------------------------
-#install kiss-vm
-install-kiss-vm-ns() {
-	local _name=$1
-	local KissUrl=https://github.com/tcler/kiss-vm-ns
-	which vm &>/dev/null || {
-		echo -e "{info} installing kiss-vm-ns ..."
-		which git &>/dev/null || yum install -y git
-		while true; do
-			git clone --depth=1 "$KissUrl" && make -C kiss-vm-ns
-			which vm && break
-			sleep 5
-			echo -e "{warn} installing kiss-vm-ns  fail, try again ..."
-		done
-	}
-	[[ "$_name"x = "vm"x ]] && vm prepare
-}
-install-kiss-vm-ns vm
+distro=${1:-RHEL-8.7.0}
 
 #---------------------------------------------------------------
 : <<COMM

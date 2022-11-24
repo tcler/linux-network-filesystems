@@ -1,26 +1,9 @@
 #!/bin/bash
 
-LANG=C
-P=$0
-[[ $0 = /* ]] && P=${0##*/}
-AT=("$@")
-switchroot() {
-	[[ $(id -u) != 0 ]] && {
-		echo -e "{NETNS:WARN} $P need root permission, switch to:\n  sudo $P ${AT[@]}" | GREP_COLORS='ms=1;30' grep --color=always . >&2
-		exec sudo $P "${AT[@]}"
-	}
-}
-switchroot;
+. /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
-which netns &>/dev/null || {
-	echo -e "{info} installing kiss-vm-ns ..."
-	while true; do
-		git clone --depth=1 "$KissVMUrl" && make -C kiss-vm-ns
-		which netns && break
-		sleep 5
-		echo -e "{warn} installing kiss-vm-ns  fail, try again ..."
-	done
-}
+LANG=C
+switchroot "$@"
 
 faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
 warnlog() { echo -e "\033[41m{TEST:WARN} $*\033[0m"; }
