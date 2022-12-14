@@ -38,16 +38,13 @@ fi
 
 #---------------------------------------------------------------
 #create nfs server and client VMs
-vm $distro -n nfsserv -p nfs-utils --net $NET --nointeract --saveimage $VMOPT $FORCE_OPT
-vmnfsserv=$(vm --getvmname $distro -n nfsserv)
-vm $distro -n nfsclnt -p nfs-utils --net $NET --nointeract --saveimage $VMOPT $FORCE_OPT
-vmnfsclnt=$(vm --getvmname $distro -n nfsclnt)
+vmnfsserv=nfsserv
+vmnfsclnt=nfsclnt
+trun vm create $distro -n $vmnfsserv -p nfs-utils --net $NET --nointeract --saveimage $VMOPT $FORCE_OPT
+trun vm create $distro -n $vmnfsclnt -p nfs-utils --net $NET --nointeract --saveimage $VMOPT $FORCE_OPT
 vm -v exec $vmnfsserv -- systemctl stop firewalld
 vm -v exec $vmnfsclnt -- systemctl stop firewalld
-vmnfsservaddr=$(vm if $vmnfsserv)
 vm -v exec $vmnfsserv -- ln -sf /opt /optlink
-#vm -v exec $vmnfsserv -- ln -sf /crash /var/crash
-#vm -v exec $vmnfsserv -- rm /crash
 
 tests=(
 	/:+testfile,usr/bin/bash
@@ -75,6 +72,7 @@ tests=(
 	@/nfsshare/share1:+testfile
 )
 
+vmnfsservaddr=$(vm if $vmnfsserv)
 for key in "${!tests[@]}"; do
 	read sharepath files <<<"${tests[$key]/:/ }"
 	echo "Test $key: export $sharepath" | GREP_COLORS='ms=44' grep --color=always .
