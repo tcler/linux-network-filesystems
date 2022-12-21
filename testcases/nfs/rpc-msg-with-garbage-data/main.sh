@@ -46,7 +46,7 @@ else
 	vm exec -v $vmclnt -- ls -l $nfsmp $nfsmp/testdir
 	vm exec -v $vmclnt -- sleep 2
 	vm exec -v $vmclnt -- pkill tshark
-	vm exec -v $vmclnt -- "tshark -i eth0 -Y nfs -f 'host $servaddr' -r $pcapf -T fields -e nfs.fhandle -f 'nfs.name == testdir'|grep -E '^.{80}$'|sort -u|tee fhlist.txt"
+	vm exec -v $vmclnt -- "tshark -i eth0 -Y nfs -r $pcapf -T fields -e nfs.fhandle -f 'nfs.name == testdir'|grep -E '^.{80}$'|sort -u|tee fhlist.txt"
 	trun maxblksize=$(vm exec $vmserv -- cat /proc/fs/nfsd/max_block_size)
 	vm -v cpto $vmclnt ./nfsv3-read.py .
 	trun fh1=$(vm exec $vmclnt -- head -1 fhlist.txt)
