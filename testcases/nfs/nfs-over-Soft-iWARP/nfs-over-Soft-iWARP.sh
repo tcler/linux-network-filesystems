@@ -5,6 +5,7 @@
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
 distro=${1:-CentOS-8-stream}
+shift 1
 
 Cleanup() {
 	rm -f $stdlogf
@@ -22,7 +23,7 @@ fi
 vmserv=nfs-o-soft-iwarp-serv
 vmclnt=nfs-o-soft-iwarp-clnt
 
-vm create -n $vmserv -p "libibverbs-utils perftest iproute tmux" -f $distro -i $imagef --nointeract
+vm create -n $vmserv -p "libibverbs-utils perftest iproute tmux" -f $distro -i $imagef --nointeract "$@"
 vm create -n $vmclnt -p "libibverbs-utils perftest iproute"      -f $distro -i $imagef --nointeract
 
 vm exec -v $vmserv -- modprobe siw

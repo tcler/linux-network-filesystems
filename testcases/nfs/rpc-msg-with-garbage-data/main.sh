@@ -10,9 +10,10 @@ nfsmp=/mnt/nfsmp
 
 #create nfs-server vm
 distro=${1:-RHEL-9.2.0%}
+shift
 vmserv=nfs-server
 vmclnt=nfs-client
-vm create $distro -n $vmserv -f -nointeract -p 'nfs-utils wireshark tmux'
+vm create $distro -n $vmserv -f -nointeract -p 'nfs-utils wireshark tmux' "$@"
 vm -v cpto $vmserv /usr/bin/make-nfs-server.sh .
 vm -v exec $vmserv -- bash make-nfs-server.sh
 vm -v exec $vmserv -- mkdir -p /nfsshare/rw/testdir
