@@ -38,7 +38,7 @@ for User in li zhi cheng ben jeff steve; do
 		expect {*:} {send \"$password\\r\"}
 		expect {*:} {send \"$password\\r\"}
 		expect eof"
-	vm exec -v ipa-server -- ipa user-mod $User --password-expiration='2049-10-01 00:00:00Z'
+	vm exec -v ipa-server -- ipa user-mod $User --password-expiration="$(date -dnow+8years +%F\ %TZ)"
 done
 vm exec -v ipa-server -- ipa user-find
 
