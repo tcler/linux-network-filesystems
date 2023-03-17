@@ -39,12 +39,12 @@ vm exec -v $ipaserv -- "grep ${servaddr%.*} /etc/resolv.conf || echo servername 
 vm exec -v $ipaserv -- cat /etc/resolv.conf
 vm exec -v $ipaserv -- kinit.sh admin $password
 vm exec -v $ipaserv -- ipa pwpolicy-mod --maxlife=365
+passwd_expiration=$(date -dnow+8years +%F\ %TZ)
 for User in li zhi cheng ben jeff steve; do
-	vm exec -v $ipaserv -- expect -c "spawn ipa user-add $User --first $User --last jhts --password --shell=/bin/bash
+	vm exec -v $ipaserv -- expect -c "spawn ipa user-add $User --first $User --last jhts --password --shell=/bin/bash {--password-expiration=$passwd_expiration}
 		expect {*:} {send \"$password\\r\"}
 		expect {*:} {send \"$password\\r\"}
 		expect eof"
-	vm exec -v $ipaserv -- ipa user-mod $User --password-expiration="$(date -dnow+8years +%F\ %TZ)"
 done
 vm exec -v $ipaserv -- ipa user-find
 
