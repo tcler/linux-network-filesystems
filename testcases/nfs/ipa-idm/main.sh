@@ -53,6 +53,8 @@ for Group in qe devel; do
 done
 vm exec -v $ipaserv -- ipa group-add-member qe --users={li,zhi,cheng}
 vm exec -v $ipaserv -- ipa group-add-member devel --users={ben,jeff,steve}
+vm exec -v $ipaserv -- sssctl domain-list
+vm exec -v $ipaserv -- sssctl user-show admin
 
 #-------------------------------------------------------------------------------
 #create new VM ipa-client to join the realm
@@ -74,7 +76,12 @@ vm exec -v $ipaclnt -- kinit.sh admin $password
 vm exec -v $ipaclnt -- klist
 vm exec -v $ipaserv -- grep $ipaclnt /var/log/krb5kdc.log
 vm exec -v $ipaserv -- "journalctl -u named-pkcs11.service | grep ${ipaclnt}.*updating"
+
 vm exec -v $ipaclnt -- 'ipa host-show $(hostname)'
+vm exec -v $ipaclnt -- authselect list
+vm exec -v $ipaclnt -- authselect show sssd
+vm exec -v $ipaclnt -- authselect test -a sssd with-mkhomedir with-sudo
+
 vm exec -v $ipaclnt -- mkdir /mnt/nfsmp
 
 #-------------------------------------------------------------------------------
@@ -95,6 +102,7 @@ vm exec -v $nfsserv -- chmod g+ws /expdir/qe /expdir/devel
 vm exec -v $nfsserv -- ls -l /expdir
 vm exec -v $nfsserv -- "echo '/expdir *(rw,no_root_squash)' >/etc/exports"
 vm exec -v $nfsserv -- systemctl start nfs-server
+vm exec -v $nfsserv -- kadmin.local list_principals
 
 #-------------------------------------------------------------------------------
 vm exec -v $ipaclnt -- showmount -e ${nfsserv}
