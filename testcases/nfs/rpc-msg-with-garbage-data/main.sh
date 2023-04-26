@@ -9,7 +9,7 @@ _USER=$(whoami)
 nfsmp=/mnt/nfsmp
 
 #create nfs-server vm
-distro=${1:-RHEL-9.2.0%}
+distro=${1:-CentOS-9-stream}
 shift
 vmserv=nfs-server
 vmclnt=nfs-client

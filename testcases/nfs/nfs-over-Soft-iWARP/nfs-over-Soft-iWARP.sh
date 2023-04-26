@@ -4,7 +4,7 @@
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
-distro=${1:-CentOS-8-stream}
+distro=${1:-CentOS-9-stream}
 shift 1
 
 Cleanup() {

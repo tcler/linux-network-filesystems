@@ -3,10 +3,6 @@
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
-if ! egrep -wo '(vmx|svm)' /proc/cpuinfo -q; then
-	warnlog "this testcase need host support Virtualiztion, but current machine doen't support." >&2
-	exit 1
-fi
 [[ -z "$distro" ]] && {
 	echo "Usage: $0 <distro> [mount options]"
 	exit 1
