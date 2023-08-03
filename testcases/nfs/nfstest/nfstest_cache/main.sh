@@ -36,4 +36,4 @@ vm -v exec $vmclnt -- bash install-nfstest.sh
 vm -v exec $vmclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 vm -v exec $vmclnt -- ip link set "$NIC" promisc on
 vm -v exec foo@$vmclnt -- ssh-copy-id -oStrictHostKeyChecking=no -f $clntxaddr
-vm -v exec foo@$vmclnt -- nfstest_cache --server $servaddr --client $clntxaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC "$@"
+vm -v exec foo@$vmclnt -- nfstest_cache --server $servaddr --client $clntxaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2 "$@"
