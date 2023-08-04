@@ -9,7 +9,8 @@ _USER=$(whoami)
 nfsmp=/mnt/nfsmp
 
 #create nfs-server vm
-distro=${1:-CentOS-9-stream}; shift;
+[[ $1 != -* ]] && { distro="$1"; shift; }
+distro=${distro:-9}
 vmserv=nfs-server
 vmclnt=nfs-client
 vm create $distro -n $vmserv -m 4G -f -nointeract -p 'nfs-utils wireshark tmux' --sa
@@ -30,5 +31,4 @@ vm -v cpto $vmclnt /usr/bin/install-nfstest.sh .
 vm -v exec $vmclnt -- bash install-nfstest.sh
 vm -v exec $vmclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
 vm -v exec $vmclnt -- ip link set "$NIC" promisc on
-#vm -v exec $vmclnt -- nfstest_alloc --server $servaddr --export=$expdir --mtpoint=$nfsmp --mtopts=rw --interface=$NIC --createtraces --trcdelay=2 "$@"
 vm -v exec $vmclnt -- nfstest_alloc --server $servaddr --export=$expdir --mtpoint=$nfsmp --mtopts=rw --interface=$NIC "$@"

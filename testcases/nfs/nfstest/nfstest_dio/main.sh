@@ -9,7 +9,8 @@ _USER=$(whoami)
 nfsmp=/mnt/nfsmp
 
 #create nfs-server vm
-distro=${1:-CentOS-9-stream}; shift;
+[[ $1 != -* ]] && { distro="$1"; shift; }
+distro=${distro:-9}
 vmserv=nfs-server
 vmclnt=nfs-client
 vm create $distro -n $vmserv -m 4G -f -nointeract -p 'nfs-utils wireshark tmux' --sa
