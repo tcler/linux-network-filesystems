@@ -35,7 +35,7 @@ for arg; do
 done
 set -- "${argv[@]}"
 
-distro=${1:-CentOS-8-stream}; shift
+distro=${1:-9}; shift
 echo -e "\n================ [DEBUG] ===============\n= distro/family: $distro"
 
 #---------------------------------------------------------------

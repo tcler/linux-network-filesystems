@@ -13,7 +13,7 @@ faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
 
 ExportDir=/nfsshare
 MountPoint=/mnt/nfs
-distro=$1; shift
+distro=${1:-9}; shift
 MOUNT_OPTS="$*"
 MOUNT_OPTS=${MOUNT_OPTS:--onconnect=16}
 

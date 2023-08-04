@@ -15,8 +15,7 @@ for arg; do
 done
 set -- "${argv[@]}"
 
-distro=${1:-RHEL-8.8.0}
-distro=${1:-CentOS-9-stream}
+distro=${1:-9}
 
 #---------------------------------------------------------------
 : <<COMM
