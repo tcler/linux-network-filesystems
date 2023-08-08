@@ -42,8 +42,8 @@ vm exec -v $ipaserv -- ipa pwpolicy-mod --maxlife=365
 passwd_expiration=$(date -dnow+8years +%F\ %TZ)
 for User in li zhi cheng ben jeff steve; do
 	vm exec -v $ipaserv -- expect -c "spawn ipa user-add $User --first $User --last jhts --password --shell=/bin/bash {--password-expiration=$passwd_expiration}
-		expect {*:} {send \"$password\\r\"}
-		expect {*:} {send \"$password\\r\"}
+		expect {*:} {send \"$password\\n\"}
+		expect {*:} {send \"$password\\n\"}
 		expect eof"
 done
 vm exec -v $ipaserv -- ipa user-find
@@ -102,7 +102,7 @@ vm exec -v $nfsserv -- chmod g+ws /expdir/qe /expdir/devel
 vm exec -v $nfsserv -- ls -l /expdir
 vm exec -v $nfsserv -- "echo '/expdir *(rw,no_root_squash)' >/etc/exports"
 vm exec -v $nfsserv -- systemctl start nfs-server
-vm exec -v $nfsserv -- kadmin.local list_principals
+vm exec -v $ipaserv -- kadmin.local list_principals
 
 #-------------------------------------------------------------------------------
 vm exec -v $ipaclnt -- showmount -e ${nfsserv}
