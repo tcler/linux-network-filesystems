@@ -15,18 +15,18 @@ passwd=redhat
 vmserv=nfs-server
 vmclntx=nfs-clientx
 vmclnt=nfs-client
-vm create $distro -n $vmserv -m 4G -f -nointeract -p 'nfs-utils wireshark' --sa
+vm create $distro -n $vmserv -m 4G -f -nointeract -p 'vim nfs-utils wireshark' --sa
 vm -v cpto $vmserv /usr/bin/make-nfs-server.sh .
 vm -v exec $vmserv -- bash make-nfs-server.sh
 vm -v exec $vmserv -- mkdir -p /nfsshare/rw/testdir
 vm -v exec $vmserv -- touch /nfsshare/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $vmserv)
 
-vm create $distro -n $vmclntx -m 4G -f -nointeract -p 'nfs-utils wireshark' --sa
+vm create $distro -n $vmclntx -m 4G -f -nointeract -p 'vim nfs-utils wireshark python3' --sa
 vm exec -v $vmclntx -- showmount -e $servaddr
 clntxaddr=$(vm ifaddr $vmclntx)
 
-vm create $distro -n $vmclnt -m 4G -f -nointeract -p 'nfs-utils wireshark expect iproute-tc kernel-modules-extra' --sa
+vm create $distro -n $vmclnt -m 4G -f -nointeract -p 'vim nfs-utils wireshark expect iproute-tc kernel-modules-extra' --sa
 vm exec -v $vmclnt -- showmount -e $servaddr
 clntaddr=$(vm ifaddr $vmclnt)
 
