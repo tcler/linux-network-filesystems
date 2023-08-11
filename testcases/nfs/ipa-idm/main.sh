@@ -6,8 +6,15 @@ distro=${1:-9}
 dnsdomain=lab.kissvm.net
 ipaserv=ipa-server
 ipaclnt=ipa-client
+nfsserv=nfs-server
 password=redhat123
+
 vm create -n $ipaserv $distro --msize 4096 -p "firewalld bind-utils expect vim" --nointeract --saveimage -f
+vm create -n $ipaclnt $distro --msize 4096 -p "bind-utils vim nfs-utils" --nointeract --saveimage -f
+vm create -n $nfsserv $distro --msize 4096 -p "bind-utils vim nfs-utils" --nointeract --saveimage -f
+
+#-------------------------------------------------------------------------------
+#create new VM ipa-server
 vm cpto $ipaserv /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.
 vm exec -v $ipaserv -- systemctl start firewalld
 vm exec -v $ipaserv -- systemctl enable firewalld
@@ -57,12 +64,42 @@ vm exec -v $ipaserv -- sssctl domain-list
 vm exec -v $ipaserv -- sssctl user-show admin
 
 #-------------------------------------------------------------------------------
+#create new VM ipa-nfsserver to join the realm
+vm cpto $nfsserv /usr/bin/ipa-client-install.sh /usr/bin/kinit.sh /usr/bin/make-nfs-server.sh /usr/bin/.
+vm exec -v $nfsserv -- ipa-client-install.sh
+
+#Change host's DNS nameserver configuration to use the ipa/idm server.
+vm exec -v $nfsserv -- "nmcli connection modify 'System eth0' ipv4.dns $servaddr; nmcli connection up 'System eth0'"
+vm exec -v $nfsserv -- sed -i -e "/${servaddr%.*}/d" -e "s/^search.*/&\nnameserver ${servaddr}\nnameserver ${servaddr%.*}.1/" /etc/resolv.conf
+vm exec -v $nfsserv -- cat /etc/resolv.conf
+
+vm exec -v $nfsserv -- dig +short SRV _ldap._tcp.$dnsdomain
+vm exec -v $nfsserv -- dig +short SRV _kerberos._tcp.$dnsdomain
+vm exec -v $nfsserv -- ipa-client-install --domain=$dnsdomain --realm=${dnsdomain^^} --principal=admin --password=$password \
+	--unattended --mkhomedir
+vm exec -v $nfsserv -- kinit.sh admin $password
+vm exec -v $nfsserv -- klist
+vm exec -vx $ipaserv -- grep $nfsserv /var/log/krb5kdc.log
+vm exec -vx $ipaserv -- "journalctl -u named-pkcs11.service | grep ${nfsserv}.*updating"
+vm exec -v $nfsserv -- 'ipa host-show $(hostname)'
+
+vm exec -v $nfsserv -- sed -i -e "/^#Domain/s/^#//;/Domain = /s/=.*/= ${dnsdomain}/" -e '/^LDAP/s//#&/' /etc/idmapd.conf
+vm exec -v $nfsserv -- bash -c 'echo -e "[General]\n Verbosity = 2\n Domain = '"${dnsdomain}"'\n Local-Realms = '"${dnsdomain^^}"'" > /etc/idmapd.conf'
+vm exec -v $nfsserv -- make-nfs-server.sh
+vm exec -vx $nfsserv -- "chown :qe /nfsshare/qe; chown :devel /nfsshare/devel"
+vm exec -vx $nfsserv -- chmod g+ws /nfsshare/qe /nfsshare/devel
+vm exec -v $nfsserv -- ls -l /nfsshare
+
+vm exec -v $nfsserv -- ipa service-add nfs/${nfsserv}.${dnsdomain}
+vm exec -v $nfsserv -- ipa-getkeytab -s ${ipaserv}.${dnsdomain} -p nfs/${nfsserv}.${dnsdomain} -k /etc/krb5.keytab
+vm exec -v $ipaserv -- kadmin.local list_principals
+
+#-------------------------------------------------------------------------------
 #create new VM ipa-client to join the realm
-vm create -n $ipaclnt $distro --msize 4096 -p "bind-utils vim nfs-utils" --nointeract --saveimage -f
 vm cpto $ipaclnt /usr/bin/ipa-client-install.sh /usr/bin/kinit.sh /usr/bin/.
 vm exec -v $ipaclnt -- ipa-client-install.sh
 
-#Change client's DNS nameserver configuration to use the ipa/idm server.
+#Change host's DNS nameserver configuration to use the ipa/idm server.
 vm exec -v $ipaclnt -- "nmcli connection modify 'System eth0' ipv4.dns $servaddr; nmcli connection up 'System eth0'"
 vm exec -v $ipaclnt -- cat /etc/resolv.conf
 vm exec -v $ipaclnt -- sed -i -e "/${servaddr%.*}/d" -e "s/^search.*/&\nnameserver ${servaddr}\nnameserver ${servaddr%.*}.1/" /etc/resolv.conf
@@ -74,8 +111,6 @@ vm exec -v $ipaclnt -- ipa-client-install --domain=$dnsdomain --realm=${dnsdomai
 	--unattended --mkhomedir #--server=$ipaserv.$dnsdomain
 vm exec -v $ipaclnt -- kinit.sh admin $password
 vm exec -v $ipaclnt -- klist
-vm exec -v $ipaserv -- grep $ipaclnt /var/log/krb5kdc.log
-vm exec -v $ipaserv -- "journalctl -u named-pkcs11.service | grep ${ipaclnt}.*updating"
 
 vm exec -v $ipaclnt -- 'ipa host-show $(hostname)'
 vm exec -v $ipaclnt -- authselect list
@@ -83,28 +118,21 @@ vm exec -v $ipaclnt -- authselect show sssd
 vm exec -v $ipaclnt -- authselect test -a sssd with-mkhomedir with-sudo
 
 vm exec -v $ipaclnt -- mkdir /mnt/nfsmp
+vm exec -v $ipaclnt -- sed -i -e "/^#Domain/s/^#//;/Domain = /s/=.*/= ${dnsdomain}/" -e '/^LDAP/s//#&/' /etc/idmapd.conf
+vm exec -v $ipaclnt -- bash -c 'echo -e "[General]\n Verbosity = 2\n Domain = '"${dnsdomain}"'\n Local-Realms = '"${dnsdomain^^}"'" > /etc/idmapd.conf'
+vm exec -v $ipaclnt -- systemctl restart nfs-client.target gssproxy.service rpc-statd.service rpc-gssd.service
 
 #-------------------------------------------------------------------------------
-#create new VM ipa-nfsserver to join the realm
-nfsserv=nfs-server
-vm create -n $nfsserv $distro --msize 4096 -p "bind-utils vim nfs-utils" --nointeract --saveimage -f
-vm cpto $nfsserv /usr/bin/ipa-client-install.sh /usr/bin/kinit.sh /usr/bin/.
-vm exec -v $nfsserv -- ipa-client-install.sh
-vm exec -v $nfsserv -- "nmcli connection modify 'System eth0' ipv4.dns $servaddr; nmcli connection up 'System eth0'"
-vm exec -v $nfsserv -- sed -i -e "/${servaddr%.*}/d" -e "s/^search.*/&\nnameserver ${servaddr}\nnameserver ${servaddr%.*}.1/" /etc/resolv.conf
-vm exec -v $nfsserv -- ipa-client-install --domain=$dnsdomain --realm=${dnsdomain^^} --principal=admin --password=$password \
-	--unattended --mkhomedir
-vm exec -v $nfsserv -- kinit.sh admin $password
-vm exec -v $nfsserv -- 'ipa host-show $(hostname)'
-vm exec -v $nfsserv -- mkdir -p /expdir/qe /expdir/devel
-vm exec -v $nfsserv -- "chown :qe /expdir/qe; chown :devel /expdir/devel"
-vm exec -v $nfsserv -- chmod g+ws /expdir/qe /expdir/devel
-vm exec -v $nfsserv -- ls -l /expdir
-vm exec -v $nfsserv -- "echo '/expdir *(rw,no_root_squash)' >/etc/exports"
-vm exec -v $nfsserv -- systemctl start nfs-server
 vm exec -v $ipaserv -- kadmin.local list_principals
+vm exec -vx $ipaclnt -- showmount -e ${nfsserv}
+vm exec -vx $ipaclnt -- mount ${nfsserv}:/ /mnt/nfsmp
+vm exec -vx $ipaclnt -- mount -t nfs4
+vm exec -vx $ipaclnt -- umount -a -t nfs4
 
 #-------------------------------------------------------------------------------
-vm exec -v $ipaclnt -- showmount -e ${nfsserv}
-vm exec -v $ipaclnt -- mount ${nfsserv}:/ /mnt/nfsmp
-vm exec -v $ipaclnt -- mount -t nfs4
+vm exec -v $nfsserv -- klist
+vm exec -v $ipaclnt -- klist
+
+vm exec -vx $ipaclnt -- mount -osec=krb5 ${nfsserv}:/nfsshare/qe /mnt/nfsmp
+vm exec -vx $ipaclnt -- mount -t nfs4
+vm exec -vx $ipaclnt -- umount -a -t nfs4
