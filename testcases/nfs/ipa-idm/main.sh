@@ -4,6 +4,8 @@
 
 distro=${1:-9}
 dnsdomain=lab.kissvm.net
+domain=${dnsdomain}
+realm=${domain^^}
 ipaserv=ipa-server
 ipaclnt=ipa-client
 nfsserv=nfs-server
@@ -37,10 +39,10 @@ vm exec -v $ipaserv -- dig +short $hostname A
 vm exec -v $ipaserv -- dig +short -x $servaddr
 
 vm exec -v $ipaserv -- ipa-server-install.sh
-#vm exec -v $ipaserv -- ipa-server-install --realm  ${dnsdomain^^} --ds-password $password --admin-password $password \
+#vm exec -v $ipaserv -- ipa-server-install --realm  ${realm} --ds-password $password --admin-password $password \
 #	--mkhomedir --no-ntp --unattended
 _zone=$(echo "$addr" | awk -F. '{ for (i=NF-1; i>0; i--) printf("%s.",$i) }')in-addr.arpa.
-vm exec -v $ipaserv -- ipa-server-install --realm  ${dnsdomain^^} --ds-password $password --admin-password $password \
+vm exec -v $ipaserv -- ipa-server-install --realm  ${realm} --ds-password $password --admin-password $password \
 	--mkhomedir --no-ntp --setup-dns --no-forwarders --unattended --auto-reverse #--reverse-zone=$_zone
 vm exec -v $ipaserv -- "grep ${servaddr%.*} /etc/resolv.conf || echo servername ${servaddr%.*}.1 >>/etc/resolv.conf"
 vm exec -v $ipaserv -- cat /etc/resolv.conf
@@ -75,7 +77,7 @@ vm exec -v $nfsserv -- cat /etc/resolv.conf
 
 vm exec -v $nfsserv -- dig +short SRV _ldap._tcp.$dnsdomain
 vm exec -v $nfsserv -- dig +short SRV _kerberos._tcp.$dnsdomain
-vm exec -v $nfsserv -- ipa-client-install --domain=$dnsdomain --realm=${dnsdomain^^} --principal=admin --password=$password \
+vm exec -v $nfsserv -- ipa-client-install --domain=$domain --realm=${realm} --principal=admin --password=$password \
 	--unattended --mkhomedir
 vm exec -v $nfsserv -- kinit.sh admin $password
 vm exec -v $nfsserv -- klist
@@ -83,15 +85,15 @@ vm exec -vx $ipaserv -- grep $nfsserv /var/log/krb5kdc.log
 vm exec -vx $ipaserv -- "journalctl -u named-pkcs11.service | grep ${nfsserv}.*updating"
 vm exec -v $nfsserv -- 'ipa host-show $(hostname)'
 
-vm exec -v $nfsserv -- sed -i -e "/^#Domain/s/^#//;/Domain = /s/=.*/= ${dnsdomain}/" -e '/^LDAP/s//#&/' /etc/idmapd.conf
-vm exec -v $nfsserv -- bash -c 'echo -e "[General]\n Verbosity = 2\n Domain = '"${dnsdomain}"'\n Local-Realms = '"${dnsdomain^^}"'" > /etc/idmapd.conf'
+vm exec -v $nfsserv -- sed -i -e "/^#Domain/s/^#//;/Domain = /s/=.*/= ${domain}/" -e '/^LDAP/s//#&/' /etc/idmapd.conf
+vm exec -v $nfsserv -- bash -c 'echo -e "[General]\n Verbosity = 2\n Domain = '"${domain}"'\n Local-Realms = '"${realm}"'" > /etc/idmapd.conf'
 vm exec -v $nfsserv -- make-nfs-server.sh
 vm exec -vx $nfsserv -- "chown :qe /nfsshare/qe; chown :devel /nfsshare/devel"
 vm exec -vx $nfsserv -- chmod g+ws /nfsshare/qe /nfsshare/devel
 vm exec -v $nfsserv -- ls -l /nfsshare
 
-vm exec -v $nfsserv -- ipa service-add nfs/${nfsserv}.${dnsdomain}
-vm exec -v $nfsserv -- ipa-getkeytab -s ${ipaserv}.${dnsdomain} -p nfs/${nfsserv}.${dnsdomain} -k /etc/krb5.keytab
+vm exec -v $nfsserv -- ipa service-add nfs/${nfsserv}.${domain}
+vm exec -v $nfsserv -- ipa-getkeytab -s ${ipaserv}.${domain} -p nfs/${nfsserv}.${domain} -k /etc/krb5.keytab
 vm exec -v $ipaserv -- kadmin.local list_principals
 
 #-------------------------------------------------------------------------------
@@ -107,8 +109,8 @@ vm exec -v $ipaclnt -- cat /etc/resolv.conf
 
 vm exec -v $ipaclnt -- dig +short SRV _ldap._tcp.$dnsdomain
 vm exec -v $ipaclnt -- dig +short SRV _kerberos._tcp.$dnsdomain
-vm exec -v $ipaclnt -- ipa-client-install --domain=$dnsdomain --realm=${dnsdomain^^} --principal=admin --password=$password \
-	--unattended --mkhomedir #--server=$ipaserv.$dnsdomain
+vm exec -v $ipaclnt -- ipa-client-install --domain=$domain --realm=${realm} --principal=admin --password=$password \
+	--unattended --mkhomedir #--server=$ipaserv.$domain
 vm exec -v $ipaclnt -- kinit.sh admin $password
 vm exec -v $ipaclnt -- klist
 
@@ -118,8 +120,8 @@ vm exec -v $ipaclnt -- authselect show sssd
 vm exec -v $ipaclnt -- authselect test -a sssd with-mkhomedir with-sudo
 
 vm exec -v $ipaclnt -- mkdir /mnt/nfsmp
-vm exec -v $ipaclnt -- sed -i -e "/^#Domain/s/^#//;/Domain = /s/=.*/= ${dnsdomain}/" -e '/^LDAP/s//#&/' /etc/idmapd.conf
-vm exec -v $ipaclnt -- bash -c 'echo -e "[General]\n Verbosity = 2\n Domain = '"${dnsdomain}"'\n Local-Realms = '"${dnsdomain^^}"'" > /etc/idmapd.conf'
+vm exec -v $ipaclnt -- sed -i -e "/^#Domain/s/^#//;/Domain = /s/=.*/= ${domain}/" -e '/^LDAP/s//#&/' /etc/idmapd.conf
+vm exec -v $ipaclnt -- bash -c 'echo -e "[General]\n Verbosity = 2\n Domain = '"${domain}"'\n Local-Realms = '"${realm}"'" > /etc/idmapd.conf'
 vm exec -v $ipaclnt -- systemctl restart nfs-client.target gssproxy.service rpc-statd.service rpc-gssd.service
 
 #-------------------------------------------------------------------------------
@@ -133,6 +135,6 @@ vm exec -vx $ipaclnt -- umount -a -t nfs4
 vm exec -v $nfsserv -- klist
 vm exec -v $ipaclnt -- klist
 
-vm exec -vx $ipaclnt -- mount -osec=krb5 ${nfsserv}:/nfsshare/qe /mnt/nfsmp
+vm exec -vx $ipaclnt -- mount -osec=krb5 ${nfsserv}.${domain}:/nfsshare/qe /mnt/nfsmp
 vm exec -vx $ipaclnt -- mount -t nfs4
 vm exec -vx $ipaclnt -- umount -a -t nfs4
