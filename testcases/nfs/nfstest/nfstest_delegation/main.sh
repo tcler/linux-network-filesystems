@@ -32,11 +32,10 @@ vm exec -v $vmclnt -- showmount -e $servaddr
 expdir=/nfsshare/rw
 NIC=eth0
 clntxaddr=$(vm ifaddr $vmclntx)
-vm -v cpto $vmclnt /usr/bin/install-nfstest.sh .
+vm -v cpto $vmclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh .
 vm -v exec $vmclnt -- bash install-nfstest.sh
 vm -v exec $vmclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
-vm -v exec $vmclnt -- "ssh-keygen -q -t ecdsa -f ~/.ssh/id_ecdsa -N ''"
-vm -v exec $vmclnt -- expect -c "spawn ssh-copy-id -oStrictHostKeyChecking=no -f $clntxaddr; expect {*assword:} {send \"$passwd\\n\"}; expect eof"
+vm -v exec $vmclnt -- bash ssh-copy-id.sh $clntxaddr root redhat
 
 vm -v exec $vmclnt -- ip link set "$NIC" promisc on
 vm -v exec $vmclnt -- nfstest_delegation --server=$servaddr --export=$expdir --nfsversion=4.2 --client $clntxaddr --client-nfsvers=4.0,4.1,4.2 "$@"
