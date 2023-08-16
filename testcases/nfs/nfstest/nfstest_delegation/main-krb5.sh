@@ -150,7 +150,6 @@ vm exec -v $nfsserv -- klist
 
 #-------------------------------------------------------------------------------
 #ipa-client: configure krb5 nfs client
-vm exec -v $nfsclnt -- mkdir /mnt/nfsmp
 vm exec -v $nfsclnt -- sed -i -e "/^#Domain/s/^#//;/Domain = /s/=.*/= ${domain}/" -e '/^LDAP/s//#&/' /etc/idmapd.conf
 vm exec -v $nfsclnt -- bash -c 'echo -e "[General]\n Verbosity = 2\n Domain = '"${domain}"'\n Local-Realms = '"${realm}"'" > /etc/idmapd.conf'
 vm exec -v $nfsclnt -- systemctl restart nfs-client.target gssproxy.service rpc-statd.service rpc-gssd.service
@@ -159,7 +158,6 @@ vm exec -v $nfsclnt -- klist
 
 #-------------------------------------------------------------------------------
 #ipa-clientx: configure krb5 nfs clientx
-vm exec -v $nfsclntx -- mkdir /mnt/nfsmp
 vm exec -v $nfsclntx -- sed -i -e "/^#Domain/s/^#//;/Domain = /s/=.*/= ${domain}/" -e '/^LDAP/s//#&/' /etc/idmapd.conf
 vm exec -v $nfsclntx -- bash -c 'echo -e "[General]\n Verbosity = 2\n Domain = '"${domain}"'\n Local-Realms = '"${realm}"'" > /etc/idmapd.conf'
 vm exec -v $nfsclntx -- systemctl restart nfs-client.target gssproxy.service rpc-statd.service rpc-gssd.service

@@ -19,8 +19,8 @@ vm exec -v $nfsclnt -- mkdir -p $nfsmp
 #nfstest_pnfs
 expdir=/share2
 NIC=eth0
-vm -v cpto $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/.
-vm -v exec $nfsclnt -- install-nfstest.sh
-vm -v exec $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
-vm -v exec $nfsclnt -- ip link set "$NIC" promisc on
-vm -v exec $nfsclnt -- nfstest_pnfs --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2 "$@"
+vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/.
+vm exec -v $nfsclnt -- install-nfstest.sh
+vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
+vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
+vm exec -v $nfsclnt -- nfstest_pnfs --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2 "$@"
