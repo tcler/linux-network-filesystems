@@ -14,8 +14,8 @@ distro=${distro:-9}
 vmserv=nfs-server
 vmclnt=nfs-client
 vm create $distro -n $vmserv -m 4G -f -nointeract -p 'nfs-utils wireshark tmux' --sa
-vm -v cpto $vmserv /usr/bin/make-nfs-server.sh .
-vm -v exec $vmserv -- bash make-nfs-server.sh
+vm -v cpto $vmserv /usr/bin/make-nfs-server.sh /usr/bin/.
+vm -v exec $vmserv -- make-nfs-server.sh
 vm -v exec $vmserv -- mkdir -p /nfsshare/rw/testdir
 vm -v exec $vmserv -- touch /nfsshare/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $vmserv)
@@ -24,7 +24,7 @@ vm create $distro -n $vmclnt -m 4G -f -nointeract -p 'nfs-utils wireshark tmux' 
 vm exec -v $vmclnt -- showmount -e $servaddr
 vm exec -v $vmclnt -- mkdir -p $nfsmp
 
-#nfstest_alloc
+#nfstest_dio
 expdir=/nfsshare/rw
 NIC=eth0
 vm -v cpto $vmclnt /usr/bin/install-nfstest.sh .
@@ -33,4 +33,4 @@ vm -v exec $vmclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 vm -v exec $vmclnt -- ip link set "$NIC" promisc on
 vm -v exec $vmclnt -- getconf PAGESIZE
 pgsize=$(vm exec $vmclnt -- getconf PAGESIZE)
-vm -v exec $vmclnt -- nfstest_alloc --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --rsize=$pgsize --wsize=$pgsize --nfsversion=4.2 "$@"
+vm -v exec $vmclnt -- nfstest_dio --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --rsize=$pgsize --wsize=$pgsize --nfsversion=4.2 "$@"
