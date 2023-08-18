@@ -9,13 +9,18 @@ switchroot() {
 }
 switchroot "$@"
 
-gitrepo=https://github.com/tcler/kiss-vm-ns
-rpm -q git make &>/dev/null || yum install -y git make
-while true; do
-	git clone $gitrepo && make -C kiss-vm-ns
-	which vm && break
-	echo -e "{warn} installing kiss-vm-ns fail, try again ..."
-done
-rm -rf kiss-vm-ns
+install_kiss_tools() {
+	local _repon=kiss-vm-ns
+	local url=https://github.com/tcler/${_repon}/archive/refs/heads/master.tar.gz
+	local tmpdir=$(mktemp -d)
+	while ! command -v vm; do
+		rm -rf $tmpdir/${_repon}-master
+		curl -k -Ls $url | tar zxf - -C $tmpdir &&
+			gmake -C $tmpdir/${_repon}-master &&
+			break
+	done
+	rm -rf $tmpdir
+}
 
+install_kiss_tools
 vm prepare
