@@ -10,11 +10,15 @@ ipaserv=ipa-server
 nfsserv=nfs-server
 ipaclnt=ipa-client
 password=redhat123
+stdlogf=/tmp/std-$$.log
 
 ### __prepare__ test env build
-trun tmux new -d "vm create -n $ipaserv $distro --msize 4096 -p 'firewalld bind-utils expect vim' --nointeract --saveimage -f"
-trun tmux new -d "vm create -n $ipaclnt $distro --msize 4096 -p 'bind-utils vim nfs-utils' --nointeract --saveimage -f"
-vm create -n $nfsserv $distro --msize 4096 -p "bind-utils vim nfs-utils" --nointeract --saveimage -f
+trun vm create $distro --downloadonly |& tee $stdlogf
+imgf=$(sed -n '${s/^.* //;p}' $stdlogf)
+
+trun tmux new -d "vm create -n $ipaserv $distro --msize 4096 -p 'firewalld bind-utils expect vim' --nointeract -I=$imgf -f"
+trun tmux new -d "vm create -n $ipaclnt $distro --msize 4096 -p 'bind-utils vim nfs-utils' --nointeract -I=$imgf -f"
+vm create -n $nfsserv $distro --msize 4096 -p "bind-utils vim nfs-utils" --nointeract -I=$imgf -f
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.-d.vm.creat[e]; do sleep 10; done
 
