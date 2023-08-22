@@ -11,16 +11,35 @@ nfsserv=nfs-server
 nfsclntx=nfs-clientx
 nfsclnt=nfs-client
 password=redhat123
+stdlogf=/tmp/std-$$.log
 
-### __prepare__ test env build
-vm create -n $ipaserv $distro --msize 4096 -p "vim bind-utils firewalld expect" --nointeract --saveimage -f
-vm create -n $nfsserv $distro --msize 4096 -p "vim nfs-utils bind-utils" --nointeract --saveimage -f
-vm create -n $nfsclntx $distro --msize 4096 -p "vim nfs-utils bind-utils python3" --nointeract --saveimage -f
-vm create -n $nfsclnt $distro --msize 4096 -p "vim nfs-utils bind-utils expect iproute-tc kernel-modules-extra" --nointeract --saveimage -f
+### download vm image
+trun vm create $distro --downloadonly |& tee $stdlogf
+imgf=$(sed -n '${s/^.* //;p}' $stdlogf)
+
+### __prepare__ test env build: create vm
+trun -tmux vm create -n $ipaserv  $distro --msize 4096 -p vim,bind-utils,firewalld,expect --nointeract -I=$imgf -f
+trun -tmux vm create -n $nfsserv  $distro --msize 4096 -p vim,fs-utils,bind-utils --nointeract -I=$imgf -f
+trun -tmux vm create -n $nfsclntx $distro --msize 4096 -p vim,nfs-utils,bind-utils,python3 --nointeract -I=$imgf -f
+trun       vm create -n $nfsclnt $distro --msize 4096 -p vim,nfs-utils,bind-utils,expect,iproute-tc,kernel-modules-extra --nointeract -I=$imgf -f
+echo "{INFO} waiting all vm create process finished ..."
+while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 10; done
+
+### __prepare__ test env build: install requirements: ipa-server/ipa-client
+vm cpto $ipaserv  /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.
+vm cpto $nfsserv  /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,make-nfs-server.sh} /usr/bin/.
+vm cpto $nfsclnt  /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,ssh-copy-id.sh} /usr/bin/.
+vm cpto $nfsclntx /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,ssh-copy-id.sh} /usr/bin/.
+
+trun -tmux vm exec -v $nfsserv -- ipa-client-install.sh
+trun -tmux vm exec -v $nfsclnt -- ipa-client-install.sh
+trun -tmux vm exec -v $nfsclntx -- ipa-client-install.sh
+trun       vm exec -v $ipaserv -- ipa-server-install.sh
+echo "{INFO} waiting all vm exec process finished ..."
+while ps axf|grep tmux.new.*-d.vm.exe[c].*.ipa-.*-install.sh; do sleep 10; done
 
 #-------------------------------------------------------------------------------
 #configure ipa-server
-vm cpto $ipaserv /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.
 vm exec -v $ipaserv -- systemctl start firewalld
 vm exec -v $ipaserv -- systemctl enable firewalld
 vm exec -v $ipaserv -- firewall-cmd --add-service=freeipa-ldap
@@ -41,7 +60,6 @@ vm exec -v $ipaserv -- "echo '$_ipa_serv_addr    $_hostname' >>/etc/hosts"
 vm exec -v $ipaserv -- dig +short $hostname A
 vm exec -v $ipaserv -- dig +short -x $_ipa_serv_addr
 
-vm exec -v $ipaserv -- ipa-server-install.sh
 #vm exec -v $ipaserv -- ipa-server-install --realm  ${realm} --ds-password $password --admin-password $password \
 #	--mkhomedir --no-ntp --unattended
 _zone=$(echo "$addr" | awk -F. '{ for (i=NF-1; i>0; i--) printf("%s.",$i) }')in-addr.arpa.
@@ -70,9 +88,6 @@ vm exec -v $ipaserv -- sssctl user-show admin
 
 #-------------------------------------------------------------------------------
 #configure nfsserver to join the realm
-vm cpto $nfsserv /usr/bin/ipa-client-install.sh /usr/bin/kinit.sh /usr/bin/make-nfs-server.sh /usr/bin/.
-vm exec -v $nfsserv -- ipa-client-install.sh
-
 #Change host's DNS nameserver configuration to use the ipa/idm server.
 vm exec -v $nfsserv -- "nmcli connection modify 'System eth0' ipv4.dns $_ipa_serv_addr; nmcli connection up 'System eth0'"
 vm exec -v $nfsserv -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf
@@ -90,9 +105,6 @@ vm exec -v $nfsserv -- 'ipa host-show $(hostname)'
 
 #-------------------------------------------------------------------------------
 #configure nfs-client to join the realm
-vm cpto $nfsclnt /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,ssh-copy-id.sh} /usr/bin/.
-vm exec -v $nfsclnt -- ipa-client-install.sh
-
 #Change host's DNS nameserver configuration to use the ipa/idm server.
 vm exec -v $nfsclnt -- "nmcli connection modify 'System eth0' ipv4.dns $_ipa_serv_addr; nmcli connection up 'System eth0'"
 vm exec -v $nfsclnt -- cat /etc/resolv.conf
@@ -113,9 +125,6 @@ vm exec -v $nfsclnt -- authselect test -a sssd with-mkhomedir with-sudo
 
 #-------------------------------------------------------------------------------
 #configure nfs-clientx to join the realm
-vm cpto $nfsclntx /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,ssh-copy-id.sh} /usr/bin/.
-vm exec -v $nfsclntx -- ipa-client-install.sh
-
 #Change host's DNS nameserver configuration to use the ipa/idm server.
 vm exec -v $nfsclntx -- "nmcli connection modify 'System eth0' ipv4.dns $_ipa_serv_addr; nmcli connection up 'System eth0'"
 vm exec -v $nfsclntx -- cat /etc/resolv.conf

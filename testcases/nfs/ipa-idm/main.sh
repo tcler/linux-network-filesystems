@@ -16,15 +16,23 @@ stdlogf=/tmp/std-$$.log
 trun vm create $distro --downloadonly |& tee $stdlogf
 imgf=$(sed -n '${s/^.* //;p}' $stdlogf)
 
-trun tmux new -d "vm create -n $ipaserv $distro --msize 4096 -p 'firewalld bind-utils expect vim' --nointeract -I=$imgf -f"
-trun tmux new -d "vm create -n $ipaclnt $distro --msize 4096 -p 'bind-utils vim nfs-utils' --nointeract -I=$imgf -f"
+trun -tmux=$$-ipaserv vm create -n $ipaserv $distro --msize 4096 -p firewalld,bind-utils,expect,vim --nointeract -I=$imgf -f
+trun -tmux=$$-ipaclnt vm create -n $ipaclnt $distro --msize 4096 -p bind-utils,vim,nfs-utils --nointeract -I=$imgf -f
 vm create -n $nfsserv $distro --msize 4096 -p "bind-utils vim nfs-utils" --nointeract -I=$imgf -f
 echo "{INFO} waiting all vm create process finished ..."
-while ps axf|grep tmux.new.-d.vm.creat[e]; do sleep 10; done
+while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 10; done
+
+vm cpto $ipaserv /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.
+vm cpto $nfsserv /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,make-nfs-server.sh} /usr/bin/.
+vm cpto $ipaclnt /usr/bin/ipa-client-install.sh /usr/bin/kinit.sh /usr/bin/.
+trun -tmux=$$-tmp1 vm exec -v $nfsserv -- ipa-client-install.sh
+trun -tmux=$$-tmp2 vm exec -v $ipaclnt -- ipa-client-install.sh
+vm exec -v $ipaserv -- ipa-server-install.sh
+echo "{INFO} waiting all vm exec process finished ..."
+while ps axf|grep tmux.new.*-d.vm.exe[c].*.ipa-.*-install.sh; do sleep 10; done
 
 #-------------------------------------------------------------------------------
 #configure ipa-server
-vm cpto $ipaserv /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.
 vm exec -v $ipaserv -- systemctl start firewalld
 vm exec -v $ipaserv -- systemctl enable firewalld
 vm exec -v $ipaserv -- firewall-cmd --add-service=freeipa-ldap
@@ -45,7 +53,6 @@ vm exec -v $ipaserv -- "echo '$_ipa_serv_addr    $_hostname' >>/etc/hosts"
 vm exec -v $ipaserv -- dig +short $_hostname A
 vm exec -v $ipaserv -- dig +short -x $_ipa_serv_addr
 
-vm exec -v $ipaserv -- ipa-server-install.sh
 #vm exec -v $ipaserv -- ipa-server-install --realm  ${realm} --ds-password $password --admin-password $password \
 #	--mkhomedir --no-ntp --unattended
 _zone=$(echo "$addr" | awk -F. '{ for (i=NF-1; i>0; i--) printf("%s.",$i) }')in-addr.arpa.
@@ -74,9 +81,6 @@ vm exec -v $ipaserv -- sssctl user-show admin
 
 #-------------------------------------------------------------------------------
 #configure nfsserver to join the realm
-vm cpto $nfsserv /usr/bin/ipa-client-install.sh /usr/bin/kinit.sh /usr/bin/make-nfs-server.sh /usr/bin/.
-vm exec -v $nfsserv -- ipa-client-install.sh
-
 #Change host's DNS nameserver configuration to use the ipa/idm server.
 vm exec -v $nfsserv -- "nmcli connection modify 'System eth0' ipv4.dns $_ipa_serv_addr; nmcli connection up 'System eth0'"
 vm exec -v $nfsserv -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf
@@ -94,9 +98,6 @@ vm exec -v $nfsserv -- 'ipa host-show $(hostname)'
 
 #-------------------------------------------------------------------------------
 #configure ipa-client to join the realm
-vm cpto $ipaclnt /usr/bin/ipa-client-install.sh /usr/bin/kinit.sh /usr/bin/.
-vm exec -v $ipaclnt -- ipa-client-install.sh
-
 #Change host's DNS nameserver configuration to use the ipa/idm server.
 vm exec -v $ipaclnt -- "nmcli connection modify 'System eth0' ipv4.dns $_ipa_serv_addr; nmcli connection up 'System eth0'"
 vm exec -v $ipaclnt -- cat /etc/resolv.conf
