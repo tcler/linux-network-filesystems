@@ -111,8 +111,6 @@ vm exec -v $ipaclnt -- authselect test -a sssd with-mkhomedir with-sudo
 
 #-------------------------------------------------------------------------------
 #nfs-server: configure krb5 nfs server
-vm exec -v $nfsserv -- sed -i -e "/^#Domain/s/^#//;/Domain = /s/=.*/= ${domain}/" -e '/^LDAP/s//#&/' /etc/idmapd.conf
-vm exec -v $nfsserv -- bash -c 'echo -e "[General]\n Verbosity = 2\n Domain = '"${domain}"'\n Local-Realms = '"${realm}"'" > /etc/idmapd.conf'
 vm exec -v $nfsserv -- make-nfs-server.sh
 vm exec -vx $nfsserv -- "chown :qe /nfsshare/qe; chown :devel /nfsshare/devel"
 vm exec -vx $nfsserv -- chmod g+ws /nfsshare/qe /nfsshare/devel
@@ -126,8 +124,6 @@ vm exec -v $nfsserv -- klist
 #-------------------------------------------------------------------------------
 #ipa-client: configure krb5 nfs client
 vm exec -v $ipaclnt -- mkdir /mnt/nfsmp
-vm exec -v $ipaclnt -- sed -i -e "/^#Domain/s/^#//;/Domain = /s/=.*/= ${domain}/" -e '/^LDAP/s//#&/' /etc/idmapd.conf
-vm exec -v $ipaclnt -- bash -c 'echo -e "[General]\n Verbosity = 2\n Domain = '"${domain}"'\n Local-Realms = '"${realm}"'" > /etc/idmapd.conf'
 vm exec -v $ipaclnt -- systemctl restart nfs-client.target gssproxy.service rpc-statd.service rpc-gssd.service
 vm exec -v $ipaserv -- kadmin.local list_principals
 vm exec -v $ipaclnt -- klist
