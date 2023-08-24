@@ -11,11 +11,10 @@ nfsserv=nfs-server
 nfsclntx=nfs-clientx
 nfsclnt=nfs-client
 password=redhat123
-stdlogf=/tmp/std-$$.log
 
 ### download vm image
-trun vm create $distro --downloadonly |& tee $stdlogf
-imgf=$(sed -n '${s/^.* //;p}' $stdlogf)
+stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
+imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 ### __prepare__ test env build: create vm
 trun -tmux vm create -n $ipaserv  $distro --msize 4096 -p vim,bind-utils,firewalld,expect --nointeract -I=$imgf -f

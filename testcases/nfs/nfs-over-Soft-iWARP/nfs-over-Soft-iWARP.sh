@@ -7,15 +7,9 @@
 distro=${1:-9}
 shift 1
 
-Cleanup() {
-	rm -f $stdlogf
-	exit
-}
-trap Cleanup EXIT #SIGINT SIGQUIT SIGTERM
-stdlogf=/tmp/nfs-o-soft-iwarp-$$.log
-vm --downloadonly $distro 2>&1 | tee $stdlogf
-imagef=$(sed -n '${s/^.* //; p}' $stdlogf)
-if [[ ! -f "$imagef" ]]; then
+stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
+imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
+if [[ ! -f "$imgf" ]]; then
 	echo "{WARN} seems cloud image file download fail." >&2
 	exit 1
 fi
@@ -23,8 +17,8 @@ fi
 vmserv=nfs-o-soft-iwarp-serv
 vmclnt=nfs-o-soft-iwarp-clnt
 
-vm create -n $vmserv -p "libibverbs-utils perftest iproute tmux" -f $distro -i $imagef --nointeract "$@"
-vm create -n $vmclnt -p "libibverbs-utils perftest iproute"      -f $distro -i $imagef --nointeract
+vm create -n $vmserv -p libibverbs-utils,perftest,iproute,tmux -f $distro -i $imgf --nointeract "$@"
+vm create -n $vmclnt -p libibverbs-utils,perftest,iproute      -f $distro -i $imgf --nointeract
 
 vm exec -v $vmserv -- modprobe siw
 vm exec -v $vmserv -- rdma link add siw0 type siw netdev eth0
