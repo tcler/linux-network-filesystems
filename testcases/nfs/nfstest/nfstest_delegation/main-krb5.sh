@@ -2,7 +2,9 @@
 #
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
-distro=${1:-9}
+[[ $1 != -* ]] && { distro="$1"; shift; }
+distro=${distro:-9}
+
 dnsdomain=lab.kissvm.net
 domain=${dnsdomain}
 realm=${domain^^}
@@ -17,7 +19,7 @@ stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 ### __prepare__ test env build: create vm
-trun -tmux vm create -n $ipaserv  $distro --msize 4096 -p vim,bind-utils,firewalld,expect --nointeract -I=$imgf -f
+trun -tmux vm create -n $ipaserv  $distro --msize 4096 -p vim,bind-utils,firewalld,expect,tomcat --nointeract -I=$imgf -f
 trun -tmux vm create -n $nfsserv  $distro --msize 4096 -p vim,fs-utils,bind-utils --nointeract -I=$imgf -f
 trun -tmux vm create -n $nfsclntx $distro --msize 4096 -p vim,nfs-utils,bind-utils,python3 --nointeract -I=$imgf -f
 trun       vm create -n $nfsclnt $distro --msize 4096 -p vim,nfs-utils,bind-utils,expect,iproute-tc,kernel-modules-extra --nointeract -I=$imgf -f
