@@ -16,18 +16,18 @@ password=redhat123
 stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
-trun -tmux=$$-ipaserv vm create -n $ipaserv $distro --msize 4096 -p firewalld,bind-utils,expect,vim,tomcat --nointeract -I=$imgf -f
-trun -tmux=$$-ipaclnt vm create -n $ipaclnt $distro --msize 4096 -p bind-utils,vim,nfs-utils --nointeract -I=$imgf -f
-trun                  vm create -n $nfsserv $distro --msize 4096 -p bind-utils,vim,nfs-utils --nointeract -I=$imgf -f
+trun -tmux=$$-ipaserv vm create -n $ipaserv $distro --msize 4096 -p firewalld,bind-utils,expect,vim,tomcat,NetworkManager,sssd-tools --nointeract -I=$imgf -f
+trun -tmux=$$-ipaclnt vm create -n $ipaclnt $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -I=$imgf -f
+trun                  vm create -n $nfsserv $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -I=$imgf -f
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 10; done
 
-vm cpto $ipaserv /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.
-vm cpto $nfsserv /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,make-nfs-server.sh} /usr/bin/.
-vm cpto $ipaclnt /usr/bin/ipa-client-install.sh /usr/bin/kinit.sh /usr/bin/.
-trun -tmux=$$-tmp1 vm exec -v $nfsserv -- ipa-client-install.sh
-trun -tmux=$$-tmp2 vm exec -v $ipaclnt -- ipa-client-install.sh
-vm exec -v $ipaserv -- ipa-server-install.sh
+vm cpto -v $ipaserv /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.
+vm cpto -v $nfsserv /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,make-nfs-server.sh} /usr/bin/.
+vm cpto -v $ipaclnt /usr/bin/ipa-client-install.sh /usr/bin/kinit.sh /usr/bin/.
+trun -tmux=$$-tmp1 vm exec -v $nfsserv -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
+trun -tmux=$$-tmp2 vm exec -v $ipaclnt -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
+vm exec -v $ipaserv -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-server-install.sh"
 echo "{INFO} waiting all vm exec process finished ..."
 while ps axf|grep tmux.new.*-d.vm.exe[c].*.ipa-.*-install.sh; do sleep 10; done
 
@@ -112,9 +112,9 @@ vm exec -v $ipaclnt -- kinit.sh admin $password
 vm exec -v $ipaclnt -- klist
 
 vm exec -v $ipaclnt -- 'ipa host-show $(hostname)'
-vm exec -v $ipaclnt -- authselect list
-vm exec -v $ipaclnt -- authselect show sssd
-vm exec -v $ipaclnt -- authselect test -a sssd with-mkhomedir with-sudo
+vm exec -v $ipaclnt -- 'command -v authselect && { authselect list; }'
+vm exec -v $ipaclnt -- 'command -v authselect && { authselect show sssd; }'
+vm exec -v $ipaclnt -- 'command -v authselect && { authselect test -a sssd with-mkhomedir with-sudo; }'
 
 #-------------------------------------------------------------------------------
 #nfs-server: configure krb5 nfs server
