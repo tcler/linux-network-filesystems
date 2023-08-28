@@ -19,10 +19,10 @@ stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 ### __prepare__ test env build: create vm
-trun -tmux vm create -n $ipaserv  $distro --msize 4096 -p vim,bind-utils,firewalld,expect,tomcat --nointeract -I=$imgf -f
-trun -tmux vm create -n $nfsserv  $distro --msize 4096 -p vim,fs-utils,bind-utils --nointeract -I=$imgf -f
-trun -tmux vm create -n $nfsclntx $distro --msize 4096 -p vim,nfs-utils,bind-utils,python3 --nointeract -I=$imgf -f
-trun       vm create -n $nfsclnt $distro --msize 4096 -p vim,nfs-utils,bind-utils,expect,iproute-tc,kernel-modules-extra --nointeract -I=$imgf -f
+trun -tmux vm create -n $ipaserv  $distro --msize 4096 -p vim,bind-utils,firewalld,expect,tomcat,NetworkManager,sssd-tools --nointeract -I=$imgf -f
+trun -tmux vm create -n $nfsserv  $distro --msize 4096 -p vim,nfs-utils,bind-utils,NetworkManager --nointeract -I=$imgf -f
+trun -tmux vm create -n $nfsclntx $distro --msize 4096 -p vim,nfs-utils,bind-utils,NetworkManager,python3 --nointeract -I=$imgf -f
+trun       vm create -n $nfsclnt $distro --msize 4096 -p vim,nfs-utils,bind-utils,NetworkManager,expect,iproute-tc,kernel-modules-extra --nointeract -I=$imgf -f
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 10; done
 
@@ -32,10 +32,10 @@ vm cpto $nfsserv  /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,make-nfs-ser
 vm cpto $nfsclnt  /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,ssh-copy-id.sh} /usr/bin/.
 vm cpto $nfsclntx /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,ssh-copy-id.sh} /usr/bin/.
 
-trun -tmux vm exec -v $nfsserv -- ipa-client-install.sh
-trun -tmux vm exec -v $nfsclnt -- ipa-client-install.sh
-trun -tmux vm exec -v $nfsclntx -- ipa-client-install.sh
-trun       vm exec -v $ipaserv -- ipa-server-install.sh
+trun -tmux vm exec -v $nfsserv -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
+trun -tmux vm exec -v $nfsclnt -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
+trun -tmux vm exec -v $nfsclntx -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
+trun       vm exec -v $ipaserv -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-server-install.sh"
 echo "{INFO} waiting all vm exec process finished ..."
 while ps axf|grep tmux.new.*-d.vm.exe[c].*.ipa-.*-install.sh; do sleep 10; done
 
@@ -174,15 +174,13 @@ servaddr=$(vm ifaddr $nfsserv)
 clntxaddr=$(vm ifaddr $nfsclntx)
 servfqdn=${nfsserv}.${domain}
 clntxfqdn=${nfsclntx}.${domain}
-vm cpto $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/.
+vm cpto $nfsclnt /usr/bin/{install-nfstest.sh,ssh-copy-id.sh} /usr/bin/.
 vm exec -vx $nfsclnt -- install-nfstest.sh
 vm exec -vx $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
-vm exec -vx $nfsclnt -- "ssh-keygen -q -t ecdsa -f ~/.ssh/id_ecdsa -N ''"
-vm exec -vx $nfsclnt -- expect -c "spawn ssh-copy-id -oStrictHostKeyChecking=no -f $clntxaddr; expect {*assword:} {send \"redhat\\n\"}; expect eof"
-#vm exec -v  $nfsclnt -- nfstest_delegation --server=$servfqdn --export=$expdir --nfsversion=4.2 --client $clntxfqdn --client-nfsvers=4.0,4.1,4.2 "$@"
+vm exec -vx $nfsclnt -- ssh-copy-id.sh $clntxaddr root redhat
 
 #-------------------------------------------------------------------------------
 #2174870#c5
 vm exec -vx $nfsclnt -- ip link set "$NIC" promisc on
-vm exec -v  $nfsclnt -- tc qdisc add dev $NIC root netem delay 14ms
+vm exec -vx $nfsclnt -- tc qdisc add dev $NIC root netem delay 28ms
 vm exec -v  $nfsclnt -- nfstest_delegation --server=$servfqdn --export=$expdir --nfsversion=4.2 --sec=krb5 --nconnect 16 "$@"
