@@ -28,7 +28,7 @@ clntxaddr=$(vm ifaddr $nfsclntx)
 vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin/.
 vm exec -v $nfsclnt -- install-nfstest.sh
 vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
-vm exec -v foo@$nfsclnt -- ssh-copy-id.sh $clntxaddr foo redhat
+vm exec -v foo@$nfsclnt -- ssh-copy-id.sh $servaddr foo redhat
 vm exec -v foo@$nfsclnt -- ssh-copy-id.sh $clntxaddr root redhat
 
 vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
