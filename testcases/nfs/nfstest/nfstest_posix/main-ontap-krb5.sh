@@ -7,7 +7,7 @@ clientvm=${2:-rhel-client}
 
 ### __prepare__ test env build
 #create Windows AD server, ONTAP simulator and client VMs
-make-ontap-with-windows-ad.sh $distro $clientvm
+trun -x0 make-ontap-with-windows-ad.sh $distro $clientvm || exit $?
 
 #install nfstest on $clientvm
 vm cpto $clientvm /usr/bin/install-nfstest.sh /usr/bin/.
