@@ -8,7 +8,7 @@ nfsclnt=nfs-client
 nfsmp=/mnt/nfsmp
 
 #create netapp ontap-simulator
-make-ontap-simulator.sh
+trun -x0 make-ontap-simulator.sh || exit $?
 servaddr=192.168.20.21
 
 #create vm as nfs client
