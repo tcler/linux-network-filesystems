@@ -46,8 +46,10 @@ vm exec -vx $nfsclnt -- mount $serv_dst_addr:/nfsshare/rw /mnt/dst
 vm exec -vx $nfsclnt -- mount -t nfs4
 
 vm exec -vx $nfsclnt -- time cp /mnt/src/largefile.img  /mnt/dst/.
-vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY|^READ|^WRITE)'"
-vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY|^READ|^WRITE)'"
+vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY(_NOTIFY)?|^READ|^WRITE):'"
+vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY_NOTIFY):'"
+vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY|^READ|^WRITE):'"
+vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY):'"
 
 #-------------------------------------------------------------------------------
 echo
@@ -59,7 +61,9 @@ vm exec -vx $nfsclnt -- mount $serv_src_addr:/nfsshare/rw /mnt/src
 vm exec -vx $nfsclnt -- mount $serv_dst_addr:/nfsshare/rw /mnt/dst
 vm exec -vx $nfsclnt -- mount -t nfs4
 vm exec -vx $nfsclnt -- time cp /mnt/src/largefile.img  /mnt/dst/.
-vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY|^READ|^WRITE)'"
-vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY|^READ|^WRITE)'"
+vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY(_NOTIFY)?|^READ|^WRITE):'"
+vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY_NOTIFY):'"
+vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY|^READ|^WRITE):'"
+vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY):'"
 
 vm exec -v $nfsclnt -- "dmesg | grep TECH.PREVIEW /var/log/messages"
