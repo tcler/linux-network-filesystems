@@ -7,12 +7,20 @@ distro=${distro:-9}
 nfsclnt=nfs-client
 nfsmp=/mnt/nfsmp
 
-#create netapp ontap-simulator
-trun -x0 make-ontap-simulator.sh || exit $?
-servaddr=192.168.20.21
+#download image file
+stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
+imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 #create vm as nfs client
-vm create $distro -n $nfsclnt -m 4G -f -nointeract --net ontap2-data -p 'nfs-utils expect iproute-tc kernel-modules-extra' --sa
+trun -tmux vm create $distro -n $nfsclnt -m 4G -f -nointeract --net ontap2-data -p nfs-utils,expect,iproute-tc,kernel-modules-extra -I=$imgf
+
+#create netapp ontap-simulator
+trun -x0 make-ontap-simulator.sh || exit $?
+
+echo "{INFO} waiting all vm create process finished ..."
+while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 16; done
+
+servaddr=192.168.20.21
 vm exec -v $nfsclnt -- showmount -e $servaddr
 vm exec -v $nfsclnt -- mkdir -p $nfsmp
 
