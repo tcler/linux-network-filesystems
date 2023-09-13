@@ -32,4 +32,5 @@ vm exec -v foo@$nfsclnt -- ssh-copy-id.sh $servaddr foo redhat
 vm exec -v foo@$nfsclnt -- ssh-copy-id.sh $clntxaddr root redhat
 
 vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
+vm exec -v $nfsclnt -- usermod -a -G nobody foo
 vm exec -v foo@$nfsclnt -- nfstest_cache --server $servaddr --client $clntxaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2 "$@"
