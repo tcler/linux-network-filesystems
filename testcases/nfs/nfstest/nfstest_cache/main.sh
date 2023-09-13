@@ -8,16 +8,23 @@ distro=${distro:-9}
 nfsserv=nfs-server
 nfsclntx=nfs-clientx
 nfsclnt=nfs-client
-vm create $distro -n $nfsserv -m 4G -f -nointeract -p 'vim nfs-utils wireshark' --sa
+
+#download image file
+stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
+imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
+
+trun -tmux vm create $distro -n $nfsserv -m 4G -f -nointeract -p vim,nfs-utils,tmux,wireshark -I=$imgf
+trun -tmux vm create $distro -n $nfsclntx -m 4G -f -nointeract -p vim,nfs-utils,wireshark,python3 -I=$imgf
+trun       vm create $distro -n $nfsclnt -m 4G -f -nointeract -p vim,nfs-utils,wireshark,expect,iproute-tc,kernel-modules-extra -I=$imgf
+echo "{INFO} waiting all vm create process finished ..."
+while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 16; done
+
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh .
 vm exec -v $nfsserv -- bash make-nfs-server.sh
 vm exec -v $nfsserv -- mkdir -p /nfsshare/rw/testdir
 vm exec -v $nfsserv -- touch /nfsshare/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $nfsserv)
 
-vm create $distro -n $nfsclntx -m 4G -f -nointeract -p 'vim nfs-utils wireshark python3' --sa
-
-vm create $distro -n $nfsclnt -m 4G -f -nointeract -p 'vim nfs-utils wireshark expect iproute-tc kernel-modules-extra' --sa
 vm exec -v $nfsclnt -- showmount -e $servaddr
 
 #nfstest_cache
