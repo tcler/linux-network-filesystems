@@ -34,5 +34,9 @@ vm exec -v $nfsclnt -- install-nfstest.sh
 vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
 vm exec -v $nfsclnt -- getconf PAGESIZE
+
 pgsize=$(vm exec $nfsclnt -- getconf PAGESIZE)
-vm exec -v $nfsclnt -- nfstest_dio --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --rsize=$pgsize --wsize=$pgsize --nfsversion=4.2 "$@"
+distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
+resdir=~/testres/$distro/nfstest
+mkdir -p $resdir
+vm exec -v $nfsclnt -- nfstest_dio --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --rsize=$pgsize --wsize=$pgsize --nfsversion=4.2 "$@" |& tee $resdir/dio.log

@@ -16,4 +16,8 @@ vm exec -vx $clientvm -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 
 ONTAP_ENV_FILE=/tmp/ontap2info.env
 source "$ONTAP_ENV_FILE"
-vm exec -v  $clientvm -- nfstest_interop --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5 --datadir datadir --nfsversion=4.2
+
+distro=$(vm homedir $clientvm|awk -F/ 'NR==1{print $(NF-1)}')
+resdir=~/testres/nfstest/$distro
+mkdir -p $resdir
+vm exec -v  $clientvm -- nfstest_interop --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5 --datadir datadir --nfsversion=4.2 |& tee $resdir/interop-ontap-krb5.log

@@ -34,6 +34,9 @@ vm cpto -v $vmclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh .
 vm exec -v $vmclnt -- bash install-nfstest.sh
 vm exec -v $vmclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 vm exec -v $vmclnt -- bash ssh-copy-id.sh $clntxaddr root redhat
-
 vm exec -v $vmclnt -- ip link set "$NIC" promisc on
-vm exec -v $vmclnt -- nfstest_delegation --server=$servaddr --export=$expdir --nfsversion=4.2 --client $clntxaddr --client-nfsvers=4.0,4.1,4.2 "$@"
+
+distro=$(vm homedir $vmclnt|awk -F/ 'NR==1{print $(NF-1)}')
+resdir=~/testres/$distro/nfstest
+mkdir -p $resdir
+vm exec -v $vmclnt -- nfstest_delegation --server=$servaddr --export=$expdir --nfsversion=4.2 --client $clntxaddr --client-nfsvers=4.0,4.1,4.2 "$@" |& tee $resdir/delegation.log

@@ -40,4 +40,8 @@ vm exec -v foo@$nfsclnt -- ssh-copy-id.sh $clntxaddr root redhat
 
 vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
 vm exec -v $nfsclnt -- usermod -a -G nobody foo
-vm exec -v foo@$nfsclnt -- nfstest_cache --server $servaddr --client $clntxaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2 "$@"
+
+distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
+resdir=~/testres/$distro/nfstest
+mkdir -p $resdir
+vm exec -v foo@$nfsclnt -- nfstest_cache --server $servaddr --client $clntxaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2 "$@" |& tee $resdir/cache.log

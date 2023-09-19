@@ -33,4 +33,8 @@ vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin
 vm exec -v $nfsclnt -- install-nfstest.sh
 vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
 vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
-vm exec -v $nfsclnt -- nfstest_posix --server $servaddr --export=$expdir --mtpoint=$nfsmp --mtopts=rw --interface=$NIC --nfsversion=4.2 "$@"
+
+distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
+resdir=~/testres/$distro/nfstest
+mkdir -p $resdir
+vm exec -v $nfsclnt -- nfstest_posix --server $servaddr --export=$expdir --mtpoint=$nfsmp --mtopts=rw --interface=$NIC --nfsversion=4.2 "$@" |& tee $resdir/posix.log
