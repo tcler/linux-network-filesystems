@@ -15,7 +15,7 @@ for arg; do
 done
 set -- "${argv[@]}"
 
-distro=${1:-9}
+distro=${1:-9}; shift
 
 #---------------------------------------------------------------
 : <<COMM
@@ -40,8 +40,10 @@ fi
 #create nfs server and client VMs
 vmnfsserv=nfsserv
 vmnfsclnt=nfsclnt
-trun vm create $distro -n $vmnfsserv -p nfs-utils --net $NET --nointeract --saveimage $VMOPT $FORCE_OPT
-trun vm create $distro -n $vmnfsclnt -p nfs-utils --net $NET --nointeract --saveimage $VMOPT $FORCE_OPT
+trun -tmux vm create $distro -n $vmnfsserv -p nfs-utils --net $NET --nointeract --saveimage $VMOPT $FORCE_OPT "$@"
+trun       vm create $distro -n $vmnfsclnt -p nfs-utils --net $NET --nointeract --saveimage $VMOPT $FORCE_OPT "$@"
+echo "{INFO} waiting all vm create process finished ..."
+while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 16; done
 vm -v exec $vmnfsserv -- systemctl stop firewalld
 vm -v exec $vmnfsclnt -- systemctl stop firewalld
 vm -v exec $vmnfsserv -- ln -sf /opt /optlink

@@ -19,9 +19,9 @@ password=redhat123
 stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
-trun -tmux=$$-ipaserv vm create -n $ipaserv $distro --msize 4096 -p firewalld,bind-utils,expect,vim,tomcat,NetworkManager,sssd-tools --nointeract -I=$imgf -f
-trun -tmux=$$-ipaclnt vm create -n $ipaclnt $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -I=$imgf -f
-trun                  vm create -n $nfsserv $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -I=$imgf -f
+trun -tmux=$$-ipaserv vm create -n $ipaserv $distro --msize 4096 -p firewalld,bind-utils,expect,vim,tomcat,NetworkManager,sssd-tools --nointeract -I=$imgf -f "$@"
+trun -tmux=$$-ipaclnt vm create -n $ipaclnt $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -I=$imgf -f "$@"
+trun                  vm create -n $nfsserv $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -I=$imgf -f "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 10; done
 

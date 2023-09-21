@@ -4,8 +4,7 @@
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
-distro=${1:-9}
-shift 1
+distro=${1:-9}; shift 1
 
 stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
@@ -17,8 +16,10 @@ fi
 vmserv=nfs-o-soft-iwarp-serv
 vmclnt=nfs-o-soft-iwarp-clnt
 
-vm create -n $vmserv -p libibverbs-utils,perftest,iproute,tmux -f $distro -i $imgf --nointeract "$@"
-vm create -n $vmclnt -p libibverbs-utils,perftest,iproute      -f $distro -i $imgf --nointeract
+trun -tmux vm create -n $vmserv -p libibverbs-utils,perftest,iproute,tmux -f $distro -i $imgf --nointeract "$@"
+trun       vm create -n $vmclnt -p libibverbs-utils,perftest,iproute      -f $distro -i $imgf --nointeract "$@"
+echo "{INFO} waiting all vm create process finished ..."
+while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 16; done
 
 vm exec -v $vmserv -- modprobe siw
 vm exec -v $vmserv -- rdma link add siw0 type siw netdev eth0

@@ -17,7 +17,7 @@ trun -as=root systemctl restart nfs-server
 win_iso_url=http://download.devel.redhat.com/qa/rhts/lookaside/windows-images/Win2022-Evaluation.iso
 hostip=192.168.122.1
 vmname=win-vm
-vm create -f Windows-server-2022 -n $vmname -C $win_iso_url \
+trun vm create -f Windows-server-2022 -n $vmname -C $win_iso_url \
 	--osv win2k22 \
 	--vcpus sockets=1,cores=4 --msize 8192 --dsize 80 \
 	--win-run='Install-WindowsFeature NFS-Client' \

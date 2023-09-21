@@ -6,7 +6,7 @@ distro=${1:-9}
 clientvm=${2:-rhel-client}
 if [[ $# -ge 2 ]]; then
 	shift 2
-else [[ $# -ge 1 ]]; then
+elif [[ $# -ge 1 ]]; then
 	shift
 fi
 
