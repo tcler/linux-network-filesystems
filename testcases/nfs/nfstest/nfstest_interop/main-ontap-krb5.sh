@@ -4,10 +4,15 @@
 
 distro=${1:-9}
 clientvm=${2:-rhel-client}
+if [[ $# -ge 2 ]]; then
+	shift 2
+else [[ $# -ge 1 ]]; then
+	shift
+fi
 
 ### __prepare__ test env build
 #create Windows AD server, ONTAP simulator and client VMs
-trun -x0 make-ontap-with-windows-ad.sh $distro $clientvm || exit $?
+trun -x0 make-ontap-with-windows-ad.sh $distro $clientvm "$@" || exit $?
 
 #install nfstest on $clientvm
 vm cpto $clientvm /usr/bin/install-nfstest.sh /usr/bin/.

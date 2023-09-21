@@ -19,10 +19,10 @@ stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 ### __prepare__ test env build: create vm
-trun -tmux vm create -n $ipaserv  $distro --msize 4096 -p vim,bind-utils,firewalld,expect,tomcat,NetworkManager,sssd-tools --nointeract -I=$imgf -f
-trun -tmux vm create -n $nfsserv  $distro --msize 4096 -p vim,nfs-utils,bind-utils,NetworkManager --nointeract -I=$imgf -f --kdump
-trun -tmux vm create -n $nfsclntx $distro --msize 4096 -p vim,nfs-utils,bind-utils,NetworkManager,python3 --nointeract -I=$imgf -f --kdump
-trun       vm create -n $nfsclnt $distro --msize 4096 -p vim,nfs-utils,bind-utils,NetworkManager,expect,iproute-tc,kernel-modules-extra --nointeract -I=$imgf -f --kdump
+trun -tmux vm create -n $ipaserv  $distro --msize 4096 -p vim,bind-utils,firewalld,expect,tomcat,NetworkManager,sssd-tools --nointeract -I=$imgf -f "$@"
+trun -tmux vm create -n $nfsserv  $distro --msize 4096 -p vim,nfs-utils,bind-utils,NetworkManager --nointeract -I=$imgf -f --kdump "$@"
+trun -tmux vm create -n $nfsclntx $distro --msize 4096 -p vim,nfs-utils,bind-utils,NetworkManager,python3 --nointeract -I=$imgf -f --kdump "$@"
+trun       vm create -n $nfsclnt $distro --msize 4096 -p vim,nfs-utils,bind-utils,NetworkManager,expect,iproute-tc,kernel-modules-extra --nointeract -I=$imgf -f --kdump "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 10; done
 

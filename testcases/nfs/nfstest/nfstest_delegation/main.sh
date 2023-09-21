@@ -14,9 +14,9 @@ vmclnt=nfs-client
 stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
-trun -tmux vm create $distro -n $vmserv -m 4G -f -nointeract -p vim,nfs-utils,wireshark -I=$imgf
-trun -tmux vm create $distro -n $vmclntx -m 4G -f -nointeract -p vim,nfs-utils,wireshark,python3 -I=$imgf
-trun       vm create $distro -n $vmclnt -m 4G -f -nointeract -p vim,nfs-utils,wireshark,expect,iproute-tc,kernel-modules-extra -I=$imgf
+trun -tmux vm create $distro -n $vmserv -m 4G -f -nointeract -p vim,nfs-utils,wireshark -I=$imgf "$@"
+trun -tmux vm create $distro -n $vmclntx -m 4G -f -nointeract -p vim,nfs-utils,wireshark,python3 -I=$imgf "$@"
+trun       vm create $distro -n $vmclnt -m 4G -f -nointeract -p vim,nfs-utils,wireshark,expect,iproute-tc,kernel-modules-extra -I=$imgf "$@"
 vm cpto -v $vmserv /usr/bin/make-nfs-server.sh .
 vm exec -v $vmserv -- bash make-nfs-server.sh
 vm exec -v $vmserv -- mkdir -p /nfsshare/rw/testdir

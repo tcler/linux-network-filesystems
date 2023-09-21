@@ -12,7 +12,7 @@ stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 #create vm as nfs client
-trun -tmux vm create $distro -n $nfsclnt -m 4G -f -nointeract --net ontap2-data -p nfs-utils,expect,iproute-tc,kernel-modules-extra -I=$imgf
+trun -tmux vm create $distro -n $nfsclnt -m 4G -f -nointeract --net ontap2-data -p nfs-utils,expect,iproute-tc,kernel-modules-extra -I=$imgf "$@"
 
 #create netapp ontap-simulator
 trun -x0 make-ontap-simulator.sh || exit $?
