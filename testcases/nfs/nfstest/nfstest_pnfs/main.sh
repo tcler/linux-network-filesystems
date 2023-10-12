@@ -35,4 +35,4 @@ vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
 distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
 resdir=~/testres/$distro/nfstest
 mkdir -p $resdir
-vm exec -v $nfsclnt -- nfstest_pnfs --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2 "$@" |& tee $resdir/pnfs.log
+vm exec -v $nfsclnt -- nfstest_pnfs --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2 |& tee $resdir/pnfs.log
