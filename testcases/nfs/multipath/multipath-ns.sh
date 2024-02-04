@@ -11,7 +11,7 @@ ClientIP2=192.168.10.2
 ExportDir=/nfsshare
 MountPoint=/mnt/nfs
 MOUNT_OPTS="$*"
-MOUNT_OPTS=${MOUNT_OPTS:--onconnect=16}
+MOUNT_OPTS=${MOUNT_OPTS:--onosharecache,nconnect=16}
 
 ns 2>/dev/null
 

@@ -10,7 +10,7 @@ ExportDir=/nfsshare
 MountPoint=/mnt/nfs
 distro=${1:-9}; shift
 MOUNT_OPTS="$*"
-MOUNT_OPTS=${MOUNT_OPTS:--onconnect=16}
+MOUNT_OPTS=${MOUNT_OPTS:--onosharecache,nconnect=16}
 
 subnet1=12
 brname1=vm-vbr$subnet1
