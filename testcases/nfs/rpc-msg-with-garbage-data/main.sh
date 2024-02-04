@@ -7,6 +7,7 @@
 _USER=$(whoami)
 [[ $(id -u) = 0 && -n "$SUDO_USER" ]] && _USER=$SUDO_USER
 nfsmp=/mnt/nfsmp
+script_dir=$(readlink -f $(dirname $0))
 
 #create nfs-server vm
 distro=${1:-9}; shift
@@ -21,6 +22,14 @@ servaddr=$(vm ifaddr $vmserv)
 pcapf=nfs.pcap
 
 if true; then
+	[[ $(id -u) != 0 ]] && {
+		sudo -K
+		while true; do
+			read -s -p "sudo Password: " password
+			echo
+			echo "$password" | sudo -S ls / >/dev/null && break
+		done
+	}
 	trun -as=root mkdir -p $nfsmp
 	trun -as=root mount -overs=3 $servaddr:/nfsshare/rw $nfsmp
 	trun mount -t nfs,nfs4
@@ -33,8 +42,8 @@ if true; then
 	vm exec -v $vmserv -- "tshark -i eth0 -Y nfs -r $pcapf -T fields -e nfs.fhandle -f 'nfs.name == testdir'|grep -E '^.{80}$'|sort -u|tee fhlist.txt"
 	trun maxblksize=$(vm exec $vmserv -- cat /proc/fs/nfsd/max_block_size)
 	trun fh1=$(vm exec $vmserv -- head -1 fhlist.txt)
-	trun -as=root ./nfsv3-read.py $servaddr readdirplus $maxblksize $fh1 -s
-	trun -x -as=root "./nfsv3-read.py $servaddr readdirplus $maxblksize $fh1 -s|grep nfs.status3.=.0"
+	trun -as=root "${script_dir}/nfsv3-read.py" $servaddr readdirplus $maxblksize $fh1 -s
+	trun -x -as=root "'${script_dir}/nfsv3-read.py' $servaddr readdirplus $maxblksize $fh1 -s|grep nfs.status3.=.0"
 	trun -as=root umount -fl $nfsmp
 else
 	vm create $distro -n $vmclnt -f -nointeract -p 'nfs-utils wireshark tmux'
@@ -48,7 +57,7 @@ else
 	vm exec -v $vmclnt -- pkill tshark
 	vm exec -v $vmclnt -- "tshark -i eth0 -Y nfs -r $pcapf -T fields -e nfs.fhandle -f 'nfs.name == testdir'|grep -E '^.{80}$'|sort -u|tee fhlist.txt"
 	trun maxblksize=$(vm exec $vmserv -- cat /proc/fs/nfsd/max_block_size)
-	vm -v cpto $vmclnt ./nfsv3-read.py .
+	vm -v cpto $vmclnt "${script_dir}/nfsv3-read.py" .
 	trun fh1=$(vm exec $vmclnt -- head -1 fhlist.txt)
 	trun "fhlist='$(vm exec $vmclnt -- cat fhlist.txt)'"
 	vm exec -vx $vmclnt -- "./nfsv3-read.py $servaddr readdirplus $maxblksize $fh1 -s | grep nfs.status3.=.0"
