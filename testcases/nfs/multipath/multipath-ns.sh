@@ -39,6 +39,7 @@ ns exec -v   c1 -- mount $MOUNT_OPTS $ServerIP2:/ $MountPoint
 ns exec -v   c1 -- mount -t nfs,nfs4
 ns exec -v   c1 -- grep xprt /proc/self/mountstats
 ns exec -v   c1 -- ss -nt "dst $ServerIP1"
+ns exec -v   c1 -- ss -nt "dst $ServerIP2"
 
 #please clean test env:
 ns exec -vx0 c1 -- umount -t nfs,nfs4 -a

@@ -48,6 +48,7 @@ vm exec -v   $C -- mount $MOUNT_OPTS $Saddr1:$ExportDir $MountPoint
 
 vm exec -v   $C -- mount -t nfs,nfs4
 vm exec -v   $C -- grep xprt /proc/self/mountstats
+vm exec -v   $C -- ss -nt "dst $Saddr0"
 vm exec -v   $C -- ss -nt "dst $Saddr1"
 
 vm exec -v   $C -- mount -t nfs,nfs4
