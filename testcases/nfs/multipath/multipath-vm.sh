@@ -3,11 +3,6 @@
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
-[[ -z "$distro" ]] && {
-	echo "Usage: $0 <distro> [mount options]"
-	exit 1
-}
-
 warnlog() { echo -e "\033[41m{TEST:WARN} $*\033[0m"; }
 faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
 
@@ -22,6 +17,11 @@ brname1=vm-vbr$subnet1
 netname1=net$subnet1
 S=serv
 C=clnt
+
+[[ -z "$distro" ]] && {
+	echo "Usage: $0 <distro> [mount options]"
+	exit 1
+}
 
 vm netcreate netname=$netname1 brname=$brname1 subnet=$subnet1
 vm netinfo $netname1
@@ -48,7 +48,7 @@ vm exec -v   $C -- mount $MOUNT_OPTS $Saddr1:$ExportDir $MountPoint
 
 vm exec -v   $C -- mount -t nfs,nfs4
 vm exec -v   $C -- grep xprt /proc/self/mountstats
-vm exec -v   $C -- ss -nt "dst $ServerIP1"
+vm exec -v   $C -- ss -nt "dst $Saddr1"
 
 vm exec -v   $C -- mount -t nfs,nfs4
 vm exec -vx0 $C -- umount -t nfs,nfs4 -a
