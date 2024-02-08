@@ -27,13 +27,18 @@ trun vm create -f Windows-server-2022 -n $vmname -C $win_iso_url \
 	--win-run='Install-WindowsFeature NFS-Client' \
 	--win-run='Enable-WindowsOptionalFeature -FeatureName ServicesForNFS-ClientOnly, ClientForNFS-Infrastructure -Online -NoRestart' \
 	--win-run-post="showmount.exe -e ${hostip}" \
+	--win-run-post='C:\Windows\system32\mount.exe -o anon \\'${hostip}${expdir}' Z:; ls Z:
+		if (Test-Path -Path Z:\windir) { Remove-Item -Force -Recurse Z:\windir };
+		if (Test-Path -Path Z:\win.txt) { Remove-Item -Force Z:\win.txt };
+		Set-Content Z:\win.txt "in.windows"; New-Item Z:\windir -ItemType "directory";
+		Get-Content Z:\win.txt; ls Z:' \
 	--win-auto=base \
 	--wait
 trun sed -n '/autorun-post/,/autorun-post.end/p'  /tmp/${vmname}-data/postinstall.log
 
-trun -as=$_USER vm exec -v $vmname -- 'showmount.exe -e '"${hostip}"
-trun -as=$_USER vm exec -v $vmname -- 'powershell -command "mount.exe -o anon \\'"${hostip}"'\'"${expdir#/}"' Z:; ls Z:;
+trun vm exec -v $vmname -- 'showmount.exe -e '"${hostip}"
+trun vm exec -v $vmname -- 'powershell -command "mount.exe -o anon \\'"${hostip}"'\'"${expdir#/}"' Z:; ls Z:;
 	if (Test-Path -Path Z:\windir) { Remove-Item -Force -Recurse Z:\windir };
 	if (Test-Path -Path Z:\win.txt) { Remove-Item -Force Z:\win.txt };
-	Set-Content Z:\win.txt "in.windows"; New-Item Z:\windir -ItemType "directory";
-	Get-Content Z:\win.txt; ls Z:"'
+	Set-Content Z:\win.txt \"in.windows 2\"; New-Item Z:\windir -ItemType \"directory\";
+	echo _; Get-Content Z:\win.txt; echo _; ls Z:;"'
