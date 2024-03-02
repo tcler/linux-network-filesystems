@@ -36,4 +36,7 @@ vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
 distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
 resdir=~/testres/$distro/pynfs
 mkdir -p $resdir
-vm exec -v $nfsclnt -- testserver.py --maketree $servaddr:$expdir all |& tee $resdir/testserver.log
+{
+  vm exec -v $nfsclnt -- uname -r;
+  vm exec -v $nfsclnt -- testserver.py --maketree $servaddr:$expdir all;
+} |& tee $resdir/testserver.log

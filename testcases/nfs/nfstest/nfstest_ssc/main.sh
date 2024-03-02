@@ -42,4 +42,7 @@ vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
 resdir=~/testres/$distro/nfstest
 mkdir -p $resdir
-vm exec -v $nfsclnt -- nfstest_ssc -s $serv1addr -e /nfsshare/rw --dst-server $serv2addr --dst-export /nfsshare/async inter |& tee $resdir/ssc.log
+{
+  vm exec -v $nfsclnt -- uname -r;
+  vm exec -v $nfsclnt -- nfstest_ssc -s $serv1addr -e /nfsshare/rw --dst-server $serv2addr --dst-export /nfsshare/async inter;
+} |& tee $resdir/ssc.log

@@ -187,4 +187,7 @@ vm exec -vx $nfsclnt -- tc qdisc add dev $NIC root netem delay 28ms
 distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
 resdir=~/testres/$distro/nfstest
 mkdir -p $resdir
-vm exec -v  $nfsclnt -- nfstest_delegation --server=$servfqdn --export=$expdir --nfsversion=4.2 --sec=krb5 --nconnect 16 |& tee $resdir/delegation-krb5.log
+{
+  vm exec -v  $nfsclnt -- uname -r;
+  vm exec -v  $nfsclnt -- nfstest_delegation --server=$servfqdn --export=$expdir --nfsversion=4.2 --sec=krb5 --nconnect 16;
+} |& tee $resdir/delegation-krb5.log

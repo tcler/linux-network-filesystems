@@ -39,4 +39,7 @@ vm exec -v $vmclnt -- ip link set "$NIC" promisc on
 distro=$(vm homedir $vmclnt|awk -F/ 'NR==1{print $(NF-1)}')
 resdir=~/testres/$distro/nfstest
 mkdir -p $resdir
-vm exec -v $vmclnt -- nfstest_delegation --server=$servaddr --export=$expdir --nfsversion=4.2 --client $clntxaddr --client-nfsvers=4.0,4.1,4.2 |& tee $resdir/delegation.log
+{
+  vm exec -v $vmclnt -- uname -r;
+  vm exec -v $vmclnt -- nfstest_delegation --server=$servaddr --export=$expdir --nfsversion=4.2 --client $clntxaddr --client-nfsvers=4.0,4.1,4.2;
+} |& tee $resdir/delegation.log

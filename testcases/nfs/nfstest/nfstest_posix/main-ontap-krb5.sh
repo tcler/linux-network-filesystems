@@ -25,4 +25,7 @@ source "$ONTAP_ENV_FILE"
 distro=$(vm homedir $clientvm|awk -F/ 'NR==1{print $(NF-1)}')
 resdir=~/testres/$distro/nfstest
 mkdir -p $resdir
-vm exec -v  $clientvm -- nfstest_posix --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5p --nfsversion=4.2 |& tee $resdir/posix-ontap-krb5.log
+{
+  vm exec -v $clientvm -- uname -r;
+  vm exec -v $clientvm -- nfstest_posix --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5p --nfsversion=4.2;
+} |& tee $resdir/posix-ontap-krb5.log
