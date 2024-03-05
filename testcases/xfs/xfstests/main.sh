@@ -4,15 +4,16 @@
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
-[[ $1 != -* ]] && { distro="$1"; shift; }
+[[ $1 != -* ]] && { distro="$1"; shift 1; }; at=("$@")
 distro=${distro:-9}
-vmname=fstest
+vmname=fstest; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=${at[$((i+1))]}; done
 
 ### __prepare__ test env build
 stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
-trun vm create -n $vmname $distro --msize 4096 -p vim --nointeract -I=$imgf -f --xdisk=16,xfs,bus=sata --xdisk=16,xfs,bus=sata "$@"
+trun vm create -n $vmname $distro --msize 4096 -p git,tmux,vim --nointeract -I=$imgf -f \
+	--xdisk=16,xfs,bus=sata --xdisk=16,xfs,bus=sata --xdisk=16,xfs,bus=sata "$@"
 
 vm cpto -v  $vmname /usr/bin/xfstests-install.sh /usr/bin/make-nfs-server.sh /usr/bin/.
 vm exec -vx $vmname -- "xfstests-install.sh" || exit 1
@@ -26,7 +27,14 @@ export TEST_DEV=/dev/sda1
 export TEST_DIR=/mnt/xfstests_test
 export SCRATCH_DEV=/dev/sdb1
 export SCRATCH_MNT=/mnt/xfstests_scratch
+export LOGWRITES_DEV=/dev/sdc1
 EOF"
-vm exec -v $vmname -- "cd /var/lib/xfstests/; ./check -n -g auto"
-#vm exec -v $vmname -- "cd /var/lib/xfstests/; DIFF_LENGTH=-0 ./check"
-vm exec -v $vmname -- "cd /var/lib/xfstests/; ./check"
+
+distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
+resdir=~/testres/$distro/nfstest
+mkdir -p $resdir
+{
+  vm exec -v $vmname -- uname -r;
+  #vm exec -v $vmname -- "cd /var/lib/xfstests/; ./check -n -g auto;"
+  vm exec -v $vmname -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check ${TESTS};"
+} |& tee $resdir/xfstests-xfs.log
