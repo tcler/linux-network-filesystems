@@ -14,8 +14,8 @@ imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 trun vm create -n $vmname $distro --msize 4096 -p vim --nointeract -I=$imgf -f --xdisk=16,xfs,bus=sata --xdisk=16,xfs,bus=sata "$@"
 
-vm cpto -v $vmname /usr/bin/xfstests-install.sh /usr/bin/make-nfs-server.sh /usr/bin/.
-vm exec -v $vmname -- "xfstests-install.sh"
+vm cpto -v  $vmname /usr/bin/xfstests-install.sh /usr/bin/make-nfs-server.sh /usr/bin/.
+vm exec -vx $vmname -- "xfstests-install.sh" || exit 1
 
 #-------------------------------------------------------------------------------
 #prepare TEST_DEV TEST_DIR SCRATCH_DEV SCRATCH_MNT for xfstests
