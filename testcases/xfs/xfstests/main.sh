@@ -4,6 +4,11 @@
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
+#env
+#TESTS="generic/068 ..."
+#DIFFLEN=-0
+#NOURING=yes
+
 [[ $1 != -* ]] && { distro="$1"; shift 1; }; at=("$@")
 distro=${distro:-9}
 vmname=fstest; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=${at[$((i+1))]}; done
@@ -16,7 +21,7 @@ trun vm create -n $vmname $distro --msize 4096 -p git,tmux,vim --nointeract -I=$
 	--xdisk=16,xfs,bus=sata --xdisk=16,xfs,bus=sata --xdisk=16,xfs,bus=sata "$@"
 
 vm cpto -v  $vmname /usr/bin/xfstests-install.sh /usr/bin/make-nfs-server.sh /usr/bin/.
-vm exec -vx $vmname -- "xfstests-install.sh" || exit 1
+vm exec -vx $vmname -- "xfstests-install.sh $NOURING" || exit 1
 
 #-------------------------------------------------------------------------------
 #prepare TEST_DEV TEST_DIR SCRATCH_DEV SCRATCH_MNT for xfstests
