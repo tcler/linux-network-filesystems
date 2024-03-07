@@ -8,6 +8,7 @@
 #TESTS="generic/068 ..."
 #DIFFLEN=-0
 #NOURING=yes
+#FSTYPE=xfs
 
 [[ $1 != -* ]] && { distro="$1"; shift 1; }; at=("$@")
 distro=${distro:-9}
@@ -17,8 +18,9 @@ vmname=fstest; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=${at[
 stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
+fs=${FSTYPE:-xfs}
 trun vm create -n $vmname $distro --msize 4096 -p git,tmux,vim --nointeract -I=$imgf -f \
-	--xdisk=16,xfs,bus=sata --xdisk=16,xfs,bus=sata --xdisk=16,xfs,bus=sata "$@"
+	--xdisk=16,${fs},bus=sata --xdisk=16,${fs},bus=sata --xdisk=16,${fs},bus=sata "$@"
 
 vm cpto -v  $vmname /usr/bin/xfstests-install.sh /usr/bin/make-nfs-server.sh /usr/bin/.
 vm exec -vx $vmname -- "xfstests-install.sh $NOURING" || exit 1
