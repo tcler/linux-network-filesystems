@@ -9,6 +9,7 @@
 #DIFFLEN=-0
 #NOURING=yes
 #FSTYPE=xfs
+#MKFS_OPTS=
 
 [[ $1 != -* ]] && { distro="$1"; shift 1; }; at=("$@")
 distro=${distro:-9}
@@ -19,6 +20,8 @@ stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 fs=${FSTYPE:-xfs}
+mkfsOpt="${MKFS_OPTS} "
+case $fs in ext*) mkfsOpt+=-F;; btrfs|xfs) mkfsOpt+=-f;; esac
 trun vm create -n $vmname $distro --msize 4096 -p git,tmux,vim --nointeract -I=$imgf -f \
 	--xdisk=16,${fs},bus=sata --xdisk=16,${fs},bus=sata --xdisk=16,${fs},bus=sata "$@"
 
@@ -36,6 +39,7 @@ export SCRATCH_DEV=/dev/sdb1
 export SCRATCH_MNT=/mnt/xfstests_scratch
 export LOGWRITES_DEV=/dev/sdc1
 EOF"
+[[ -n "$MKFS_OPTS" ]] && vm exec -vx $vmname -- 'for dev in /dev/sd{a..c}1; do '"mkfs.${fs} $mkfsOpt"' $dev; done'
 
 distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
 resdir=~/testres/$distro/nfstest
