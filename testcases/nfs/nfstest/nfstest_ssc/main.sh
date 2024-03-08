@@ -9,7 +9,7 @@ nfsserv2=nfs-server2
 nfsclnt=nfs-client
 
 #download image file
-stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
+stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 #create nfs server,client vm

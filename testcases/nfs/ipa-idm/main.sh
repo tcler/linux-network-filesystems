@@ -16,7 +16,7 @@ ipaclnt=ipa-client
 password=redhat123
 
 ### __prepare__ test env build
-stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
+stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 trun -tmux=$$-ipaserv vm create -n $ipaserv $distro --msize 4096 -p firewalld,bind-utils,expect,vim,tomcat,NetworkManager,sssd-tools --nointeract -I=$imgf -f "$@"

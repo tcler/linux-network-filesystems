@@ -6,7 +6,7 @@
 
 distro=${1:-9}; shift
 
-stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
+stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 if [[ ! -f "$imgf" ]]; then
 	echo "{WARN} seems cloud image file download fail." >&2

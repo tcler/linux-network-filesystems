@@ -12,7 +12,7 @@ nfsservd=nfs-serv-dst
 nfsclnt=nfs-client
 
 ### __prepare__ test env build
-stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
+stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 trun -tmux=- vm create -n $nfsservs $distro -p bind-utils,vim,nfs-utils --nointeract -I=$imgf -f "$@"

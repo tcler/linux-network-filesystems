@@ -11,7 +11,7 @@ vmclntx=nfs-clientx
 vmclnt=nfs-client
 
 #download image file
-stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
+stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 trun -tmux vm create $distro -n $vmserv -m 4G -f -nointeract -p vim,nfs-utils,wireshark -I=$imgf "$@"

@@ -15,7 +15,7 @@ nfsclnt=nfs-client
 password=redhat123
 
 ### download vm image
-stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
+stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 ### __prepare__ test env build: create vm

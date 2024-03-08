@@ -8,7 +8,7 @@ nfsclnt=nfs-client
 nfsmp=/mnt/nfsmp
 
 #download image file
-stdlog=$(trun vm create $distro --downloadonly |& tee /dev/tty)
+stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 #create vm as nfs client
