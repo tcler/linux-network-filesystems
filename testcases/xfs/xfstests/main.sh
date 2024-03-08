@@ -9,7 +9,7 @@
 #DIFFLEN=-0
 #NOURING=yes
 #FSTYPE=xfs
-#MKFS_OPTS=
+#MKFS_OPTIONS=
 #MOUNT_OPTIONS=
 
 [[ $1 != -* ]] && { distro="$1"; shift 1; }; at=("$@")
@@ -21,7 +21,7 @@ stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 fs=${FSTYPE:-xfs}
-mkfsOpt="${MKFS_OPTS} "
+mkfsOpt="${MKFS_OPTIONS} "
 case $fs in ext*) mkfsOpt+=-F;; btrfs|xfs) mkfsOpt+=-f;; esac
 trun vm create -n $vmname $distro --msize 4096 -p git,tmux,vim --nointeract -I=$imgf -f \
 	--xdisk=16,${fs} --xdisk=16,${fs} --xdisk=16,${fs} "$@"
@@ -41,9 +41,10 @@ export TEST_DIR=/mnt/xfstests_test
 export SCRATCH_DEV=/dev/${devs[1]}
 export SCRATCH_MNT=/mnt/xfstests_scratch
 export LOGWRITES_DEV=/dev/${devs[2]}
-export MOUNT_OPTIONS='${MOUNT_OPTION:--o dax}'
+export MKFS_OPTIONS='${MKFS_OPTIONS}'
+export MOUNT_OPTIONS='${MOUNT_OPTIONS}'
 EOF"
-[[ -n "$MKFS_OPTS" ]] && vm exec -vx $vmname -- "for dev in ${devs[@]}; do mkfs.${fs} $mkfsOpt /dev/\$dev; done"
+[[ -n "$MKFS_OPTIONS" ]] && vm exec -vx $vmname -- "for dev in ${devs[*]}; do mkfs.${fs} $mkfsOpt /dev/\$dev; done"
 
 distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
 resdir=~/testres/$distro/nfstest
