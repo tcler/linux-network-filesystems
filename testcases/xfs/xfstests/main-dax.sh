@@ -21,7 +21,7 @@ fs=${FSTYPE:-xfs}
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
-trun vm create -n $vmname $distro --msize 8G -p git,tmux,vim,ndctl --nointeract -I=$imgf -f \
+trun vm create -n $vmname $distro --msize 4G -p git,tmux,vim,ndctl --nointeract -I=$imgf -f \
 	--nvdimm='4098+2 4098+2' --xdisk=16,${fs} "$@"
 
 vm cpto -v  $vmname /usr/bin/xfstests-install.sh /usr/bin/make-nfs-server.sh /usr/bin/.
@@ -35,7 +35,7 @@ vm exec -v $vmname -- "useradd -m fsgqa; useradd 123456-fsgqa; useradd fsgqa2; g
 read logdev < <(vm exec -v $vmname -- lsblk -nio NAME,LABEL | awk '$2 ~ /.*xdisk[0-9]/{print substr($1,3)}')
 pdevs=(pmem0 pmem1)
 case ${fs} in
-xfs) MKFS_OPTIONS=${MKFS_OPTIONS:--m rmapbt=1,reflink=0 -d daxinherit=1};;
+xfs) MKFS_OPTIONS=${MKFS_OPTIONS:--m rmapbt=1,reflink=1 -d daxinherit=1};;
 esac
 MOUNT_OPTIONS=${MOUNT_OPTIONS:--o dax=always}
 vm exec -v $vmname -- "cat >/var/lib/xfstests/local.config <<EOF
