@@ -50,7 +50,7 @@ export MOUNT_OPTIONS='${MOUNT_OPTIONS}'
 EOF"
 [[ -n "$MKFS_OPTIONS" ]] && vm exec -vx $vmname -- "for dev in ${devs[*]}; do mkfs.${fs} $mkfsOpt /dev/\$dev; done"
 
-distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
+distro=$(vm homedir $vmname|awk -F/ 'NR==1{print $(NF-1)}')
 resdir=~/testres/$distro/xfstest
 mkdir -p $resdir
 {

@@ -58,7 +58,7 @@ vm exec -vx $vmname -- ndctl list
 vm exec -vx $vmname -- "for dev in ${pdevs[*]:0:2}; do mkfs.${fs} $MKFS_OPTIONS /dev/\${dev}; done"
 TESTS=${TESTS:--g dax}
 
-distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
+distro=$(vm homedir $vmname|awk -F/ 'NR==1{print $(NF-1)}')
 resdir=~/testres/$distro/xfstest
 mkdir -p $resdir
 {
