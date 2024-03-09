@@ -14,7 +14,7 @@
 
 [[ $1 != -* ]] && { distro="$1"; shift 1; }; at=("$@")
 distro=${distro:-9}
-vmname=fstest; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=${at[$((i+1))]}; done
+vmname=dax-fstest; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=${at[$((i+1))]}; done
 fs=${FSTYPE:-xfs}
 
 ### __prepare__ test env build
@@ -22,7 +22,7 @@ stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 trun vm create -n $vmname $distro --msize 8G -p git,tmux,vim,ndctl --nointeract -I=$imgf -f \
-	--nvdimm='1024+2 1024+2' --xdisk=16,${fs} --kernel-opts='memmap=10240M!4G memmap=10240M!6G' "$@"
+	--nvdimm='4098+2 4098+2' --xdisk=16,${fs} "$@"
 
 vm cpto -v  $vmname /usr/bin/xfstests-install.sh /usr/bin/make-nfs-server.sh /usr/bin/.
 vm exec -vx $vmname -- "xfstests-install.sh $NOURING" || exit 1
@@ -33,7 +33,7 @@ vm exec -v $vmname -- "mkdir -p /mnt/xfstests_test /mnt/xfstests_scratch"
 vm exec -v $vmname -- "useradd -m fsgqa; useradd 123456-fsgqa; useradd fsgqa2; groupadd fsgqa"
 
 read logdev < <(vm exec -v $vmname -- lsblk -nio NAME,LABEL | awk '$2 ~ /.*xdisk[0-9]/{print substr($1,3)}')
-pdevs=($(vm exec -v $vmname -- lsblk -nio NAME,SIZE | awk '/pmem/ && $2 ~ /[0-9]G/ {print $1}'))
+pdevs=(pmem0 pmem1)
 case ${fs} in
 xfs) MKFS_OPTIONS=${MKFS_OPTIONS:--m rmapbt=1,reflink=0 -d daxinherit=1};;
 esac
@@ -48,6 +48,9 @@ export MKFS_OPTIONS='${MKFS_OPTIONS}'
 export MOUNT_OPTIONS='${MOUNT_OPTIONS}'
 EOF"
 case $fs in ext*) MKFS_OPTIONS+=" -F";; btrfs|xfs) MKFS_OPTIONS+=" -f";; esac
+vm exec -vx $vmname -- ndctl list
+#ref: https://nvdimm.wiki.kernel.org  /convert all your raw mode namespaces to fsdax mode/
+vm exec -vx $vmname -- 'for n in $(ndctl list | grep -o namespace...); do ndctl create-namespace -f -e $n --mode=memory; done'
 vm exec -vx $vmname -- ndctl list
 vm exec -vx $vmname -- "for dev in ${pdevs[*]:0:2}; do mkfs.${fs} $MKFS_OPTIONS /dev/\${dev}; done"
 TESTS=${TESTS:--g dax}
