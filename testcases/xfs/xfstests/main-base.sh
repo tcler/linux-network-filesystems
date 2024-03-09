@@ -21,12 +21,16 @@ stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 fs=${FSTYPE:-xfs}
+case ${fs} in
+xfs) MKFS_OPTIONS=${MKFS_OPTIONS:--m rmapbt=1,reflink=1};;
+esac
 mkfsOpt="${MKFS_OPTIONS} "
 case $fs in ext*) mkfsOpt+=-F;; btrfs|xfs) mkfsOpt+=-f;; esac
 trun vm create -n $vmname $distro --msize 4096 -p git,tmux,vim --nointeract -I=$imgf -f \
 	--xdisk=16,${fs} --xdisk=16,${fs} --xdisk=16,${fs} "$@"
 
-vm cpto -v  $vmname /usr/bin/xfstests-install.sh /usr/bin/make-nfs-server.sh /usr/bin/.
+vm cpto -v  $vmname /usr/bin/xfstests-install.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/.
+vm exec -vx $vmname -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
 vm exec -vx $vmname -- "xfstests-install.sh $NOURING" || exit 1
 
 #-------------------------------------------------------------------------------

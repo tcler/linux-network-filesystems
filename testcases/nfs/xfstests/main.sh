@@ -27,7 +27,8 @@ servaddr=$(vm ifaddr $nfsserv)
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh .
 tmux new -s nfsServer -d "vm exec -v $nfsserv -- bash make-nfs-server.sh"
 
-vm cpto -v  $nfsclnt /usr/bin/xfstests-install.sh /usr/bin/.
+vm cpto -v  $nfsclnt /usr/bin/xfstests-install.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/.
+vm exec -vx $nfsclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
 vm exec -vx $nfsclnt -- "xfstests-install.sh $NOURING" || exit 1
 
 while tmux ls | grep nfsServer; do sleep 8; done

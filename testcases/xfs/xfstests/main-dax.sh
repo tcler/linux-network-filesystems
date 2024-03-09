@@ -34,7 +34,9 @@ vm exec -v $vmname -- "useradd -m fsgqa; useradd 123456-fsgqa; useradd fsgqa2; g
 
 read logdev < <(vm exec -v $vmname -- lsblk -nio NAME,LABEL | awk '$2 ~ /.*xdisk[0-9]/{print substr($1,3)}')
 pdevs=($(vm exec -v $vmname -- lsblk -nio NAME,SIZE | awk '/pmem/ && $2 ~ /[0-9]G/ {print $1}'))
-MKFS_OPTIONS=${MKFS_OPTIONS:--m rmapbt=1,reflink=0 -d daxinherit=1}
+case ${fs} in
+xfs) MKFS_OPTIONS=${MKFS_OPTIONS:--m rmapbt=1,reflink=0 -d daxinherit=1};;
+esac
 MOUNT_OPTIONS=${MOUNT_OPTIONS:--o dax=always}
 vm exec -v $vmname -- "cat >/var/lib/xfstests/local.config <<EOF
 export TEST_DEV=/dev/${pdevs[0]}
