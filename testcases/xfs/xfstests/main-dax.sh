@@ -51,10 +51,10 @@ vm exec -vx $vmname -- "for dev in ${pdevs[*]:0:2}; do mkfs.${fs} $MKFS_OPTIONS 
 TESTS=${TESTS:--g dax}
 
 distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-resdir=~/testres/$distro/nfstest
+resdir=~/testres/$distro/xfstest
 mkdir -p $resdir
 {
   vm exec -v $vmname -- uname -r;
   #vm exec -v $vmname -- "cd /var/lib/xfstests/; ./check -n -g auto;"
   vm exec -v $vmname -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check ${TESTS};"
-} |& tee $resdir/xfstests-xfs.log
+} |& tee $resdir/xfstests-${fs}-dax.log

@@ -45,7 +45,7 @@ export SCRATCH_MNT=/mnt/xfstests_scratch
 EOF"
 
 distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-resdir=~/testres/$distro/nfstest
+resdir=~/testres/$distro/xfstest
 mkdir -p $resdir
 {
   vm exec -v $nfsclnt -- uname -r;
