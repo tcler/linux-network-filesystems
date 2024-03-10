@@ -22,7 +22,7 @@ stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
 trun vm create -n $vmname $distro --msize 4G -p git,tmux,vim,ndctl --nointeract -I=$imgf -f \
-	--nvdimm='4098+2 4098+2' --xdisk=16,${fs} "$@"
+	--nvdimm='4098+2 4098+2' --xdisk=16,${fs} "$@" || exit $?
 
 vm cpto -v  $vmname /usr/bin/xfstests-install.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/.
 vm exec -vx $vmname -- "xfstests-install.sh $NOURING" || exit 1
