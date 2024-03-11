@@ -24,6 +24,12 @@ imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 trun vm create -n $vmname $distro --msize 4G -p git,tmux,vim,ndctl --nointeract -I=$imgf -f \
 	--nvdimm='4098+2 4098+2' --xdisk=16,${fs} "$@" || exit $?
 
+[[ ${fs} = xfs ]] && grep -q '.?-b  *upk' <<<"${*}" && xfsprogs_upstream=yes
+[[ "$xfsprogs_upstream" = yes ]] && {
+	vm cpto -v  $vmname /usr/bin/xfsprogs-upstream-install.sh  /usr/bin/.
+	vm exec -vx $vmname -- "xfsprogs-upstream-install.sh nouring=$NOURING" || exit 1
+}
+
 vm cpto -v  $vmname /usr/bin/xfstests-install.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/.
 vm exec -vx $vmname -- "xfstests-install.sh $NOURING" || exit 1
 

@@ -15,23 +15,30 @@
 [[ $1 != -* ]] && { distro="$1"; shift 1; }; at=("$@")
 distro=${distro:-9}
 vmname=fstest; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=${at[$((i+1))]}; done
+fs=${FSTYPE:-xfs}
 
 ### __prepare__ test env build
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
-fs=${FSTYPE:-xfs}
 case ${fs} in
-xfs) MKFS_OPTIONS=${MKFS_OPTIONS:--m rmapbt=1,reflink=1};;
+xfs)
+	MKFS_OPTIONS=${MKFS_OPTIONS:--m rmapbt=1,reflink=1}
+	grep -q '.?-b  *upk' <<<"${*}" && xfsprogs_upstream=yes
+	;;
 esac
 mkfsOpt="${MKFS_OPTIONS} "
 case $fs in ext*) mkfsOpt+=-F;; btrfs|xfs) mkfsOpt+=-f;; esac
 trun vm create -n $vmname $distro --msize 4096 -p git,tmux,vim --nointeract -I=$imgf -f \
 	--xdisk=16,${fs} --xdisk=16,${fs} --xdisk=16,${fs} "$@" || exit $?
 
+[[ "$xfsprogs_upstream" = yes ]] && {
+	vm cpto -v  $vmname /usr/bin/xfsprogs-upstream-install.sh  /usr/bin/.
+	vm exec -vx $vmname -- "xfsprogs-upstream-install.sh nouring=$NOURING" || exit 1
+}
 vm cpto -v  $vmname /usr/bin/xfstests-install.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/.
 vm exec -vx $vmname -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
-vm exec -vx $vmname -- "xfstests-install.sh $NOURING" || exit 1
+vm exec -vx $vmname -- "xfstests-install.sh nouring=$NOURING" || exit 1
 
 #-------------------------------------------------------------------------------
 #prepare TEST_DEV TEST_DIR SCRATCH_DEV SCRATCH_MNT for xfstests
