@@ -42,7 +42,7 @@ trun vm create -n $vmname $distro --msize 4G -p $pkglist --nointeract ${insOpt} 
 	vm exec -vx $vmname -- "xfsprogs-upstream-install.sh nouring=$NOURING" || exit 1
 }
 vm cpto -v  $vmname /usr/bin/xfstests-install.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/.
-vm exec -vx $vmname -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
+vm exec -vx $vmname -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils devscripts-checkbashisms'
 vm exec -vx $vmname -- "xfstests-install.sh nouring=$NOURING" || exit 1
 
 #-------------------------------------------------------------------------------
@@ -59,6 +59,7 @@ export SCRATCH_MNT=/mnt/xfstests_scratch
 export LOGWRITES_DEV=/dev/${devs[2]}
 export MKFS_OPTIONS='${MKFS_OPTIONS}'
 export MOUNT_OPTIONS='${MOUNT_OPTIONS}'
+export WORKAREA=/var/lib/xfstests
 EOF"
 [[ -n "$MKFS_OPTIONS" ]] && vm exec -vx $vmname -- "for dev in ${devs[*]}; do mkfs.${fs} $mkfsOpt /dev/\$dev; done"
 

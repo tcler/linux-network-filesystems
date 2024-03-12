@@ -47,6 +47,7 @@ export TEST_DEV=$servaddr:/nfsshare/qe
 export TEST_DIR=/mnt/xfstests_test
 export SCRATCH_DEV=$servaddr:/nfsshare/devel
 export SCRATCH_MNT=/mnt/xfstests_scratch
+export WORKAREA=/var/lib/xfstests
 EOF"
 
 distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')

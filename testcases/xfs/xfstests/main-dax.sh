@@ -59,6 +59,7 @@ export SCRATCH_MNT=/mnt/xfstests_scratch
 export LOGWRITES_DEV=/dev/$logdev
 export MKFS_OPTIONS='${MKFS_OPTIONS}'
 export MOUNT_OPTIONS='${MOUNT_OPTIONS}'
+export WORKAREA=/var/lib/xfstests
 EOF"
 case $fs in ext*) MKFS_OPTIONS+=" -F";; btrfs|xfs) MKFS_OPTIONS+=" -f";; esac
 vm exec -vx $vmname -- ndctl list
