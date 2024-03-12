@@ -16,6 +16,7 @@
 distro=${distro:-9}
 vmname=fstest; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=${at[$((i+1))]}; done
 fs=${FSTYPE:-xfs}
+pkglist=git,tmux,vim
 
 ### __prepare__ test env build
 if [[ "${*}" != *-L* && "${*}" != *--location ]]; then
@@ -28,11 +29,12 @@ case ${fs} in
 xfs)
 	MKFS_OPTIONS=${MKFS_OPTIONS:--m rmapbt=1,reflink=1}
 	grep -q '.?-b  *upk' <<<"${*}" && xfsprogs_upstream=yes
+	pkglist+=,xfsdump
 	;;
 esac
 mkfsOpt="${MKFS_OPTIONS} "
 case $fs in ext*) mkfsOpt+=-F;; btrfs|xfs) mkfsOpt+=-f;; esac
-trun vm create -n $vmname $distro --msize 4G -p git,tmux,vim --nointeract ${insOpt} -f \
+trun vm create -n $vmname $distro --msize 4G -p $pkglist --nointeract ${insOpt} -f \
 	--xdisk=16,${fs} --xdisk=16,${fs} --xdisk=16,${fs} --ks-only-use='vda' "$@" || exit $?
 
 [[ "$xfsprogs_upstream" = yes ]] && {

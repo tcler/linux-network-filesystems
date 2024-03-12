@@ -13,6 +13,7 @@
 distro=${distro:-9}
 nfsserv=nfs-server
 nfsclnt=nfs-client
+pkglist=vim,nfs-utils,tmux
 
 #download image file
 if [[ "${*}" != *-L* && "${*}" != *--location ]]; then
@@ -21,8 +22,8 @@ if [[ "${*}" != *-L* && "${*}" != *--location ]]; then
 	insOpt="-I=$imgf"
 fi
 
-trun -tmux vm create $distro -n $nfsserv -m 4G -f -nointeract -p vim,nfs-utils,tmux     $insOpt "$@"
-trun       vm create $distro -n $nfsclnt -m 4G -f -nointeract -p vim,nfs-utils,tmux,git $insOpt "$@" || exit $?
+trun -tmux vm create $distro -n $nfsserv -m 4G -f -nointeract -p ${pkglist}     $insOpt "$@"
+trun       vm create $distro -n $nfsclnt -m 4G -f -nointeract -p ${pkglist},git $insOpt "$@" || exit $?
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 10; done
 servaddr=$(vm ifaddr $nfsserv)

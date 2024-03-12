@@ -16,6 +16,7 @@
 distro=${distro:-9}
 vmname=dax-fstest; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=${at[$((i+1))]}; done
 fs=${FSTYPE:-xfs}
+pkglist=git,tmux,vim,ndctl
 
 ### __prepare__ test env build
 if [[ "${*}" != *-L* && "${*}" != *--location ]]; then
@@ -24,7 +25,7 @@ if [[ "${*}" != *-L* && "${*}" != *--location ]]; then
 	insOpt="-I=$imgf"
 fi
 
-trun vm create -n $vmname $distro --msize 4G -p git,tmux,vim,ndctl --nointeract ${insOpt} -f \
+trun vm create -n $vmname $distro --msize 4G -p $pkglist --nointeract ${insOpt} -f \
 	--nvdimm='4098+2 4098+2' --xdisk=16,${fs} --ks-only-use='vda' "$@" || exit $?
 
 [[ ${fs} = xfs ]] && grep -q '.?-b  *upk' <<<"${*}" && xfsprogs_upstream=yes
