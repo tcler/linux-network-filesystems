@@ -18,11 +18,14 @@ vmname=dax-fstest; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=$
 fs=${FSTYPE:-xfs}
 
 ### __prepare__ test env build
-stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
+if [[ "${*}" != *-L* && "${*}" != *--location ]]; then
+	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
+	imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
+	insOpt="-I=$imgf"
+fi
 
-trun vm create -n $vmname $distro --msize 4G -p git,tmux,vim,ndctl --nointeract -I=$imgf -f \
-	--nvdimm='4098+2 4098+2' --xdisk=16,${fs} "$@" || exit $?
+trun vm create -n $vmname $distro --msize 4G -p git,tmux,vim,ndctl --nointeract ${insOpt} -f \
+	--nvdimm='4098+2 4098+2' --xdisk=16,${fs} --ks-only-use='vda' "$@" || exit $?
 
 [[ ${fs} = xfs ]] && grep -q '.?-b  *upk' <<<"${*}" && xfsprogs_upstream=yes
 [[ "$xfsprogs_upstream" = yes ]] && {

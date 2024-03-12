@@ -18,8 +18,11 @@ vmname=fstest; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=${at[
 fs=${FSTYPE:-xfs}
 
 ### __prepare__ test env build
-stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
+if [[ "${*}" != *-L* && "${*}" != *--location ]]; then
+	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
+	imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
+	insOpt="-I=$imgf"
+fi
 
 case ${fs} in
 xfs)
@@ -29,8 +32,8 @@ xfs)
 esac
 mkfsOpt="${MKFS_OPTIONS} "
 case $fs in ext*) mkfsOpt+=-F;; btrfs|xfs) mkfsOpt+=-f;; esac
-trun vm create -n $vmname $distro --msize 4096 -p git,tmux,vim --nointeract -I=$imgf -f \
-	--xdisk=16,${fs} --xdisk=16,${fs} --xdisk=16,${fs} "$@" || exit $?
+trun vm create -n $vmname $distro --msize 4G -p git,tmux,vim --nointeract ${insOpt} -f \
+	--xdisk=16,${fs} --xdisk=16,${fs} --xdisk=16,${fs} --ks-only-use='vda' "$@" || exit $?
 
 [[ "$xfsprogs_upstream" = yes ]] && {
 	vm cpto -v  $vmname /usr/bin/xfsprogs-upstream-install.sh  /usr/bin/.

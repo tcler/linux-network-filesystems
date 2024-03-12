@@ -15,11 +15,14 @@ nfsserv=nfs-server
 nfsclnt=nfs-client
 
 #download image file
-stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
+if [[ "${*}" != *-L* && "${*}" != *--location ]]; then
+	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
+	imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
+	insOpt="-I=$imgf"
+fi
 
-trun -tmux vm create $distro -n $nfsserv -m 4G -f -nointeract -p vim,nfs-utils,tmux     -I=$imgf "$@"
-trun       vm create $distro -n $nfsclnt -m 4G -f -nointeract -p vim,nfs-utils,tmux,git -I=$imgf "$@" || exit $?
+trun -tmux vm create $distro -n $nfsserv -m 4G -f -nointeract -p vim,nfs-utils,tmux     $insOpt "$@"
+trun       vm create $distro -n $nfsclnt -m 4G -f -nointeract -p vim,nfs-utils,tmux,git $insOpt "$@" || exit $?
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 10; done
 servaddr=$(vm ifaddr $nfsserv)
