@@ -29,7 +29,7 @@ case ${fs} in
 xfs)
 	MKFS_OPTIONS=${MKFS_OPTIONS:--m rmapbt=1,reflink=1}
 	grep -q '.?-b  *upk' <<<"${*}" && xfsprogs_upstream=yes
-	pkglist+=,xfsdump
+	pkglist+=,xfsdump,xfsprogs-xfs_scrub
 	;;
 esac
 mkfsOpt="${MKFS_OPTIONS} "
