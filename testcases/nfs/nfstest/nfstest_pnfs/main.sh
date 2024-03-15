@@ -4,7 +4,7 @@
 
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
-nfsclnt=nfs-client
+nfsclnt=nfstest-rhel-client
 nfsmp=/mnt/nfsmp
 
 #download image file
@@ -15,7 +15,7 @@ imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 trun -tmux vm create $distro -n $nfsclnt -m 4G -f -nointeract --net ontap2-data -p nfs-utils,expect,iproute-tc,kernel-modules-extra -I=$imgf "$@"
 
 #create netapp ontap-simulator
-trun -x0 make-ontap-simulator.sh || exit $?
+trun -x0 make-ontap-simulator.sh $distro $nfsclnt || exit $?
 
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 16; done
@@ -33,7 +33,8 @@ vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
 vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
 
 distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-resdir=~/testres/$distro/nfstest
+distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
+resdir=~/testres/$distrodir/nfstest
 mkdir -p $resdir
 {
   vm exec -v $nfsclnt -- uname -r;

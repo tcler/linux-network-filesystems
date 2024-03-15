@@ -11,8 +11,8 @@
 
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
-nfsserv=nfs-server
-nfsclnt=nfs-client
+nfsserv=fstest-nfsserv
+nfsclnt=fstest-nfsclnt
 pkglist=vim,nfs-utils,tmux
 
 #download image file
@@ -57,3 +57,5 @@ mkdir -p $resdir
   vm exec -v $nfsclnt -- uname -r;
   vm exec -v $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
 } |& tee $resdir/xfstests-nfs.log
+
+vm stop $nfsserv $nfsclnt

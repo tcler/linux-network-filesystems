@@ -14,8 +14,8 @@
 
 [[ $1 != -* ]] && { distro="$1"; shift 1; }; at=("$@")
 distro=${distro:-9}
-vmname=dax-fstest; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=${at[$((i+1))]}; done
 fs=${FSTYPE:-xfs}
+vmname=dax-fstest-${fs}; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=${at[$((i+1))]}; done
 pkglist=git,tmux,vim,ndctl
 
 ### __prepare__ test env build
@@ -70,7 +70,8 @@ vm exec -vx $vmname -- "for dev in ${pdevs[*]:0:2}; do mkfs.${fs} $MKFS_OPTIONS 
 TESTS=${TESTS:--g dax}
 
 distro=$(vm homedir $vmname|awk -F/ 'NR==1{print $(NF-1)}')
-resdir=~/testres/$distro/xfstest
+distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
+resdir=~/testres/$distrodir/xfstest
 mkdir -p $resdir
 {
   vm exec -v $vmname -- uname -r;

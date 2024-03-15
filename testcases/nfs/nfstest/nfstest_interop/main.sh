@@ -5,8 +5,8 @@
 #create nfs-server vm
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
-nfsserv=nfs-server
-nfsclnt=nfs-client
+nfsserv=nfstest-serv
+nfsclnt=nfstest-clnt
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
@@ -35,9 +35,12 @@ vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
 vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
 
 distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-resdir=~/testres/$distro/nfstest
+distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
+resdir=~/testres/$distrodir/nfstest
 mkdir -p $resdir
 {
   vm exec -v $nfsclnt -- uname -r;
   vm exec -v $nfsclnt -- nfstest_interop --server ${servaddr} --export=${expdir} --nfsversion=4.2;
 } |& tee $resdir/interop.log
+
+vm stop $nfsserv $nfsclnt

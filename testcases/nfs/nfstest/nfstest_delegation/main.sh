@@ -6,9 +6,9 @@
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
 passwd=redhat
-vmserv=nfs-server
-vmclntx=nfs-clientx
-vmclnt=nfs-client
+vmserv=nfstest-serv
+vmclnt=nfstest-clnt
+vmclntx=nfstest-clntx
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
@@ -37,9 +37,12 @@ vm exec -v $vmclnt -- bash ssh-copy-id.sh $clntxaddr root redhat
 vm exec -v $vmclnt -- ip link set "$NIC" promisc on
 
 distro=$(vm homedir $vmclnt|awk -F/ 'NR==1{print $(NF-1)}')
-resdir=~/testres/$distro/nfstest
+distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
+resdir=~/testres/$distrodir/nfstest
 mkdir -p $resdir
 {
   vm exec -v $vmclnt -- uname -r;
   vm exec -v $vmclnt -- nfstest_delegation --server=$servaddr --export=$expdir --nfsversion=4.2 --client $clntxaddr --client-nfsvers=4.0,4.1,4.2;
 } |& tee $resdir/delegation.log
+
+vm stop $vmserv $vmclnt $vmclntx

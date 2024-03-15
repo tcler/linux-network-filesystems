@@ -5,8 +5,8 @@
 #create nfs-server vm
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
-nfsserv=nfs-server
-nfsclnt=nfs-client
+nfsserv=pynfs-server
+nfsclnt=pynfs-client
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
@@ -34,7 +34,8 @@ vm exec -v $nfsclnt -- install-pynfs.sh
 vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
 
 distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-resdir=~/testres/$distro/pynfs
+distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
+resdir=~/testres/$distrodir/pynfs
 mkdir -p $resdir
 {
   vm exec -v $nfsclnt -- uname -r;

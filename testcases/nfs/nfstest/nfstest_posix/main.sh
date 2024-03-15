@@ -35,7 +35,8 @@ vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
 vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
 
 distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-resdir=~/testres/$distro/nfstest
+distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
+resdir=~/testres/$distrodir/nfstest
 mkdir -p $resdir
 {
   vm exec -v $nfsclnt -- uname -r;

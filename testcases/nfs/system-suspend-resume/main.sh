@@ -6,8 +6,8 @@
 
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
-nfsserv=nfs-serv-sr
-nfsclnt=nfs-clnt-sr
+nfsserv=nfs-suspend-serv
+nfsclnt=nfs-suspend-clnt
 
 ### __prepare__ test env build
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
@@ -81,3 +81,5 @@ vm vnc "$nfsserv" -putln ""
 
 trun port-available.sh $serv_addr 22 -w
 vm exec -vx1-255 $nfsserv -- 'dmesg|grep Freezing.of.tasks.failed.after'
+
+vm stop $nfsserv $nfsclnt

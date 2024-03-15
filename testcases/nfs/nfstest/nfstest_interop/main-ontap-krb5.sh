@@ -3,7 +3,7 @@
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
 distro=${1:-9}
-clientvm=${2:-rhel-client}
+clientvm=${2:-nfstest-rhel-clnt}
 if [[ $# -ge 2 ]]; then
 	shift 2
 elif [[ $# -ge 1 ]]; then
@@ -23,7 +23,8 @@ ONTAP_ENV_FILE=/tmp/ontap2info.env
 source "$ONTAP_ENV_FILE"
 
 distro=$(vm homedir $clientvm|awk -F/ 'NR==1{print $(NF-1)}')
-resdir=~/testres/nfstest/$distro
+distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
+resdir=~/testres/$distrodir/nfstest
 mkdir -p $resdir
 {
   vm exec -v  $clientvm -- uname -r;

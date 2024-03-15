@@ -14,8 +14,8 @@
 
 [[ $1 != -* ]] && { distro="$1"; shift 1; }; at=("$@")
 distro=${distro:-9}
-vmname=fstest; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=${at[$((i+1))]}; done
 fs=${FSTYPE:-xfs}
+vmname=fstest-${fs}; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=${at[$((i+1))]}; done
 pkglist=git,tmux,vim
 
 ### __prepare__ test env build
@@ -64,7 +64,8 @@ EOF"
 [[ -n "$MKFS_OPTIONS" ]] && vm exec -vx $vmname -- "for dev in ${devs[*]}; do mkfs.${fs} $mkfsOpt /dev/\$dev; done"
 
 distro=$(vm homedir $vmname|awk -F/ 'NR==1{print $(NF-1)}')
-resdir=~/testres/$distro/xfstest
+distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
+resdir=~/testres/$distrodir/xfstest
 mkdir -p $resdir
 {
   vm exec -v $vmname -- uname -r;

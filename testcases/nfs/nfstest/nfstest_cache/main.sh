@@ -5,9 +5,9 @@
 #create nfs-server vm
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
-nfsserv=nfs-server
-nfsclntx=nfs-clientx
-nfsclnt=nfs-client
+nfsserv=nfstest-serv
+nfsclnt=nfstest-clnt
+nfsclntx=nfstest-clntx
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
@@ -36,15 +36,20 @@ vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin
 vm exec -v $nfsclnt -- install-nfstest.sh
 vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 vm exec -v foo@$nfsclnt -- ssh-copy-id.sh $servaddr foo redhat
+vm exec -v foo@$nfsclnt -- ssh-copy-id.sh $servaddr root redhat
+vm exec -v foo@$nfsclnt -- ssh-copy-id.sh $clntxaddr foo redhat
 vm exec -v foo@$nfsclnt -- ssh-copy-id.sh $clntxaddr root redhat
 
 vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
 vm exec -v $nfsclnt -- usermod -a -G nobody foo
 
 distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-resdir=~/testres/$distro/nfstest
+distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
+resdir=~/testres/$distrodir/nfstest
 mkdir -p $resdir
 {
   vm exec -v foo@$nfsclnt -- uname -r;
   vm exec -v foo@$nfsclnt -- nfstest_cache --server $servaddr --client $clntxaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2;
 } |& tee $resdir/cache.log
+
+vm stop $nfsserv $nfsclnt $nfsclntx
