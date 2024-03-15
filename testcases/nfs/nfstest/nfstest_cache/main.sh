@@ -17,7 +17,7 @@ trun -tmux vm create $distro -n $nfsserv -m 4G -f -nointeract -p vim,nfs-utils,t
 trun -tmux vm create $distro -n $nfsclntx -m 4G -f -nointeract -p vim,nfs-utils,wireshark,python3 -I=$imgf "$@"
 trun       vm create $distro -n $nfsclnt -m 4G -f -nointeract -p vim,nfs-utils,wireshark,expect,iproute-tc,kernel-modules-extra -I=$imgf "$@"
 echo "{INFO} waiting all vm create process finished ..."
-while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 16; done
+while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh .
 vm exec -v $nfsserv -- bash make-nfs-server.sh

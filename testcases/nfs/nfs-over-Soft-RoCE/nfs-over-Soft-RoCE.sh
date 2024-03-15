@@ -19,7 +19,7 @@ vmclnt=nfs-o-soft-roce-clnt
 trun -tmux vm create -n $vmserv -p libibverbs-utils,perftest,iproute,tmux -f $distro -i $imgf --nointeract "$@"
 trun       vm create -n $vmclnt -p libibverbs-utils,perftest,iproute      -f $distro -i $imgf --nointeract "$@"
 echo "{INFO} waiting all vm create process finished ..."
-while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 16; done
+while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
 vm exec -v $vmserv -- modprobe rdma_rxe
 vm exec -v $vmserv -- rdma link add rxe0 type rxe netdev eth0

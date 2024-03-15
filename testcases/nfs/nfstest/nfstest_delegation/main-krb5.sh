@@ -24,7 +24,7 @@ trun -tmux vm create -n $nfsserv  $distro --msize 4096 -p vim,nfs-utils,bind-uti
 trun -tmux vm create -n $nfsclntx $distro --msize 4096 -p vim,nfs-utils,bind-utils,NetworkManager,python3 --nointeract -I=$imgf -f --kdump "$@"
 trun       vm create -n $nfsclnt $distro --msize 4096 -p vim,nfs-utils,bind-utils,NetworkManager,expect,iproute-tc,kernel-modules-extra --nointeract -I=$imgf -f --kdump "$@"
 echo "{INFO} waiting all vm create process finished ..."
-while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 10; done
+while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
 ### __prepare__ test env build: install requirements: ipa-server/ipa-client
 vm cpto $ipaserv  /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.
@@ -37,7 +37,7 @@ trun -tmux vm exec -v $nfsclnt -- "systemctl enable NetworkManager; systemctl st
 trun -tmux vm exec -v $nfsclntx -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
 trun       vm exec -v $ipaserv -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-server-install.sh"
 echo "{INFO} waiting all vm exec process finished ..."
-while ps axf|grep tmux.new.*-d.vm.exe[c].*.ipa-.*-install.sh; do sleep 10; done
+while ps axf|grep tmux.new.*$$-$USER.*-d.vm.exe[c].*.ipa-.*-install.sh; do sleep 16; done
 
 #-------------------------------------------------------------------------------
 #configure ipa-server

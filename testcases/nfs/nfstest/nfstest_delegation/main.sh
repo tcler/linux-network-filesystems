@@ -17,6 +17,8 @@ imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 trun -tmux vm create $distro -n $vmserv -m 4G -f -nointeract -p vim,nfs-utils,wireshark -I=$imgf "$@"
 trun -tmux vm create $distro -n $vmclntx -m 4G -f -nointeract -p vim,nfs-utils,wireshark,python3 -I=$imgf "$@"
 trun       vm create $distro -n $vmclnt -m 4G -f -nointeract -p vim,nfs-utils,wireshark,expect,iproute-tc,kernel-modules-extra -I=$imgf "$@"
+while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
+
 vm cpto -v $vmserv /usr/bin/make-nfs-server.sh .
 vm exec -v $vmserv -- bash make-nfs-server.sh
 vm exec -v $vmserv -- mkdir -p /nfsshare/rw/testdir

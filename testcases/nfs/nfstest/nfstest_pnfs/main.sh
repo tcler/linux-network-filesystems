@@ -18,7 +18,7 @@ trun -tmux vm create $distro -n $nfsclnt -m 4G -f -nointeract --net ontap2-data 
 trun -x0 make-ontap-simulator.sh $distro $nfsclnt || exit $?
 
 echo "{INFO} waiting all vm create process finished ..."
-while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 16; done
+while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
 servaddr=192.168.20.21
 vm exec -v $nfsclnt -- showmount -e $servaddr

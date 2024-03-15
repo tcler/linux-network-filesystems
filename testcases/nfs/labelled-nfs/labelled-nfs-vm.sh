@@ -43,7 +43,7 @@ vmnfsclnt=nfsclnt
 trun -tmux vm create $distro -n $vmnfsserv -p nfs-utils --net $NET --nointeract --saveimage $VMOPT $FORCE_OPT "$@"
 trun       vm create $distro -n $vmnfsclnt -p nfs-utils --net $NET --nointeract --saveimage $VMOPT $FORCE_OPT "$@"
 echo "{INFO} waiting all vm create process finished ..."
-while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 16; done
+while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 vm -v exec $vmnfsserv -- systemctl stop firewalld
 vm -v exec $vmnfsclnt -- systemctl stop firewalld
 vm -v exec $vmnfsserv -- ln -sf /opt /optlink

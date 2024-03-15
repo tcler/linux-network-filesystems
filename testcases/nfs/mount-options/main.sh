@@ -15,7 +15,7 @@ vmclnt=nfs-client
 trun -tmux vm create $distro -n $vmserv -f -nointeract -p 'nfs-utils wireshark tmux' "$@"
 trun       vm create $distro -n $vmclnt -f -nointeract -p 'nfs-utils wireshark tmux' "$@"
 echo "{INFO} waiting all vm create process finished ..."
-while ps axf|grep tmux.new.*-d.vm.creat[e]; do sleep 16; done
+while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
 vm -v cpto $vmserv /usr/bin/make-nfs-server.sh .
 vm -v exec $vmserv -- bash make-nfs-server.sh
