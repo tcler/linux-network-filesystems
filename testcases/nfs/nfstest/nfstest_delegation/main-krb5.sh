@@ -10,8 +10,8 @@ domain=${dnsdomain}
 realm=${domain^^}
 ipaserv=nfstest-ipa-serv
 nfsserv=nfstest-nfs-serv
-nfsclnt=nfstest-clnt
-nfsclntx=nfstest-clntx
+nfsclnt=nfstest-nfs-clnt
+nfsclntx=nfstest-nfs-clntx
 password=redhat123
 
 ### download vm image
