@@ -11,8 +11,8 @@ dnsdomain=lab.kissvm.net
 domain=${dnsdomain}
 realm=${domain^^}
 ipaserv=ipa-server
-nfsserv=nfs-server
-ipaclnt=ipa-client
+nfsserv=ipa-nfs-server
+ipaclnt=ipa-nfs-client
 password=redhat123
 
 ### __prepare__ test env build
