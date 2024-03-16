@@ -12,27 +12,32 @@ domain=${dnsdomain}
 realm=${domain^^}
 ipaserv=ipa-server
 nfsserv=ipa-nfs-server
-ipaclnt=ipa-nfs-client
+nfsclnt=ipa-nfs-client
 password=redhat123
 
 ### __prepare__ test env build
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 
-trun -tmux=$$-ipaserv vm create -n $ipaserv $distro --msize 4096 -p firewalld,bind-utils,expect,vim,tomcat,NetworkManager,sssd-tools,krb5-server --nointeract -I=$imgf -f "$@"
-trun -tmux=$$-ipaclnt vm create -n $ipaclnt $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -I=$imgf -f "$@"
-trun                  vm create -n $nfsserv $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -I=$imgf -f "$@"
+trun -tmux=$$-nfsserv vm create -n $nfsserv $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -I=$imgf -f "$@"
+trun -tmux=$$-nfsclnt vm create -n $nfsclnt $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -I=$imgf -f "$@"
+trun                  vm create -n $ipaserv $distro --msize 4096 -p firewalld,bind-utils,expect,vim,tomcat,NetworkManager,sssd-tools,krb5-server --nointeract -I=$imgf -f "$@"
 echo "{INFO} waiting all vm create process finished ..."
-while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 10; done
+while ps axf|grep tmux.new.*$$-nfs.*-d.vm.creat[e]; do sleep 10; done
 
+distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
+distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
+resdir=~/testres/$distrodir/nfs-function
+mkdir -p $resdir
+{
 vm cpto -v $ipaserv /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.
 vm cpto -v $nfsserv /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,make-nfs-server.sh} /usr/bin/.
-vm cpto -v $ipaclnt /usr/bin/ipa-client-install.sh /usr/bin/kinit.sh /usr/bin/.
+vm cpto -v $nfsclnt /usr/bin/ipa-client-install.sh /usr/bin/kinit.sh /usr/bin/.
 trun -tmux=$$-tmp1 vm exec -v $nfsserv -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
-trun -tmux=$$-tmp2 vm exec -v $ipaclnt -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
+trun -tmux=$$-tmp2 vm exec -v $nfsclnt -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
 trun               vm exec -v $ipaserv -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-server-install.sh"
 echo "{INFO} waiting all vm exec process finished ..."
-while ps axf|grep tmux.new.*$$-.*-d.vm.exe[c].*.ipa-.*-install.sh; do sleep 10; done
+while ps axf|grep tmux.new.*$$-tmp.*-d.vm.exe[c].*.ipa-.*-install.sh; do sleep 10; done
 
 #-------------------------------------------------------------------------------
 #configure ipa-server
@@ -83,7 +88,7 @@ vm exec -v $ipaserv -- sssctl domain-list
 vm exec -v $ipaserv -- sssctl user-show admin
 
 #-------------------------------------------------------------------------------
-#configure nfsserver to join the realm
+#configure nfs-server to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
 vm exec -v $nfsserv -- "nmcli connection modify 'System eth0' ipv4.dns $_ipa_serv_addr; nmcli connection up 'System eth0'"
 vm exec -v $nfsserv -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf
@@ -100,24 +105,24 @@ vm exec -v $ipaserv -- "journalctl -u named-pkcs11.service | grep ${nfsserv}.*up
 vm exec -v $nfsserv -- 'ipa host-show $(hostname)'
 
 #-------------------------------------------------------------------------------
-#configure ipa-client to join the realm
+#configure nfs-client to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
-vm exec -v $ipaclnt -- "nmcli connection modify 'System eth0' ipv4.dns $_ipa_serv_addr; nmcli connection up 'System eth0'"
-vm exec -v $ipaclnt -- cat /etc/resolv.conf
-vm exec -v $ipaclnt -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf
-vm exec -v $ipaclnt -- cat /etc/resolv.conf
+vm exec -v $nfsclnt -- "nmcli connection modify 'System eth0' ipv4.dns $_ipa_serv_addr; nmcli connection up 'System eth0'"
+vm exec -v $nfsclnt -- cat /etc/resolv.conf
+vm exec -v $nfsclnt -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf
+vm exec -v $nfsclnt -- cat /etc/resolv.conf
 
-vm exec -v $ipaclnt -- dig +short SRV _ldap._tcp.$dnsdomain
-vm exec -v $ipaclnt -- dig +short SRV _kerberos._tcp.$dnsdomain
-vm exec -v $ipaclnt -- ipa-client-install --domain=$domain --realm=${realm} --principal=admin --password=$password \
+vm exec -v $nfsclnt -- dig +short SRV _ldap._tcp.$dnsdomain
+vm exec -v $nfsclnt -- dig +short SRV _kerberos._tcp.$dnsdomain
+vm exec -v $nfsclnt -- ipa-client-install --domain=$domain --realm=${realm} --principal=admin --password=$password \
 	--unattended --mkhomedir #--server=$ipaserv.$domain
-vm exec -v $ipaclnt -- kinit.sh admin $password
-vm exec -v $ipaclnt -- klist
+vm exec -v $nfsclnt -- kinit.sh admin $password
+vm exec -v $nfsclnt -- klist
 
-vm exec -v $ipaclnt -- 'ipa host-show $(hostname)'
-vm exec -v $ipaclnt -- 'command -v authselect && { authselect list; }'
-vm exec -v $ipaclnt -- 'command -v authselect && { authselect show sssd; }'
-vm exec -v $ipaclnt -- 'command -v authselect && { authselect test -a sssd with-mkhomedir with-sudo; }'
+vm exec -v $nfsclnt -- 'ipa host-show $(hostname)'
+vm exec -v $nfsclnt -- 'command -v authselect && { authselect list; }'
+vm exec -v $nfsclnt -- 'command -v authselect && { authselect show sssd; }'
+vm exec -v $nfsclnt -- 'command -v authselect && { authselect test -a sssd with-mkhomedir with-sudo; }'
 
 #-------------------------------------------------------------------------------
 #nfs-server: configure krb5 nfs server
@@ -132,22 +137,26 @@ vm exec -v $ipaserv -- kadmin.local list_principals
 vm exec -v $nfsserv -- klist
 
 #-------------------------------------------------------------------------------
-#ipa-client: configure krb5 nfs client
-vm exec -v $ipaclnt -- mkdir /mnt/nfsmp
-vm exec -v $ipaclnt -- systemctl restart nfs-client.target gssproxy.service rpc-statd.service rpc-gssd.service
+#nfs-client: configure krb5 nfs client
+vm exec -v $nfsclnt -- mkdir /mnt/nfsmp
+vm exec -v $nfsclnt -- systemctl restart nfs-client.target gssproxy.service rpc-statd.service rpc-gssd.service
 vm exec -v $ipaserv -- kadmin.local list_principals
-vm exec -v $ipaclnt -- klist
+vm exec -v $nfsclnt -- klist
 
 ### __main__ test start
 #-------------------------------------------------------------------------------
 #simple nfs mount/umount test
-vm exec -vx $ipaclnt -- showmount -e ${nfsserv}
-vm exec -vx $ipaclnt -- mount ${nfsserv}:/ /mnt/nfsmp
-vm exec -vx $ipaclnt -- mount -t nfs4
-vm exec -vx $ipaclnt -- umount -a -t nfs4
+vm exec -vx $nfsclnt -- showmount -e ${nfsserv}
+vm exec -vx $nfsclnt -- mount ${nfsserv}:/ /mnt/nfsmp
+vm exec -vx $nfsclnt -- mount -t nfs4
+vm exec -vx $nfsclnt -- umount -a -t nfs4
 
 #-------------------------------------------------------------------------------
 #simple krb5 nfs mount/umount test
-vm exec -vx $ipaclnt -- mount -osec=krb5 ${nfsserv}.${domain}:/nfsshare/qe /mnt/nfsmp
-vm exec -vx $ipaclnt -- mount -t nfs4
-vm exec -vx $ipaclnt -- umount -a -t nfs4
+vm exec -vx $nfsclnt -- mount -osec=krb5 ${nfsserv}.${domain}:/nfsshare/qe /mnt/nfsmp
+vm exec -vx $nfsclnt -- mount -t nfs4
+vm exec -vx $nfsclnt -- umount -a -t nfs4
+
+} |& tee $resdir/ipa-idm-nfs.log
+
+vm stop $ipaserv $nfsserv $nfsclnt
