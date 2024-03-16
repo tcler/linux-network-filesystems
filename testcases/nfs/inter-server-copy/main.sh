@@ -7,9 +7,9 @@
 
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
-nfsservs=nfs-serv-src
-nfsservd=nfs-serv-dst
-nfsclnt=nfs-client
+nfsservs=nfs-ssc-serverS
+nfsservd=nfs-ssc-serverD
+nfsclnt=nfs-ssc-client
 
 ### __prepare__ test env build
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
@@ -29,12 +29,18 @@ vm exec -v $nfsservs -- make-nfs-server.sh
 vm exec -v $nfsservs -- dd if=/dev/urandom of=/nfsshare/rw/largefile.img bs=1M count=256
 vm exec -v $nfsservd -- make-nfs-server.sh
 
+### __main__ test start
+distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
+distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
+resdir=~/testres/$distrodir/nfs-function
+mkdir -p $resdir
+{
+#-------------------------------------------------------------------------------
 #enable inter-server copy
 modulef=/sys/module/nfsd/parameters/inter_copy_offload_enable
 vm exec -vx $nfsservs -- "read val <$modulef; echo -n \$val' - '; echo Y >$modulef; cat $modulef"
 vm exec -vx $nfsservd -- "read val <$modulef; echo -n \$val' - '; echo Y >$modulef; cat $modulef"
 
-### __main__ test start
 #-------------------------------------------------------------------------------
 serv_src_addr=$(vm if $nfsservs)
 serv_dst_addr=$(vm if $nfsservd)
@@ -67,3 +73,7 @@ vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY|^RE
 vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY):'"
 
 vm exec -v $nfsclnt -- "dmesg | grep TECH.PREVIEW /var/log/messages"
+
+} |& tee $resdir/nfs-ssc.log
+
+vm stop $nfsservs $nfsservd $nfsclnt
