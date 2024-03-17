@@ -5,10 +5,8 @@
 argv=()
 for arg; do
 	case "$arg" in
-	-net=*) NET=${arg#*=};;
 	-upk) VMOPT+=" --brewinstall=upk";;
-	-f|-force) FORCE_OPT="-f";;
-	-h)   echo "Usage: $0 [-h] [distro] [-net=netname] [-upk] [-force|-f]"; exit;;
+	-h)   echo "Usage: $0 [-h] [distro] [-upk] [-force|-f]"; exit;;
 	-*)   echo "{WARN} unkown option '${arg}'";;
 	*)    argv+=($arg);;
 	esac
@@ -18,32 +16,14 @@ set -- "${argv[@]}"
 distro=${1:-9}; shift
 
 #---------------------------------------------------------------
-: <<COMM
-sudo -K
-while true; do
-	read -s -p "sudo Password: " password
-	echo
-	echo "$password" | sudo -S ls / >/dev/null && break
-done
-COMM
-
-#---------------------------------------------------------------
-#create virt network nfsnet
-if [[ -z "$NET" ]]; then
-	netaddr=77
-	NET=nfsnet
-	vm netcreate netname=nfsnet brname=nfsbr0 subnet=$netaddr #tftproot=/var/lib/tftpboot bootpfile=pxelinux/pxelinux.0
-fi
-
-
-#---------------------------------------------------------------
 #create nfs server and client VMs
 vmnfsserv=nfsserv
 vmnfsclnt=nfsclnt
-trun -tmux vm create $distro -n $vmnfsserv -p nfs-utils --net $NET --nointeract --saveimage $VMOPT $FORCE_OPT "$@"
-trun       vm create $distro -n $vmnfsclnt -p nfs-utils --net $NET --nointeract --saveimage $VMOPT $FORCE_OPT "$@"
+trun -tmux vm create $distro -n $vmnfsserv -p nfs-utils --net default --nointeract --saveimage -f $VMOPT "$@"
+trun       vm create $distro -n $vmnfsclnt -p nfs-utils --net default --nointeract --saveimage -f $VMOPT "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
+
 vm -v exec $vmnfsserv -- systemctl stop firewalld
 vm -v exec $vmnfsclnt -- systemctl stop firewalld
 vm -v exec $vmnfsserv -- ln -sf /opt /optlink
@@ -108,15 +88,17 @@ for key in "${!tests[@]}"; do
 		vm -vx exec $vmnfsclnt -- ls -ldZ $nfsmp/${f#+}
 	done
 	echo
-	vm -v exec $vmnfsclnt -- sleep 1
+	vm -v exec $vmnfsclnt -- "sync; sleep 2; sync"
 	for f in ${files//,/ }; do
 		vm -vx exec $vmnfsclnt -- ls -ldZ $nfsmp/${f#+}
 	done
 	echo
 	for f in ${files//,/ }; do
-		scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C $sharepath/${f#+})
-		scontextClnt=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/${f#+})
-		vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'"
+		for ((i=0; i<32; i++)); do
+			scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C $sharepath/${f#+})
+			scontextClnt=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/${f#+})
+			vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'" && break || sleep 2
+		done
 	done
 
 	echo
