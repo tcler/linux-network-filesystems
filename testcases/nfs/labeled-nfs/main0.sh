@@ -34,10 +34,8 @@ for ((i=0; i<128; i++)); do
 	echo "Test $i: export $sharepath" | GREP_COLORS='ms=44' grep --color=always .
 
 	#server side
-	[[ $sharepath = +* ]] && {
-		sharepath=${sharepath#+}
-		vm -v exec $vmnfsserv -- mkdir -p $sharepath
-	}
+	[[ $sharepath = +* ]] && { sharepath=${sharepath#+}; vm -v exec $vmnfsserv -- mkdir -p $sharepath; }
+	[[ $file = +* ]] && { file=${file#+}; vm -v exec $vmnfsserv -- touch $sharepath/$file; }
 
 	vm -vx exec $vmnfsserv -- exportfs -ua
 	vm -vx exec $vmnfsserv -- "echo '$sharepath *(rw,no_root_squash,security_label)' >/etc/exports"
@@ -63,7 +61,6 @@ for ((i=0; i<128; i++)); do
 	vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'" || {
 		for ((j=0; j<32; j++)); do
 			sleep 2
-			scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C $sharepath/${file#+})
 			scontextClnt=$(vm -v exec $vmnfsclnt -- stat -c %C $nfsmp/${file#+})
 			vm -vx exec $vmnfsclnt -- "test '$scontextServ' = '$scontextClnt'" && break
 		done
