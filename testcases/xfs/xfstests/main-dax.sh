@@ -19,7 +19,7 @@ vmname=dax-fstest-${fs}; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vm
 pkglist=git,tmux,vim,ndctl
 
 ### __prepare__ test env build
-if [[ "${*}" != *-L* && "${*}" != *--location ]]; then
+if [[ "${*}" != *-[lL]* ]]; then
 	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 	imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
 	insOpt="-I=$imgf"
