@@ -38,7 +38,7 @@ resdir=~/testres/$distrodir/nfstest
 mkdir -p $resdir
 {
   vm exec -v $nfsclnt -- uname -r;
-  vm exec -v $nfsclnt -- nfstest_pnfs --server $oservaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2;
+  vm exec -v $nfsclnt -- nfstest_pnfs --server $lservaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2 --trcdelay=3;
 } |& tee $resdir/pnfs.log
 
 vm stop $nfsclnt
