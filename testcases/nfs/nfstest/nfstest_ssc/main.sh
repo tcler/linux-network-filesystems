@@ -4,9 +4,9 @@
 
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
-nfsserv=nfstest-serv
-nfsserv2=nfstest-serv2
-nfsclnt=nfstest-clnt
+nfsserv=nfstest-ssc-serv
+nfsserv2=nfstest-ssc-serv2
+nfsclnt=nfstest-ssc-clnt
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)

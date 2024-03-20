@@ -4,7 +4,7 @@
 
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
-nfsclnt=nfstest-rhel-client
+nfsclnt=nfstest-pnfs-Ontap-client
 nfsmp=/mnt/nfsmp
 
 #download image file
@@ -40,3 +40,5 @@ mkdir -p $resdir
   vm exec -v $nfsclnt -- uname -r;
   vm exec -v $nfsclnt -- nfstest_pnfs --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2;
 } |& tee $resdir/pnfs.log
+
+vm stop $nfsclnt

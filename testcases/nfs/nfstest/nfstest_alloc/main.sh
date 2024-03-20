@@ -5,8 +5,8 @@
 #create nfs-server vm
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
-nfsserv=nfstest-serv
-nfsclnt=nfstest-clnt
+nfsserv=nfstest-alloc-serv
+nfsclnt=nfstest-alloc-clnt
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)

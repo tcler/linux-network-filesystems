@@ -8,10 +8,10 @@ distro=${distro:-9}
 dnsdomain=lab.kissvm.net
 domain=${dnsdomain}
 realm=${domain^^}
-ipaserv=nfstest-ipa-serv
-nfsserv=nfstest-nfs-serv
-nfsclnt=nfstest-nfs-clnt
-nfsclntx=nfstest-nfs-clntx
+ipaserv=nfstest-deleg-ipa-serv
+nfsserv=nfstest-deleg-nfs-serv
+nfsclnt=nfstest-deleg-nfs-clnt
+nfsclntx=nfstest-deleg-nfs-clntx
 password=redhat123
 
 ### download vm image

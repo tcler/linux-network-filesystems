@@ -41,3 +41,5 @@ mkdir -p $resdir
   vm exec -v $nfsclnt -- uname -r;
   vm exec -v $nfsclnt -- testserver.py --maketree $servaddr:$expdir all;
 } |& tee $resdir/testserver.log
+
+vm stop $nfsserv $nfsclnt

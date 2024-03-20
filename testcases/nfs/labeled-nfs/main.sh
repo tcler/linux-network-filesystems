@@ -17,8 +17,8 @@ distro=${1:-9}; shift
 
 #---------------------------------------------------------------
 #create nfs server and client VMs
-vmnfsserv=nfsserv
-vmnfsclnt=nfsclnt
+vmnfsserv=labeled-nfs-serv
+vmnfsclnt=labeled-nfs-clnt
 trun -tmux vm create $distro -n $vmnfsserv -p nfs-utils --net default --nointeract --saveimage -f $VMOPT "$@"
 trun       vm create $distro -n $vmnfsclnt -p nfs-utils --net default --nointeract --saveimage -f $VMOPT "$@"
 echo "{INFO} waiting all vm create process finished ..."
@@ -55,6 +55,12 @@ tests=(
 )
 
 vmnfsservaddr=$(vm if $vmnfsserv)
+
+distro=$(vm homedir $vmnfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
+distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
+resdir=~/testres/$distrodir/nfs-function
+mkdir -p $resdir
+{
 for key in "${!tests[@]}"; do
 	read sharepath files <<<"${tests[$key]/:/ }"
 	echo "Test $key: export $sharepath" | GREP_COLORS='ms=44' grep --color=always .
@@ -107,3 +113,6 @@ for key in "${!tests[@]}"; do
 	echo
 done
 
+} |& tee $resdir/labeled-nfs.log
+
+vm stop $vmnfsserv $vmnfsclnt

@@ -3,7 +3,7 @@
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
 distro=${1:-9}
-clientvm=${2:-nfstest-rhel-clnt}
+clientvm=${2:-nfstest-interop-OK-clnt}
 if [[ $# -ge 2 ]]; then
 	shift 2
 elif [[ $# -ge 1 ]]; then
@@ -30,3 +30,5 @@ mkdir -p $resdir
   vm exec -v  $clientvm -- uname -r;
   vm exec -v  $clientvm -- nfstest_interop --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5 --datadir datadir --nfsversion=4.2;
 } |& tee $resdir/interop-ontap-krb5.log
+
+vm stop $clientvm

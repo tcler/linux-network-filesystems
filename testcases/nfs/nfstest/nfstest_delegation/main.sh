@@ -6,9 +6,9 @@
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
 passwd=redhat
-vmserv=nfstest-serv
-vmclnt=nfstest-clnt
-vmclntx=nfstest-clntx
+vmserv=nfstest-deleg-serv
+vmclnt=nfstest-deleg-clnt
+vmclntx=nfstest-deleg-clntx
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)

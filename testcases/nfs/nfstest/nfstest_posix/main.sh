@@ -5,8 +5,8 @@
 #create nfs-server vm
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
-nfsserv=nfs-server
-nfsclnt=nfs-client
+nfsserv=nfstest-posix-server
+nfsclnt=nfstest-posix-client
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
@@ -42,3 +42,5 @@ mkdir -p $resdir
   vm exec -v $nfsclnt -- uname -r;
   vm exec -v $nfsclnt -- nfstest_posix --server $servaddr --export=$expdir --mtpoint=$nfsmp --mtopts=rw --interface=$NIC --nfsversion=4.2;
 } |& tee $resdir/posix.log
+
+vm stop $nfsserv $nfsclnt
