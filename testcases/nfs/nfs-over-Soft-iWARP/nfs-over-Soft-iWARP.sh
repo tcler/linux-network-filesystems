@@ -28,8 +28,8 @@ vm exec -v $vmserv -- cat /etc/exports
 vm exec -v $vmserv -- sed -i -e '/rdma/s/^#//' -e 's/rdma=n/rdma=y/' /etc/nfs.conf
 vm exec -v $vmserv -- grep -v '^#' /etc/nfs.conf
 vm exec -v $vmserv -- systemctl restart nfs-server
-vm exec -v $vmserv -- firewall-cmd --permanent --add-service={mountd,nfs,rpc-bind}
-vm exec -v $vmserv -- firewall-cmd --reload
+vm exec -v $vmserv -- "firewall-cmd --permanent --add-service={mountd,nfs,rpc-bind}; firewall-cmd --reload"
+vm exec -v $vmserv -- systemctl stop firewalld   #seems this's necessary for rdma, fixme if it's not true
 vm exec -v $vmserv -- showmount -e localhost
 vm exec -v $vmserv -- cat /proc/fs/nfsd/portlist
 
@@ -39,6 +39,7 @@ vm exec -v $vmclnt -- rdma link
 vm exec -v $vmclnt -- mkdir -p /mnt/nfsmp
 servAddr=$(vm ifaddr $vmserv|head -1)
 vm exec -v -x $vmclnt -- showmount -e $servAddr
+vm exec -v    $vmclnt -- systemctl stop firewalld   #seems this's necessary for rdma, fixme if it's not true
 vm exec -v -x $vmclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049 -v
 vm exec -v -x $vmclnt -- mount -t nfs4
 
