@@ -38,6 +38,7 @@ vm exec -v $vmclnt -- rdma link add rxe0 type rxe netdev $NIC
 vm exec -v $vmclnt -- rdma link
 vm exec -v $vmclnt -- mkdir -p /mnt/nfsmp
 servAddr=$(vm ifaddr $vmserv|head -1)
+vm exec -v -x $vmclnt -- showmount -e $servAddr
 vm exec -v -x $vmclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049 -v
 vm exec -v -x $vmclnt -- mount -t nfs4
 
