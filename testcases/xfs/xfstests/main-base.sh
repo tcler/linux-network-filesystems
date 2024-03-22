@@ -21,7 +21,7 @@ pkglist=git,tmux,vim
 ### __prepare__ test env build
 if [[ "${*}" != *-[lL]* ]]; then
 	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-	imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
+	imgf=$(sed -n '${/^image url/{s/^.* //;p}}' <<<"$stdlog")
 	insOpt="-I=$imgf"
 fi
 
