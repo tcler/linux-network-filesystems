@@ -12,7 +12,7 @@ vmclntx=nfstest-deleg-clntx
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
+imgf=$(sed -n '${/^image url/{s/^.* //;p}}' <<<"$stdlog")
 
 trun -tmux vm create $distro -n $vmserv -m 4G -f -nointeract -p vim,nfs-utils,wireshark -I=$imgf "$@"
 trun -tmux vm create $distro -n $vmclntx -m 4G -f -nointeract -p vim,nfs-utils,wireshark,python3 -I=$imgf "$@"
@@ -30,7 +30,7 @@ vm exec -v $vmclnt -- showmount -e $servaddr
 
 #nfstest_delegation
 expdir=/nfsshare/rw
-NIC=eth0
+NIC=$(vm exec -v $vmclnt -- nmcli -g DEVICE connection show|head -1)
 clntxaddr=$(vm ifaddr $vmclntx)
 vm cpto -v $vmclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh .
 vm exec -v $vmclnt -- bash install-nfstest.sh

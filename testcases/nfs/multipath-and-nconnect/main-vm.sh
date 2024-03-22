@@ -39,6 +39,8 @@ vm exec -v   $S -- mkdir -p $ExportDir
 vm exec -v   $S -- touch $ExportDir/testfile
 vm exec -v   $S -- "echo '$ExportDir *(rw,no_root_squash,insecure,security_label)' >/etc/exports"
 vm exec -v   $S -- systemctl restart nfs-server
+vm exec -v   $S -- firewall-cmd --permanent --add-service={mountd,nfs,rpc-bind}
+vm exec -v   $S -- firewall-cmd --reload
 
 vm exec -v   $C -- mkdir -p $MountPoint
 vm exec -vx0 $C -- showmount -e $Saddr0

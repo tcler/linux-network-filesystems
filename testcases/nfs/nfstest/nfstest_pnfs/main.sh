@@ -9,7 +9,7 @@ nfsmp=/mnt/nfsmp
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
+imgf=$(sed -n '${/^image url/{s/^.* //;p}}' <<<"$stdlog")
 
 #create netapp ontap-simulator
 trun -x0 make-ontap-simulator.sh $distro $nfsclnt || exit $?
@@ -26,7 +26,7 @@ vm exec -v $nfsclnt -- mkdir -p $nfsmp
 
 #nfstest_pnfs
 expdir=/share2
-NIC=eth0
+NIC=$(vm exec -v $nfsclnt -- nmcli -g DEVICE connection show|head -1)
 vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/.
 vm exec -v $nfsclnt -- install-nfstest.sh
 vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'

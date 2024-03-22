@@ -10,7 +10,7 @@ nfsclnt=nfstest-dio-clnt
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
+imgf=$(sed -n '${/^image url/{s/^.* //;p}}' <<<"$stdlog")
 
 trun -tmux vm create $distro -n $nfsserv -m 4G -f -nointeract -p nfs-utils,wireshark,tmux -I=$imgf "$@"
 trun       vm create $distro -n $nfsclnt -m 4G -f -nointeract -p nfs-utils,wireshark,tmux -I=$imgf "$@"
@@ -28,7 +28,7 @@ vm exec -v $nfsclnt -- showmount -e $servaddr
 #nfstest_dio
 nfsmp=/mnt/nfsmp
 expdir=/nfsshare/rw
-NIC=eth0
+NIC=$(vm exec -v $nfsclnt -- nmcli -g DEVICE connection show|head -1)
 vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/.
 vm exec -v $nfsclnt -- install-nfstest.sh
 vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'

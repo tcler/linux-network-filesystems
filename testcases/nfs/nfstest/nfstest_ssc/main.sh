@@ -10,7 +10,7 @@ nfsclnt=nfstest-ssc-clnt
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
+imgf=$(sed -n '${/^image url/{s/^.* //;p}}' <<<"$stdlog")
 
 #create nfs server,client vm
 trun -tmux vm create $distro -n $nfsserv  -f -nointeract -p vim,nfs-utils -I=$imgf "$@"
@@ -34,7 +34,7 @@ vm exec -v $nfsclnt -- showmount -e $serv2addr
 #nfstest_ssc
 nfsmp=/mnt/nfsmp
 expdir=/nfsshare/rw
-NIC=eth0
+NIC=$(vm exec -v $nfsclnt -- nmcli -g DEVICE connection show|head -1)
 vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin/.
 vm exec -v $nfsclnt -- install-nfstest.sh
 vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'

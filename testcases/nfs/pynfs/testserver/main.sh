@@ -10,7 +10,7 @@ nfsclnt=pynfs-client
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -n '${s/^.* //;p}' <<<"$stdlog")
+imgf=$(sed -n '${/^image url/{s/^.* //;p}}' <<<"$stdlog")
 
 trun -tmux vm create $distro -n $nfsserv -m 4G -f -nointeract -p vim,nfs-utils,tmux,wireshark -I=$imgf "$@"
 trun       vm create $distro -n $nfsclnt -m 4G -f -nointeract -p vim,nfs-utils,tmux,wireshark -I=$imgf "$@"
@@ -28,7 +28,7 @@ vm exec -v $nfsclnt -- showmount -e $servaddr
 #nfstest_alloc
 expdir=/nfsshare/rw
 nfsmp=/mnt/nfsmp
-NIC=eth0
+NIC=$(vm exec -v $nfsclnt -- nmcli -g DEVICE connection show|head -1)
 vm cpto -v $nfsclnt /usr/bin/install-pynfs.sh /usr/bin/
 vm exec -v $nfsclnt -- install-pynfs.sh
 vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
