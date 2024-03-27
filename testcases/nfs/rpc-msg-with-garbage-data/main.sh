@@ -2,6 +2,7 @@
 #
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+[[ $(id -u) != 0 ]] && { echo "{ERROR} this test need run as root." >&2; exit 2; }
 
 #export share dir by nfs
 _USER=$(whoami)

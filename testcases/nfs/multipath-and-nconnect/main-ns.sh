@@ -2,6 +2,8 @@
 #ref: https://packetpushers.net/multipathing-nfs4-1-kvm
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+[[ $(id -u) != 0 ]] && { echo "{ERROR} this test need run as root." >&2; exit 2; }
+
 faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
 
 ServerIP1=192.168.9.1
