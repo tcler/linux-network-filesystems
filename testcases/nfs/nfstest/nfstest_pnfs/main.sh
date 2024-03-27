@@ -9,7 +9,7 @@ nfsmp=/mnt/nfsmp
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -n '${/^image url/{s/^.* //;p}}' <<<"$stdlog")
+imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
 #create netapp ontap-simulator
 trun -x0 make-ontap-simulator.sh $distro $nfsclnt || exit $?

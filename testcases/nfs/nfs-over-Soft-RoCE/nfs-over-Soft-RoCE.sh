@@ -7,7 +7,7 @@
 distro=${1:-9}; shift
 
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -n '${/^image url/{s/^.* //;p}}' <<<"$stdlog")
+imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
 vmserv=nfs-o-soft-roce-serv
 vmclnt=nfs-o-soft-roce-clnt

@@ -10,7 +10,7 @@ nfsclnt=nfstest-ssc-clnt
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -n '${/^image url/{s/^.* //;p}}' <<<"$stdlog")
+imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
 #create nfs server,client vm
 trun -tmux vm create $distro -n $nfsserv  -f -nointeract -p vim,nfs-utils -I=$imgf "$@"

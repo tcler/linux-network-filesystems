@@ -16,7 +16,7 @@ password=redhat123
 
 ### download vm image
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -n '${/^image url/{s/^.* //;p}}' <<<"$stdlog")
+imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
 ### __prepare__ test env build: create vm
 trun -tmux vm create -n $ipaserv  $distro --msize 4096 -p vim,bind-utils,firewalld,expect,tomcat,NetworkManager,sssd-tools --nointeract -I=$imgf -f "$@"

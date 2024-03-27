@@ -17,7 +17,7 @@ password=redhat123
 
 ### __prepare__ test env build
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -n '${/^image url/{s/^.* //;p}}' <<<"$stdlog")
+imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
 trun -tmux=$$-nfsserv vm create -n $nfsserv $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -I=$imgf -f "$@"
 trun -tmux=$$-nfsclnt vm create -n $nfsclnt $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -I=$imgf -f "$@"
