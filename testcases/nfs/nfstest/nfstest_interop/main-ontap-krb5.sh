@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+export LANG=C LANGUAGE=C   #nfstest only works on english lang env
 
 distro=${1:-9}
 clientvm=${2:-nfstest-interop-OK-clnt}
