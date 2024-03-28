@@ -15,8 +15,12 @@ MOUNT_OPTS=${MOUNT_OPTS:--onosharecache,nconnect=16}
 subnet1=12
 brname1=vm-vbr$subnet1
 netname1=net$subnet1
-S=serv
-C=clnt
+
+stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
+imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+
+S=nfs-nconn-serv
+C=nfs-nconn-clnt
 
 [[ -z "$distro" ]] && {
 	echo "Usage: $0 <distro> [mount options]"
@@ -26,8 +30,8 @@ C=clnt
 vm netcreate netname=$netname1 brname=$brname1 subnet=$subnet1
 vm netinfo $netname1
 
-vm create "$distro" -n $S --saveimage -p "nfs-utils" --nointeract --net default --net $netname1 -f
-vm create "$distro" -n $C --saveimage -p "nfs-utils" --nointeract --net default --net $netname1 -f
+vm create "$distro" -n $S -p "nfs-utils" --nointeract --net default --net $netname1 -I=$imgf -f
+vm create "$distro" -n $C -p "nfs-utils" --nointeract --net default --net $netname1 -I=$imgf -f
 
 servIpAddrs=$(vm exec -v $S -- ip a s)
 echo "$servIpAddrs"
