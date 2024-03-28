@@ -49,6 +49,10 @@ distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
 resdir=~/testres/$distrodir/nfstest
 mkdir -p $resdir
 {
+  vm exec -v $nfsserv -- 'echo "foo ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers'
+  vm exec -v $nfsclnt -- 'echo "foo ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers'
+  vm exec -v $nfsclntx -- 'echo "foo ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers'
+
   vm exec -v foo@$nfsclnt -- uname -r;
   vm exec -v foo@$nfsclnt -- nfstest_cache --server $servaddr --client $clntxaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2;
 } |& tee $resdir/cache.log
