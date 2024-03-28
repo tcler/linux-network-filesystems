@@ -9,7 +9,6 @@ faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
 ExportDir=/nfsshare
 MountPoint=/mnt/nfs
 distro=${1:-9}; shift
-MOUNT_OPTS="$*"
 MOUNT_OPTS=${MOUNT_OPTS:--onosharecache,nconnect=16}
 
 subnet1=12
