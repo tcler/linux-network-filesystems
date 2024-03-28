@@ -14,9 +14,9 @@ stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
 #create nfs server,client vm
-trun -tmux vm create $distro -n $nfsserv  -f -nointeract -p vim,nfs-utils -I=$imgf "$@"
-trun -tmux vm create $distro -n $nfsserv2 -f -nointeract -p vim,nfs-utils -I=$imgf "$@"
-trun       vm create $distro -n $nfsclnt  -f -nointeract -p vim,nfs-utils,tcpdump,iproute-tc,kernel-modules-extra -I=$imgf "$@"
+trun -tmux vm create $distro -n $nfsserv  -f -nointeract -p vim,tcpdump,nfs-utils -I=$imgf "$@"
+trun -tmux vm create $distro -n $nfsserv2 -f -nointeract -p vim,tcpdump,nfs-utils -I=$imgf "$@"
+trun       vm create $distro -n $nfsclnt  -f -nointeract -p vim,tcpdump,nfs-utils,tcpdump,iproute-tc,kernel-modules-extra -I=$imgf "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
