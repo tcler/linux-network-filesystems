@@ -3,13 +3,9 @@
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 export LANG=C LANGUAGE=C   #nfstest only works on english lang env
 
-distro=${1:-9}
-clientvm=${2:-nfstest-interop-OK-clnt}
-if [[ $# -ge 2 ]]; then
-	shift 2
-elif [[ $# -ge 1 ]]; then
-	shift
-fi
+[[ -n "$1" && "$1" != -* ]] && { distro=${1}; shift; [[ -n "$1" && "$1" != -* ]] && { clientvm=${1}; shift 1; }; }
+distro=${distro:-9}
+clientvm=${clientvm:-nfstest-interop-OK-clnt}
 
 ### __prepare__ test env build
 #create Windows AD server, ONTAP simulator and client VMs
