@@ -17,8 +17,8 @@ distro=${1:-9}; shift
 
 #---------------------------------------------------------------
 #create nfs server and client VMs
-vmnfsserv=nfsserv
-vmnfsclnt=nfsclnt
+vmnfsserv=nfs-server
+vmnfsclnt=nfs-client
 trun -tmux vm create $distro -n $vmnfsserv -p nfs-utils --net default --nointeract --saveimage -f $VMOPT "$@"
 trun       vm create $distro -n $vmnfsclnt -p nfs-utils --net default --nointeract --saveimage -f $VMOPT "$@"
 echo "{INFO} waiting all vm create process finished ..."
