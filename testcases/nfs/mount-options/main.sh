@@ -4,8 +4,6 @@
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
 #export share dir by nfs
-_USER=$(whoami)
-[[ $(id -u) = 0 && -n "$SUDO_USER" ]] && _USER=$SUDO_USER
 nfsmp=/mnt/nfsmp
 
 #create nfs-server vm
