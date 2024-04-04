@@ -61,7 +61,7 @@ export MKFS_OPTIONS='${MKFS_OPTIONS}'
 export MOUNT_OPTIONS='${MOUNT_OPTIONS}'
 export WORKAREA=/var/lib/xfstests
 EOF"
-[[ -n "$MKFS_OPTIONS" ]] && vm exec -vx $vmname -- "for dev in ${devs[*]}; do mkfs.${fs} $mkfsOpt /dev/\$dev; done"
+vm exec -vx $vmname -- "for dev in ${devs[*]}; do mkfs.${fs} $mkfsOpt /dev/\$dev; done"
 
 distro=$(vm homedir $vmname|awk -F/ 'NR==1{print $(NF-1)}')
 distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
