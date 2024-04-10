@@ -161,6 +161,7 @@ vm exec -v $nfsserv -- klist
 
 #-------------------------------------------------------------------------------
 #ipa-client: configure krb5 nfs client
+vm exec -v $nfsclnt -- mkdir /mnt/nfsmp
 vm exec -v $nfsclnt -- systemctl restart nfs-client.target gssproxy.service rpc-statd.service rpc-gssd.service
 vm exec -v $ipaserv -- kadmin.local list_principals
 vm exec -v $nfsclnt -- klist
@@ -179,6 +180,7 @@ clntxfqdn=${nfsclntx}.${domain}
 vm cpto $nfsclnt /usr/bin/{install-nfstest.sh,ssh-copy-id.sh} /usr/bin/.
 vm exec -vx $nfsclnt -- install-nfstest.sh
 vm exec -vx $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
+vm exec -vx $nfsclnt -- ssh-copy-id.sh $servaddr root redhat
 vm exec -vx $nfsclnt -- ssh-copy-id.sh $clntxaddr root redhat
 
 #-------------------------------------------------------------------------------
