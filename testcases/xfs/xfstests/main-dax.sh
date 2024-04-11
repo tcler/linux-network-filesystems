@@ -27,6 +27,7 @@ fi
 
 trun vm create -n $vmname $distro --msize 4G -p $pkglist --nointeract ${insOpt} -f \
 	--nvdimm='4098+2 4098+2' --xdisk=16,${fs} --ks-only-use='vda' "$@" || exit $?
+vm exec -v $vmname -- yum install -y $pkglist  #avoid cloud-init install pkglist fail
 
 [[ ${fs} = xfs ]] && grep -q '.?-b  *upk' <<<"${*}" && xfsprogs_upstream=yes
 [[ "$xfsprogs_upstream" = yes ]] && {
