@@ -19,8 +19,12 @@ distro=${1:-9}; shift
 #create nfs server and client VMs
 vmnfsserv=labeled-nfs-serv
 vmnfsclnt=labeled-nfs-clnt
-trun -tmux vm create $distro -n $vmnfsserv -p nfs-utils --net default --nointeract --saveimage -f $VMOPT "$@"
-trun       vm create $distro -n $vmnfsclnt -p nfs-utils --net default --nointeract --saveimage -f $VMOPT "$@"
+
+stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
+imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+
+trun -tmux vm create $distro -n $vmnfsserv -p nfs-utils --net default --nointeract -I=$imgf -f $VMOPT "$@"
+trun       vm create $distro -n $vmnfsclnt -p nfs-utils --net default --nointeract -I=$imgf -f $VMOPT "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
