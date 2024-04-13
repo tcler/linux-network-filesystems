@@ -36,7 +36,7 @@ mkfsOpt="${MKFS_OPTIONS} "
 case $fs in ext*) mkfsOpt+=-F;; btrfs|xfs) mkfsOpt+=-f;; esac
 trun vm create -n $vmname $distro --msize 4G -p $pkglist --nointeract ${insOpt} -f \
 	--xdisk=16,${fs} --xdisk=16,${fs} --xdisk=16,${fs} --ks-only-use='vda' "$@" || exit $?
-vm exec -v $vmname -- yum install -y $pkglist  #avoid cloud-init install pkglist fail
+vm exec -v $vmname -- yum install -y ${pkglist//,/ }  #avoid cloud-init install pkglist fail
 
 [[ "$xfsprogs_upstream" = yes ]] && {
 	vm cpto -v  $vmname /usr/bin/xfsprogs-upstream-install.sh  /usr/bin/.
