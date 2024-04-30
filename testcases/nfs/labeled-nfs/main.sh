@@ -60,9 +60,8 @@ tests=(
 
 vmnfsservaddr=$(vm if $vmnfsserv)
 
-distro=$(vm homedir $vmnfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
-resdir=~/testres/$distrodir/nfs-function
+distrodir=$(gen_distro_dir_name $vmnfsclnt ${SUFFIX})
+resdir=~/testres/${distrodir}/nfs-function
 mkdir -p $resdir
 {
 for key in "${!tests[@]}"; do

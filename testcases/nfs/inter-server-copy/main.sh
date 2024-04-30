@@ -30,9 +30,8 @@ vm exec -v $nfsservs -- dd if=/dev/urandom of=/nfsshare/rw/largefile.img bs=1M c
 vm exec -v $nfsservd -- make-nfs-server.sh
 
 ### __main__ test start
-distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
-resdir=~/testres/$distrodir/nfs-function
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+resdir=~/testres/${distrodir}/nfs-function
 mkdir -p $resdir
 {
 #-------------------------------------------------------------------------------

@@ -40,9 +40,8 @@ vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin
 vm exec -v $nfsclnt -- install-nfstest.sh
 vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 
-distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
-resdir=~/testres/$distrodir/nfstest
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vm exec -v $nfsclnt -- uname -r;

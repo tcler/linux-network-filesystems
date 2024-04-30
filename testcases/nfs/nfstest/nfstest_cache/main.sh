@@ -44,9 +44,8 @@ vm exec -v foo@$nfsclnt -- ssh-copy-id.sh $clntxaddr root redhat
 vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
 vm exec -v $nfsclnt -- usermod -a -G nobody foo
 
-distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
-resdir=~/testres/$distrodir/nfstest
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vm exec -v $nfsserv -- 'echo "foo ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers'

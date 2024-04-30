@@ -18,9 +18,8 @@ trun       vm create -n $nfsclnt $distro -p bind-utils,vim,nfs-utils,tmux --noin
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
-distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
-resdir=~/testres/$distrodir/nfs-function
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+resdir=~/testres/${distrodir}/nfs-function
 mkdir -p $resdir
 {
 #-------------------------------------------------------------------------------

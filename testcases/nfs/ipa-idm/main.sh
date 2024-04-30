@@ -25,9 +25,8 @@ trun                  vm create -n $ipaserv $distro --msize 4096 -p firewalld,bi
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-nfs.*-d.vm.creat[e]; do sleep 10; done
 
-distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
-resdir=~/testres/$distrodir/nfs-function
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+resdir=~/testres/${distrodir}/nfs-function
 mkdir -p $resdir
 {
 vm cpto -v $ipaserv /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.

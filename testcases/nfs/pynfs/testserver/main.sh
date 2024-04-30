@@ -33,9 +33,8 @@ vm cpto -v $nfsclnt /usr/bin/install-pynfs.sh /usr/bin/
 vm exec -v $nfsclnt -- install-pynfs.sh
 vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
 
-distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
-resdir=~/testres/$distrodir/pynfs
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+resdir=~/testres/${distrodir}/pynfs
 mkdir -p $resdir
 {
   vm exec -v $nfsclnt -- uname -r;

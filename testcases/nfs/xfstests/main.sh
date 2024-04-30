@@ -50,8 +50,8 @@ export SCRATCH_MNT=/mnt/xfstests_scratch
 export WORKAREA=/var/lib/xfstests
 EOF"
 
-distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-resdir=~/testres/$distro/xfstest
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vm exec -v $nfsclnt -- uname -r;

@@ -188,9 +188,8 @@ vm exec -vx $nfsclnt -- ssh-copy-id.sh $clntxaddr root redhat
 vm exec -vx $nfsclnt -- ip link set "$NIC" promisc on
 vm exec -vx $nfsclnt -- tc qdisc add dev $NIC root netem delay 28ms
 
-distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
-resdir=~/testres/$distrodir/nfstest
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vm exec -v  $nfsclnt -- uname -r;

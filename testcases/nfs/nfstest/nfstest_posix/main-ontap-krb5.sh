@@ -19,9 +19,8 @@ vm exec -vx $clientvm -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 ONTAP_ENV_FILE=/tmp/ontap2info.env
 source "$ONTAP_ENV_FILE"
 
-distro=$(vm homedir $clientvm|awk -F/ 'NR==1{print $(NF-1)}')
-distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
-resdir=~/testres/$distrodir/nfstest
+distrodir=$(gen_distro_dir_name $clientvm ${SUFFIX})
+resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vm exec -v $clientvm -- uname -r;

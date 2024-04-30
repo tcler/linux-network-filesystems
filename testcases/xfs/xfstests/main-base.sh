@@ -64,9 +64,8 @@ export WORKAREA=/var/lib/xfstests
 EOF"
 vm exec -vx $vmname -- "for dev in ${devs[*]}; do mkfs.${fs} $mkfsOpt /dev/\$dev; done"
 
-distro=$(vm homedir $vmname|awk -F/ 'NR==1{print $(NF-1)}')
-distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
-resdir=~/testres/$distrodir/xfstest
+distrodir=$(gen_distro_dir_name $vmname ${SUFFIX})
+resdir=~/testres/${distrodir}/xfstest
 mkdir -p $resdir
 {
   vm exec -v $vmname -- uname -r;

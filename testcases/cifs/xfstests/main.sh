@@ -90,8 +90,8 @@ TEST_DIR=/mnt/xfstests_test
 TEST_FS_MOUNT_OPTS='-ousername=$USERNAME,password=$PASSWORD,nounix,noperm,cifsacl,vers=1.0,mfsymlinks,actimeo=0'
 EOF"
 
-distro=$(vm homedir $cifsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-resdir=~/testres/$distro/xfstest
+distrodir=$(gen_distro_dir_name $cifsclnt ${SUFFIX})
+resdir=~/testres/${distrodir}/xfstest
 mkdir -p $resdir
 {
   vm exec -v $cifsclnt -- uname -r;

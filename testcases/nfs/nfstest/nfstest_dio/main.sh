@@ -37,9 +37,8 @@ vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
 vm exec -v $nfsclnt -- getconf PAGESIZE
 
 pgsize=$(vm exec $nfsclnt -- getconf PAGESIZE)
-distro=$(vm homedir $nfsclnt|awk -F/ 'NR==1{print $(NF-1)}')
-distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
-resdir=~/testres/$distrodir/nfstest
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vm exec -v $nfsclnt -- uname -r;

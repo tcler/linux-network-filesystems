@@ -39,9 +39,8 @@ vm exec -v $vmclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 vm exec -v $vmclnt -- bash ssh-copy-id.sh $clntxaddr root redhat
 vm exec -v $vmclnt -- ip link set "$NIC" promisc on
 
-distro=$(vm homedir $vmclnt|awk -F/ 'NR==1{print $(NF-1)}')
-distrodir=$distro; [[ -n "${SUFFIX}" ]] && distrodir+=-${SUFFIX}
-resdir=~/testres/$distrodir/nfstest
+distrodir=$(gen_distro_dir_name $vmclnt ${SUFFIX})
+resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vm exec -v $vmclnt -- uname -r;
