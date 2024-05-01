@@ -22,8 +22,10 @@ vm -v exec $vmserv -- touch /nfsshare/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $vmserv)
 pcapf=nfs.pcap
 
-vm exec -v $vmclnt -- showmount -e $servaddr
-vm exec -v $vmclnt -- mkdir -p $nfsmp
+vm exec -vx $vmclnt -- showmount -e $servaddr
+vm exec -vx $vmclnt -- mkdir -p $nfsmp
+vm exec -vx $vmclnt -- "mount $servaddr:/nfsshare/rw $nfsmp || mount -vvv $servaddr:/nfsshare/rw $nfsmp"
+vm exec -vx $vmclnt -- umount $nfsmp
 
 #Test1: softreval
 vm exec -v $vmclnt -- mount -osoftreval $servaddr:/nfsshare/rw $nfsmp
