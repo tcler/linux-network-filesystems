@@ -46,8 +46,8 @@ serv_dst_addr=$(vm if $nfsservd)
 vm exec -vx $nfsclnt -- showmount -e ${nfsservs}
 vm exec -vx $nfsclnt -- showmount -e ${nfsservd}
 vm exec -vx $nfsclnt -- mkdir /mnt/src /mnt/dst
-vm exec -vx $nfsclnt -- mount $serv_src_addr:/nfsshare/rw /mnt/src
-vm exec -vx $nfsclnt -- mount $serv_dst_addr:/nfsshare/rw /mnt/dst
+vm exec -vx $nfsclnt -- mount -vvv ${nfsservs}:/nfsshare/rw /mnt/src
+vm exec -vx $nfsclnt -- mount -vvv ${nfsservd}:/nfsshare/rw /mnt/dst
 vm exec -vx $nfsclnt -- mount -t nfs4
 
 vm exec -vx $nfsclnt -- time cp /mnt/src/largefile.img  /mnt/dst/.
@@ -62,8 +62,8 @@ vm exec -vx $nfsclnt -- rm /mnt/dst/largefile.img
 vm reboot $nfsclnt -w
 vm exec -vx $nfsclnt -- systemctl start proc-fs-nfsd.mount
 vm exec -vx $nfsclnt -- "read val <$modulef; echo -n \$val' - '; echo Y >$modulef; cat $modulef"
-vm exec -vx $nfsclnt -- mount $serv_src_addr:/nfsshare/rw /mnt/src
-vm exec -vx $nfsclnt -- mount $serv_dst_addr:/nfsshare/rw /mnt/dst
+vm exec -vx $nfsclnt -- mount -vvv ${nfsservs}:/nfsshare/rw /mnt/src
+vm exec -vx $nfsclnt -- mount -vvv ${nfsservd}:/nfsshare/rw /mnt/dst
 vm exec -vx $nfsclnt -- mount -t nfs4
 vm exec -vx $nfsclnt -- time cp /mnt/src/largefile.img  /mnt/dst/.
 vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY(_NOTIFY)?|^READ|^WRITE):'"
