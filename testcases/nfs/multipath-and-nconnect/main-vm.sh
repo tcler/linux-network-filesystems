@@ -29,8 +29,8 @@ C=nfs-nconn-clnt
 vm netcreate netname=$netname1 brname=$brname1 subnet=$subnet1
 vm netinfo $netname1
 
-vm create "$distro" -n $S -p "nfs-utils" --nointeract --net default --net $netname1 -I=$imgf -f
-vm create "$distro" -n $C -p "nfs-utils" --nointeract --net default --net $netname1 -I=$imgf -f
+vm create "$distro" -n $S -p "nfs-utils" --nointeract --net default --net $netname1 -I=$imgf -f "$@"
+vm create "$distro" -n $C -p "nfs-utils" --nointeract --net default --net $netname1 -I=$imgf -f "$@"
 
 servIpAddrs=$(vm exec -v $S -- ip a s)
 echo "$servIpAddrs"
