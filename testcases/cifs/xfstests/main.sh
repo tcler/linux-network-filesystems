@@ -28,24 +28,24 @@ trun -tmux vm create $distro -n $smbserv -m 4G -f -nointeract -p ${pkglist}     
 trun       vm create $distro -n $cifsclnt -m 4G -f -nointeract -p ${pkglist},git $insOpt "$@" || exit $?
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 10; done
-servaddr=$(vm ifaddr $smbserv)
+timeout 300 vm port-available -w $smbserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 vm cpto -v $smbserv /usr/bin/make-samba-server.sh .
 tmux new -s smbServer -d "vm exec -v $smbserv -- bash make-samba-server.sh"
 
 vm cpto -v  $cifsclnt /usr/bin/xfstests-install.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/.
-vm exec -vx $cifsclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
-vm exec -vx $cifsclnt -- "xfstests-install.sh nouring=$NOURING" || exit 1
+vmrunx 0 $cifsclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
+vmrunx 0 $cifsclnt -- "xfstests-install.sh nouring=$NOURING" || exit 1
 
 while tmux ls | grep smbServer; do sleep 8; done
-vm exec -vx $cifsclnt -- smbclient -L //$smbserv -U $USERNAME%$PASSWORD
+vmrunx 0 $cifsclnt -- smbclient -L //$smbserv -U $USERNAME%$PASSWORD
 
 #-------------------------------------------------------------------------------
 #prepare TEST_DEV TEST_DIR SCRATCH_DEV SCRATCH_MNT for xfstests
-vm exec -v $cifsclnt -- "mkdir -p /mnt/xfstests_test /mnt/xfstests_scratch"
-vm exec -v $cifsclnt -- "useradd -m fsgqa; useradd 123456-fsgqa; useradd fsgqa2; groupadd fsgqa"
+vmrunx - $cifsclnt -- "mkdir -p /mnt/xfstests_test /mnt/xfstests_scratch"
+vmrunx - $cifsclnt -- "useradd -m fsgqa; useradd 123456-fsgqa; useradd fsgqa2; groupadd fsgqa"
 #see: https://wiki.samba.org/images/9/99/Xfstests.local.config.txt
-vm exec -v $cifsclnt -- "cat >/var/lib/xfstests/local.config <<EOF
+vmrunx - $cifsclnt -- "cat >/var/lib/xfstests/local.config <<EOF
 [default-version]
 FSTYP=cifs
 TEST_DEV=//$smbserv/share1
@@ -94,8 +94,8 @@ distrodir=$(gen_distro_dir_name $cifsclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/xfstest
 mkdir -p $resdir
 {
-  vm exec -v $cifsclnt -- uname -r;
-  vm exec -v $cifsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -cifs -s default-version ${TESTS};"
+  vmrunx - $cifsclnt -- uname -r;
+  vmrunx - $cifsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -cifs -s default-version ${TESTS};"
 } |& tee $resdir/xfstests-cifs.log
 
 vm stop $smbserv $cifsclnt

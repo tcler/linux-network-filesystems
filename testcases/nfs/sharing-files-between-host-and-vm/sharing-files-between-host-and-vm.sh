@@ -36,8 +36,8 @@ trun vm create -f Windows-server-2022 -n $vmname -C $win_iso_url \
 	--wait
 trun sed -n '/autorun-post/,/autorun-post.end/p'  /tmp/${vmname}-data/postinstall.log
 
-trun vm exec -v $vmname -- 'showmount.exe -e '"${hostip}"
-trun vm exec -v $vmname -- 'powershell -command "mount.exe -o anon \\'"${hostip}"'\'"${expdir#/}"' Z:; ls Z:;
+trun vmrunx - $vmname -- 'showmount.exe -e '"${hostip}"
+trun vmrunx - $vmname -- 'powershell -command "mount.exe -o anon \\'"${hostip}"'\'"${expdir#/}"' Z:; ls Z:;
 	if (Test-Path -Path Z:\windir) { Remove-Item -Force -Recurse Z:\windir };
 	if (Test-Path -Path Z:\win.txt) { Remove-Item -Force Z:\win.txt };
 	Set-Content Z:\win.txt \"in.windows 2\"; New-Item Z:\windir -ItemType \"directory\";

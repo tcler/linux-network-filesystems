@@ -19,32 +19,33 @@ trun -tmux vm create $distro -n $vmserv -m 4G -f -nointeract -p vim,nfs-utils,tc
 trun -tmux vm create $distro -n $vmclntx -m 4G -f -nointeract -p vim,nfs-utils,tcpdump,wireshark,python3 -I=$imgf "$@"
 trun       vm create $distro -n $vmclnt -m 4G -f -nointeract -p vim,nfs-utils,tcpdump,wireshark,expect,iproute-tc,kernel-modules-extra -I=$imgf "$@"
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
+timeout 300 vm port-available -w $vmserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 vm cpto -v $vmserv /usr/bin/make-nfs-server.sh .
-vm exec -v $vmserv -- bash make-nfs-server.sh
-vm exec -v $vmserv -- mkdir -p /nfsshare/rw/testdir
-vm exec -v $vmserv -- touch /nfsshare/rw/testdir/file{1..128}
+vmrunx - $vmserv -- bash make-nfs-server.sh
+vmrunx - $vmserv -- mkdir -p /nfsshare/rw/testdir
+vmrunx - $vmserv -- touch /nfsshare/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $vmserv)
 
-vm exec -v $vmclntx -- showmount -e $servaddr
-vm exec -v $vmclnt -- showmount -e $servaddr
+vmrunx - $vmclntx -- showmount -e $servaddr
+vmrunx - $vmclnt -- showmount -e $servaddr
 
 #nfstest_delegation
 expdir=/nfsshare/rw
-NIC=$(vm exec -v $vmclnt -- nmcli -g DEVICE connection show|head -1)
+NIC=$(vmrunx - $vmclnt -- nmcli -g DEVICE connection show|head -1)
 clntxaddr=$(vm ifaddr $vmclntx)
 vm cpto -v $vmclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh .
-vm exec -v $vmclnt -- bash install-nfstest.sh
-vm exec -v $vmclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
-vm exec -v $vmclnt -- bash ssh-copy-id.sh $clntxaddr root redhat
-vm exec -v $vmclnt -- ip link set "$NIC" promisc on
+vmrunx - $vmclnt -- bash install-nfstest.sh
+vmrunx - $vmclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
+vmrunx - $vmclnt -- bash ssh-copy-id.sh $clntxaddr root redhat
+vmrunx - $vmclnt -- ip link set "$NIC" promisc on
 
 distrodir=$(gen_distro_dir_name $vmclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
-  vm exec -v $vmclnt -- uname -r;
-  vm exec -v $vmclnt -- nfstest_delegation --server=$servaddr --export=$expdir --nfsversion=4.2 --client $clntxaddr --client-nfsvers=4.0,4.1,4.2;
+  vmrunx - $vmclnt -- uname -r;
+  vmrunx - $vmclnt -- nfstest_delegation --server=$servaddr --export=$expdir --nfsversion=4.2 --client $clntxaddr --client-nfsvers=4.0,4.1,4.2;
 } |& tee $resdir/delegation.log
 
 vm stop $vmserv $vmclnt $vmclntx

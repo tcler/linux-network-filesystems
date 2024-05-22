@@ -14,6 +14,7 @@ trun -tmux vm create $distro -n $vmserv -f -nointeract -p 'nfs-utils wireshark t
 trun       vm create $distro -n $vmclnt -f -nointeract -p 'nfs-utils wireshark tmux' "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
+timeout 300 vm port-available -w $vmserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 vm -v cpto $vmserv /usr/bin/make-nfs-server.sh .
 vm -v exec $vmserv -- bash make-nfs-server.sh
@@ -22,16 +23,16 @@ vm -v exec $vmserv -- touch /nfsshare/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $vmserv)
 pcapf=nfs.pcap
 
-vm exec -vx $vmclnt -- showmount -e $servaddr
-vm exec -vx $vmclnt -- mkdir -p $nfsmp
-vm exec -vx $vmclnt -- "mount $servaddr:/nfsshare/rw $nfsmp || mount -vvv $servaddr:/nfsshare/rw $nfsmp"
-vm exec -vx $vmclnt -- umount $nfsmp
+vmrunx 0 $vmclnt -- showmount -e $servaddr
+vmrunx 0 $vmclnt -- mkdir -p $nfsmp
+vmrunx 0 $vmclnt -- "mount $servaddr:/nfsshare/rw $nfsmp || mount -vvv $servaddr:/nfsshare/rw $nfsmp"
+vmrunx 0 $vmclnt -- umount $nfsmp
 
 #Test1: softreval
-vm exec -v $vmclnt -- mount -osoftreval $servaddr:/nfsshare/rw $nfsmp
-vm exec -v $vmclnt -- mount -t nfs,nfs4
-vm exec -v $vmclnt -- ls -l $nfsmp $nfsmp/testdir
-vm exec -v $vmserv -- systemctl stop nfs-server
+vmrunx - $vmclnt -- mount -osoftreval $servaddr:/nfsshare/rw $nfsmp
+vmrunx - $vmclnt -- mount -t nfs,nfs4
+vmrunx - $vmclnt -- ls -l $nfsmp $nfsmp/testdir
+vmrunx - $vmserv -- systemctl stop nfs-server
 #should umount success even nfs-server stop
-vm exec -vx $vmclnt -- umount $nfsmp
-vm exec -v $vmserv -- systemctl start nfs-server
+vmrunx 0 $vmclnt -- umount $nfsmp
+vmrunx - $vmserv -- systemctl start nfs-server

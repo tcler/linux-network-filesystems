@@ -18,27 +18,27 @@ echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh .
-vm exec -v $nfsserv -- bash make-nfs-server.sh
-vm exec -v $nfsserv -- mkdir -p /nfsshare/rw/testdir
-vm exec -v $nfsserv -- touch /nfsshare/rw/testdir/file{1..128}
+vmrunx - $nfsserv -- bash make-nfs-server.sh
+vmrunx - $nfsserv -- mkdir -p /nfsshare/rw/testdir
+vmrunx - $nfsserv -- touch /nfsshare/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $nfsserv)
 
-vm exec -v $nfsclnt -- showmount -e $servaddr
+vmrunx - $nfsclnt -- showmount -e $servaddr
 
 #nfstest_alloc
 expdir=/nfsshare/rw
 nfsmp=/mnt/nfsmp
-NIC=$(vm exec -v $nfsclnt -- nmcli -g DEVICE connection show|head -1)
+NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|head -1)
 vm cpto -v $nfsclnt /usr/bin/install-pynfs.sh /usr/bin/
-vm exec -v $nfsclnt -- install-pynfs.sh
-vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
+vmrunx - $nfsclnt -- install-pynfs.sh
+vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
 
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/pynfs
 mkdir -p $resdir
 {
-  vm exec -v $nfsclnt -- uname -r;
-  vm exec -v $nfsclnt -- testserver.py --maketree $servaddr:$expdir all;
+  vmrunx - $nfsclnt -- uname -r;
+  vmrunx - $nfsclnt -- testserver.py --maketree $servaddr:$expdir all;
 } |& tee $resdir/testserver.log
 
 vm stop $nfsserv $nfsclnt

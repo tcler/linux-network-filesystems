@@ -27,6 +27,7 @@ trun -tmux vm create $distro -n $vmnfsserv -p nfs-utils --net default --nointera
 trun       vm create $distro -n $vmnfsclnt -p nfs-utils --net default --nointeract -I=$imgf -f $VMOPT "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
+timeout 300 vm port-available -w $vmnfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 vm -v exec $vmnfsserv -- systemctl stop firewalld
 vm -v exec $vmnfsclnt -- systemctl stop firewalld

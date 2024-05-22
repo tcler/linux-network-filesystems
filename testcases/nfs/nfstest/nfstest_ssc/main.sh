@@ -19,33 +19,34 @@ trun -tmux vm create $distro -n $nfsserv2 -f -nointeract -p vim,tcpdump,nfs-util
 trun       vm create $distro -n $nfsclnt  -f -nointeract -p vim,tcpdump,nfs-utils,tcpdump,iproute-tc,kernel-modules-extra -I=$imgf "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
+timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 vm cpto -v $nfsserv  /usr/bin/make-nfs-server.sh /usr/bin/.
 vm cpto -v $nfsserv2 /usr/bin/make-nfs-server.sh /usr/bin/.
-vm exec -vx $nfsserv  -- make-nfs-server.sh
-vm exec -vx $nfsserv2 -- make-nfs-server.sh
-vm exec -vx $nfsserv  -- "echo Y >/sys/module/nfsd/parameters/inter_copy_offload_enable"
-vm exec -vx $nfsserv2 -- "echo Y >/sys/module/nfsd/parameters/inter_copy_offload_enable"
+vmrunx 0 $nfsserv  -- make-nfs-server.sh
+vmrunx 0 $nfsserv2 -- make-nfs-server.sh
+vmrunx 0 $nfsserv  -- "echo Y >/sys/module/nfsd/parameters/inter_copy_offload_enable"
+vmrunx 0 $nfsserv2 -- "echo Y >/sys/module/nfsd/parameters/inter_copy_offload_enable"
 
 serv1addr=$(vm ifaddr $nfsserv)
 serv2addr=$(vm ifaddr $nfsserv2)
-vm exec -v $nfsclnt -- showmount -e $serv1addr
-vm exec -v $nfsclnt -- showmount -e $serv2addr
+vmrunx - $nfsclnt -- showmount -e $serv1addr
+vmrunx - $nfsclnt -- showmount -e $serv2addr
 
 #nfstest_ssc
 nfsmp=/mnt/nfsmp
 expdir=/nfsshare/rw
-NIC=$(vm exec -v $nfsclnt -- nmcli -g DEVICE connection show|head -1)
+NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|head -1)
 vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin/.
-vm exec -v $nfsclnt -- install-nfstest.sh
-vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
+vmrunx - $nfsclnt -- install-nfstest.sh
+vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
-  vm exec -v $nfsclnt -- uname -r;
-  vm exec -v $nfsclnt -- nfstest_ssc -s $serv1addr -e /nfsshare/rw --dst-server $serv2addr --dst-export /nfsshare/async inter;
+  vmrunx - $nfsclnt -- uname -r;
+  vmrunx - $nfsclnt -- nfstest_ssc -s $serv1addr -e /nfsshare/rw --dst-server $serv2addr --dst-export /nfsshare/async inter;
 } |& tee $resdir/ssc.log
 
 vm stop $nfsserv $nfsserv2 $nfsclnt

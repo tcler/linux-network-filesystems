@@ -16,32 +16,33 @@ trun -tmux vm create -n $vmserv -p libibverbs-utils,perftest,iproute,tmux -f $di
 trun       vm create -n $vmclnt -p libibverbs-utils,perftest,iproute      -f $distro -I=$imgf --nointeract "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
+timeout 300 vm port-available -w $vmserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
-NIC=$(vm exec -v $vmserv -- nmcli -g DEVICE connection show|head -1)
+NIC=$(vmrunx - $vmserv -- nmcli -g DEVICE connection show|head -1)
 
-vm exec -v $vmserv -- modprobe rdma_rxe
-vm exec -v $vmserv -- rdma link add rxe0 type rxe netdev $NIC
-vm exec -v $vmserv -- rdma link
-vm exec -v $vmserv -- mkdir -p /expdir
-vm exec -v $vmserv -- "echo '/expdir *(rw,no_root_squash)' > /etc/exports"
-vm exec -v $vmserv -- cat /etc/exports
-vm exec -v $vmserv -- sed -i -e '/rdma/s/^#//' -e 's/rdma=n/rdma=y/' /etc/nfs.conf
-vm exec -v $vmserv -- grep -v '^#' /etc/nfs.conf
-vm exec -v $vmserv -- systemctl restart nfs-server
-vm exec -v $vmserv -- "firewall-cmd --permanent --add-service={mountd,nfs,rpc-bind}; firewall-cmd --reload"
-vm exec -v $vmserv -- systemctl stop firewalld   #seems this's necessary for rdma, fixme if it's not true
-vm exec -v $vmserv -- showmount -e localhost
-vm exec -v $vmserv -- cat /proc/fs/nfsd/portlist
+vmrunx - $vmserv -- modprobe rdma_rxe
+vmrunx - $vmserv -- rdma link add rxe0 type rxe netdev $NIC
+vmrunx - $vmserv -- rdma link
+vmrunx - $vmserv -- mkdir -p /expdir
+vmrunx - $vmserv -- "echo '/expdir *(rw,no_root_squash)' > /etc/exports"
+vmrunx - $vmserv -- cat /etc/exports
+vmrunx - $vmserv -- sed -i -e '/rdma/s/^#//' -e 's/rdma=n/rdma=y/' /etc/nfs.conf
+vmrunx - $vmserv -- grep -v '^#' /etc/nfs.conf
+vmrunx - $vmserv -- systemctl restart nfs-server
+vmrunx - $vmserv -- "firewall-cmd --permanent --add-service={mountd,nfs,rpc-bind}; firewall-cmd --reload"
+vmrunx - $vmserv -- systemctl stop firewalld   #seems this's necessary for rdma, fixme if it's not true
+vmrunx - $vmserv -- showmount -e localhost
+vmrunx - $vmserv -- cat /proc/fs/nfsd/portlist
 
-vm exec -v $vmclnt -- modprobe rdma_rxe
-vm exec -v $vmclnt -- rdma link add rxe0 type rxe netdev $NIC
-vm exec -v $vmclnt -- rdma link
-vm exec -v $vmclnt -- mkdir -p /mnt/nfsmp
+vmrunx - $vmclnt -- modprobe rdma_rxe
+vmrunx - $vmclnt -- rdma link add rxe0 type rxe netdev $NIC
+vmrunx - $vmclnt -- rdma link
+vmrunx - $vmclnt -- mkdir -p /mnt/nfsmp
 servAddr=$(vm ifaddr $vmserv|head -1)
-vm exec -v -x $vmclnt -- showmount -e $servAddr
-vm exec -v    $vmclnt -- systemctl stop firewalld   #seems this's necessary for rdma, fixme if it's not true
-vm exec -v -x $vmclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049 -v
-vm exec -v -x $vmclnt -- mount -t nfs4
+vmrunx 0 $vmclnt -- showmount -e $servAddr
+vmrunx - $vmclnt -- systemctl stop firewalld   #seems this's necessary for rdma, fixme if it's not true
+vmrunx 0 $vmclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049 -v
+vmrunx 0 $vmclnt -- mount -t nfs4
 
-vm exec -v $vmserv -- tmux new -s listen -d 'ib_send_bw -d rxe0'
-vm exec -v $vmclnt -- ib_send_bw -d rxe0 $servAddr
+vmrunx - $vmserv -- tmux new -s listen -d 'ib_send_bw -d rxe0'
+vmrunx - $vmclnt -- ib_send_bw -d rxe0 $servAddr

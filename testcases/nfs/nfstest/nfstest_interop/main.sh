@@ -17,30 +17,31 @@ trun -tmux vm create $distro -n $nfsserv -m 4G -f -nointeract -p nfs-utils,tcpdu
 trun       vm create $distro -n $nfsclnt -m 4G -f -nointeract -p nfs-utils,tcpdump,wireshark -I=$imgf "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
+timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin
-vm exec -v $nfsserv -- make-nfs-server.sh
-vm exec -v $nfsserv -- mkdir -p /nfsshare/rw/testdir
-vm exec -v $nfsserv -- touch /nfsshare/rw/testdir/file{1..128}
+vmrunx - $nfsserv -- make-nfs-server.sh
+vmrunx - $nfsserv -- mkdir -p /nfsshare/rw/testdir
+vmrunx - $nfsserv -- touch /nfsshare/rw/testdir/file{1..128}
 
 servaddr=$(vm ifaddr $nfsserv)
-vm exec -v $nfsclnt -- showmount -e $servaddr
+vmrunx - $nfsclnt -- showmount -e $servaddr
 
 #nfstest_posix
 expdir=/nfsshare/rw
 nfsmp=/mnt/nfsmp
-NIC=$(vm exec -v $nfsclnt -- nmcli -g DEVICE connection show|head -1)
+NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|head -1)
 vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin
-vm exec -v $nfsclnt -- install-nfstest.sh
-vm exec -v $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
-vm exec -v $nfsclnt -- ip link set "$NIC" promisc on
+vmrunx - $nfsclnt -- install-nfstest.sh
+vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
+vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
 
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
-  vm exec -v $nfsclnt -- uname -r;
-  vm exec -v $nfsclnt -- nfstest_interop --server ${servaddr} --export=${expdir} --nfsversion=4.2;
+  vmrunx - $nfsclnt -- uname -r;
+  vmrunx - $nfsclnt -- nfstest_interop --server ${servaddr} --export=${expdir} --nfsversion=4.2;
 } |& tee $resdir/interop.log
 
 vm stop $nfsserv $nfsclnt

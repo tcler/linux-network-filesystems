@@ -20,14 +20,15 @@ trun -tmux vm create -n $nfsservd $distro -p bind-utils,vim,nfs-utils --nointera
 trun       vm create -n $nfsclnt  $distro -p bind-utils,vim,nfs-utils --nointeract -I=$imgf -f "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
+timeout 300 vm port-available -w $nfsservs || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 #-------------------------------------------------------------------------------
 #nfs-serv*: start nfs service
 vm cpto -v $nfsservs /usr/bin/make-nfs-server.sh /usr/bin/.
 vm cpto -v $nfsservd /usr/bin/make-nfs-server.sh /usr/bin/.
-vm exec -v $nfsservs -- make-nfs-server.sh
-vm exec -v $nfsservs -- dd if=/dev/urandom of=/nfsshare/rw/largefile.img bs=1M count=256
-vm exec -v $nfsservd -- make-nfs-server.sh
+vmrunx - $nfsservs -- make-nfs-server.sh
+vmrunx - $nfsservs -- dd if=/dev/urandom of=/nfsshare/rw/largefile.img bs=1M count=256
+vmrunx - $nfsservd -- make-nfs-server.sh
 
 ### __main__ test start
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
@@ -37,41 +38,41 @@ mkdir -p $resdir
 #-------------------------------------------------------------------------------
 #enable inter-server copy
 modulef=/sys/module/nfsd/parameters/inter_copy_offload_enable
-vm exec -vx $nfsservs -- "read val <$modulef; echo -n \$val' - '; echo Y >$modulef; cat $modulef"
-vm exec -vx $nfsservd -- "read val <$modulef; echo -n \$val' - '; echo Y >$modulef; cat $modulef"
+vmrunx 0 $nfsservs -- "read val <$modulef; echo -n \$val' - '; echo Y >$modulef; cat $modulef"
+vmrunx 0 $nfsservd -- "read val <$modulef; echo -n \$val' - '; echo Y >$modulef; cat $modulef"
 
 #-------------------------------------------------------------------------------
 serv_src_addr=$(vm if $nfsservs)
 serv_dst_addr=$(vm if $nfsservd)
-vm exec -vx $nfsclnt -- showmount -e ${nfsservs}
-vm exec -vx $nfsclnt -- showmount -e ${nfsservd}
-vm exec -vx $nfsclnt -- mkdir /mnt/src /mnt/dst
-vm exec -vx $nfsclnt -- mount -vvv ${nfsservs}:/nfsshare/rw /mnt/src
-vm exec -vx $nfsclnt -- mount -vvv ${nfsservd}:/nfsshare/rw /mnt/dst
-vm exec -vx $nfsclnt -- mount -t nfs4
+vmrunx 0 $nfsclnt -- showmount -e ${nfsservs}
+vmrunx 0 $nfsclnt -- showmount -e ${nfsservd}
+vmrunx 0 $nfsclnt -- mkdir /mnt/src /mnt/dst
+vmrunx 0 $nfsclnt -- mount -vvv ${nfsservs}:/nfsshare/rw /mnt/src
+vmrunx 0 $nfsclnt -- mount -vvv ${nfsservd}:/nfsshare/rw /mnt/dst
+vmrunx 0 $nfsclnt -- mount -t nfs4
 
-vm exec -vx $nfsclnt -- time cp /mnt/src/largefile.img  /mnt/dst/.
-vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY(_NOTIFY)?|^READ|^WRITE):'"
-vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY_NOTIFY):'"
-vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY|^READ|^WRITE):'"
-vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY):'"
+vmrunx 0 $nfsclnt -- time cp /mnt/src/largefile.img  /mnt/dst/.
+vmrunx 0 $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY(_NOTIFY)?|^READ|^WRITE):'"
+vmrunx 0 $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY_NOTIFY):'"
+vmrunx 0 $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY|^READ|^WRITE):'"
+vmrunx 0 $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY):'"
 
 #-------------------------------------------------------------------------------
 echo
-vm exec -vx $nfsclnt -- rm /mnt/dst/largefile.img
+vmrunx 0 $nfsclnt -- rm /mnt/dst/largefile.img
 vm reboot $nfsclnt -w
-vm exec -vx $nfsclnt -- systemctl start proc-fs-nfsd.mount
-vm exec -vx $nfsclnt -- "read val <$modulef; echo -n \$val' - '; echo Y >$modulef; cat $modulef"
-vm exec -vx $nfsclnt -- mount -vvv ${nfsservs}:/nfsshare/rw /mnt/src
-vm exec -vx $nfsclnt -- mount -vvv ${nfsservd}:/nfsshare/rw /mnt/dst
-vm exec -vx $nfsclnt -- mount -t nfs4
-vm exec -vx $nfsclnt -- time cp /mnt/src/largefile.img  /mnt/dst/.
-vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY(_NOTIFY)?|^READ|^WRITE):'"
-vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY_NOTIFY):'"
-vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY|^READ|^WRITE):'"
-vm exec -vx $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY):'"
+vmrunx 0 $nfsclnt -- systemctl start proc-fs-nfsd.mount
+vmrunx 0 $nfsclnt -- "read val <$modulef; echo -n \$val' - '; echo Y >$modulef; cat $modulef"
+vmrunx 0 $nfsclnt -- mount -vvv ${nfsservs}:/nfsshare/rw /mnt/src
+vmrunx 0 $nfsclnt -- mount -vvv ${nfsservd}:/nfsshare/rw /mnt/dst
+vmrunx 0 $nfsclnt -- mount -t nfs4
+vmrunx 0 $nfsclnt -- time cp /mnt/src/largefile.img  /mnt/dst/.
+vmrunx 0 $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY(_NOTIFY)?|^READ|^WRITE):'"
+vmrunx 0 $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY_NOTIFY):'"
+vmrunx 0 $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY|^READ|^WRITE):'"
+vmrunx 0 $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY):'"
 
-vm exec -v $nfsclnt -- "dmesg | grep TECH.PREVIEW /var/log/messages"
+vmrunx - $nfsclnt -- "dmesg | grep TECH.PREVIEW /var/log/messages"
 
 } |& tee $resdir/nfs-ssc.log
 
