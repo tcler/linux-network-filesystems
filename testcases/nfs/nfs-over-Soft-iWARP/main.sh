@@ -25,8 +25,10 @@ distrodir=$(gen_distro_dir_name $vmclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfs-function
 mkdir -p $resdir
 {
+#-------------------------------------------------------------------------------
+#base mount test
 NIC=$(vm exec $vmserv -- nmcli -g DEVICE connection show|sed -n 2p)
-vmrunx - $vmserv -- modprobe siw
+vmrunx 0 $vmserv -- modprobe siw || exit 2
 vmrunx - $vmserv -- rdma link add siw0 type siw netdev $NIC
 vmrunx - $vmserv -- rdma link
 vmrunx - $vmserv -- mkdir -p /expdir
@@ -49,8 +51,36 @@ vmrunx 0 $vmclnt -- showmount -e $servAddr
 vmrunx - $vmclnt -- systemctl stop firewalld   #seems this's necessary for rdma, fixme if it's not true
 vmrunx 0 $vmclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049 -v
 vmrunx 0 $vmclnt -- mount -t nfs4
+vmrunx 0 $vmclnt -- umount /mnt/nfsmp
 
 vmrunx - $vmserv -- tmux new -s listen -d 'ib_write_bw -d siw0 -R -n 5 -s 1500'
 vmrunx - $vmclnt -- ib_write_bw -d siw0 -R -n 5 -s 1500 $servAddr
 
+#-------------------------------------------------------------------------------
+##xfstest
+vm cpto -v $vmserv /usr/bin/make-nfs-server.sh .
+tmux new -s iwarpNfsServer -d "vm exec -v $vmserv -- bash make-nfs-server.sh"
+
+vm cpto -v $vmclnt /usr/bin/xfstests-install.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/.
+vmrunx 0 $vmclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
+vmrunx 0 $vmclnt -- "xfstests-install.sh nouring=$NOURING" || exit 1
+while tmux ls | grep iwarpNfsServer; do sleep 8; done
+vmrunx 0 $vmclnt -- showmount -e $servAddr
+
+TESTS=${TESTS:--g quick}
+#prepare TEST_DEV TEST_DIR SCRATCH_DEV SCRATCH_MNT for xfstests
+vmrunx - $vmclnt -- "mkdir -p /mnt/xfstests_test /mnt/xfstests_scratch"
+vmrunx - $vmclnt -- "useradd -m fsgqa; useradd 123456-fsgqa; useradd fsgqa2; groupadd fsgqa"
+vmrunx - $vmclnt -- "cat >/var/lib/xfstests/local.config <<EOF
+export TEST_DEV=$servAddr:/nfsshare/qe
+export TEST_DIR=/mnt/xfstests_test
+export TEST_FS_MOUNT_OPTS='-ordma,port=20049'
+export MOUNT_OPTIONS='-ordma,port=20049'
+export SCRATCH_DEV=$servAddr:/nfsshare/devel
+export SCRATCH_MNT=/mnt/xfstests_scratch
+export WORKAREA=/var/lib/xfstests
+EOF"
+
+vmrunx - $vmclnt -- uname -r;
+vmrunx - $vmclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
 } |& tee $resdir/nfs-soft-iwarp.log
