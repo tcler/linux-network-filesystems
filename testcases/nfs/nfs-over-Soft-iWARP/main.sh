@@ -12,14 +12,20 @@ imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 vmserv=nfs-o-soft-iwarp-serv
 vmclnt=nfs-o-soft-iwarp-clnt
 
-trun -tmux vm create -n $vmserv -p libibverbs-utils,perftest,iproute,tmux -f $distro -I=$imgf --nointeract "$@"
-trun       vm create -n $vmclnt -p libibverbs-utils,perftest,iproute      -f $distro -I=$imgf --nointeract "$@"
+### __prepare__ test env build
+pkgs=firewalld,libibverbs-utils,perftest,iproute,tmux
+trun -tmux vm create -n $vmserv -p $pkgs -f $distro -I=$imgf --nointeract "$@"
+trun       vm create -n $vmclnt -p $pkgs -f $distro -I=$imgf --nointeract "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $vmserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
-NIC=$(vmrunx - $vmserv -- nmcli -g DEVICE connection show|head -1)
-
+### __main__ test start
+distrodir=$(gen_distro_dir_name $vmclnt ${SUFFIX})
+resdir=~/testres/${distrodir}/nfs-function
+mkdir -p $resdir
+{
+NIC=$(vm exec $vmserv -- nmcli -g DEVICE connection show|sed -n 2p)
 vmrunx - $vmserv -- modprobe siw
 vmrunx - $vmserv -- rdma link add siw0 type siw netdev $NIC
 vmrunx - $vmserv -- rdma link
@@ -46,3 +52,5 @@ vmrunx 0 $vmclnt -- mount -t nfs4
 
 vmrunx - $vmserv -- tmux new -s listen -d 'ib_write_bw -d siw0 -R -n 5 -s 1500'
 vmrunx - $vmclnt -- ib_write_bw -d siw0 -R -n 5 -s 1500 $servAddr
+
+} |& tee $resdir/nfs-soft-iwarp.log
