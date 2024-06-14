@@ -28,7 +28,7 @@ vmrunx - $nfsclnt -- mkdir -p $nfsmp
 
 #nfstest_pnfs
 expdir=/share2
-NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|head -1)
+NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|sed -n '2p;q')
 vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/.
 vmrunx - $nfsclnt -- install-nfstest.sh
 vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'

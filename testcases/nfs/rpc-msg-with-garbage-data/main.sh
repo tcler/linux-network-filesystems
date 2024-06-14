@@ -22,7 +22,7 @@ vm -v exec $vmserv -- mkdir -p /nfsshare/rw/testdir
 vm -v exec $vmserv -- touch /nfsshare/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $vmserv)
 pcapf=nfs.pcap
-NIC=$(vmrunx - $vmserv -- nmcli -g DEVICE connection show|head -1)
+NIC=$(vmrunx - $vmserv -- nmcli -g DEVICE connection show|sed -n '2p;q')
 
 vmrunx - $vmclnt -- showmount -e $servaddr
 vmrunx - $vmclnt -- mkdir -p $nfsmp

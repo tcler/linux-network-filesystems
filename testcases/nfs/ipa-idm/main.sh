@@ -88,7 +88,7 @@ vmrunx - $ipaserv -- ipa group-add-member devel --users={ben,jeff,steve}
 vmrunx - $ipaserv -- sssctl domain-list
 vmrunx - $ipaserv -- sssctl user-show admin
 
-NIC=$(vmrunx - $nfsserv -- nmcli -g DEVICE connection show|head -1)
+NIC=$(vmrunx - $nfsserv -- nmcli -g DEVICE connection show|sed -n '2p;q')
 #-------------------------------------------------------------------------------
 #configure nfs-server to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.

@@ -151,8 +151,8 @@ if __name__ == '__main__':
     # Wireshark: Copy -> ... as a Hex Stream
     parser.add_argument('handle', help=textwrap.dedent("""\
         filehandle expressed as a hex stream, could be got by tshark:
-         tshark -i eth0 -f 'host nfs-server' -w nfs.pcap -O nfs
-         tshark -i eth0 -Y nfs -r nfs.pcap -T fields -e nfs.fhandle -f 'nfs.name == filename'"""))
+         tshark -i ethN -f 'host nfs-server' -w nfs.pcap -O nfs
+         tshark -i ethN -Y nfs -r nfs.pcap -T fields -e nfs.fhandle -f 'nfs.name == filename'"""))
     args = parser.parse_args()
     main(args)
     # example:
