@@ -30,7 +30,7 @@ vmrunx - $nfsclnt -- showmount -e $servaddr
 #nfstest_alloc
 expdir=/nfsshare/rw
 nfsmp=/mnt/nfsmp
-NIC=$(vmrunx - $nfsserv -- nmcli -g DEVICE connection show|sed -n '2p;q')
+NIC=any  #$(vmrunx - $nfsserv -- nmcli -g DEVICE connection show|sed -n '2p;q')
 vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh .
 vmrunx - $nfsclnt -- bash install-nfstest.sh
 vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'

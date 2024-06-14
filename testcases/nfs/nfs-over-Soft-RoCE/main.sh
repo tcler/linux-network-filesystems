@@ -27,7 +27,8 @@ mkdir -p $resdir
 {
 #-------------------------------------------------------------------------------
 #base mount test
-NIC=$(vm exec $vmserv -- nmcli -g DEVICE connection show|sed -n 2p)
+servAddr=$(vm ifaddr $vmserv|head -1)
+NIC=any  #$(vm exec $vmserv -- nmcli -g DEVICE connection show|sed -n 2p)
 vmrunx 0 $vmserv -- modprobe rdma_rxe || exit 2
 vmrunx - $vmserv -- rdma link add rxe0 type rxe netdev $NIC
 vmrunx - $vmserv -- rdma link
@@ -46,7 +47,6 @@ vmrunx - $vmclnt -- modprobe rdma_rxe
 vmrunx - $vmclnt -- rdma link add rxe0 type rxe netdev $NIC
 vmrunx - $vmclnt -- rdma link
 vmrunx - $vmclnt -- mkdir -p /mnt/nfsmp
-servAddr=$(vm ifaddr $vmserv|head -1)
 vmrunx 0 $vmclnt -- showmount -e $servAddr
 vmrunx - $vmclnt -- systemctl stop firewalld   #seems this's necessary for rdma, fixme if it's not true
 vmrunx 0 $vmclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049 -v
