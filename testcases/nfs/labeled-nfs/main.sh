@@ -7,7 +7,6 @@ for arg; do
 	case "$arg" in
 	-upk) VMOPT+=" --brewinstall=upk";;
 	-h)   echo "Usage: $0 [-h] [distro] [-upk] [-force|-f]"; exit;;
-	-*)   echo "{WARN} unkown option '${arg}'";;
 	*)    argv+=($arg);;
 	esac
 done
