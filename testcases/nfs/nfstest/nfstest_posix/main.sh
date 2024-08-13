@@ -41,7 +41,7 @@ resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
-  vmrunx - $nfsclnt -- nfstest_posix --server $servaddr --export=$expdir --mtpoint=$nfsmp --mtopts=rw --interface=$NIC --nfsversion=4.2;
+  vmrunx - $nfsclnt -- nfstest_posix --server $servaddr --export=$expdir --mtpoint=$nfsmp --mtopts=rw --interface=$NIC --trcdelay=3 --nfsversion=4.2;
 } |& tee $resdir/posix.log
 
 vm stop $nfsserv $nfsclnt

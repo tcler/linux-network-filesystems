@@ -41,7 +41,7 @@ resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
-  vmrunx - $nfsclnt -- nfstest_alloc --server $servaddr --export=$expdir --mtpoint=$nfsmp --mtopts=rw --interface=$NIC;
+  vmrunx - $nfsclnt -- nfstest_alloc --server $servaddr --export=$expdir --mtpoint=$nfsmp --mtopts=rw --interface=$NIC --trcdelay=3;
 } |& tee $resdir/alloc.log
 
 vm stop $nfsserv $nfsclnt

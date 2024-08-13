@@ -43,7 +43,7 @@ resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
-  vmrunx - $nfsclnt -- nfstest_dio --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --rsize=$pgsize --wsize=$pgsize --nfsversion=4.2;
+  vmrunx - $nfsclnt -- nfstest_dio --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --rsize=$pgsize --wsize=$pgsize --nfsversion=4.2;
 } |& tee $resdir/dio.log
 
 vm stop $nfsserv $nfsclnt

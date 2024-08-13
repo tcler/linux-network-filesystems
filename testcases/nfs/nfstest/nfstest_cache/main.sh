@@ -54,7 +54,7 @@ mkdir -p $resdir
   vmrunx - $nfsclntx -- 'echo "foo ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers'
 
   vmrunx - foo@$nfsclnt -- uname -r;
-  vmrunx - foo@$nfsclnt -- nfstest_cache --server $servaddr --client $clntxaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2;
+  vmrunx - foo@$nfsclnt -- nfstest_cache --server $servaddr --client $clntxaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --nfsversion=4.2;
 } |& tee $resdir/cache.log
 
 vm stop $nfsserv $nfsclnt $nfsclntx

@@ -39,7 +39,7 @@ resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
-  vmrunx - $nfsclnt -- nfstest_pnfs --server $lservaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --nfsversion=4.2 --trcdelay=3;
+  vmrunx - $nfsclnt -- nfstest_pnfs --server $lservaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --nfsversion=4.2;
 } |& tee $resdir/pnfs.log
 
 vm stop $nfsclnt
