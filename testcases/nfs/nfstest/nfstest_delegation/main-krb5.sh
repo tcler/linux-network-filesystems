@@ -90,11 +90,12 @@ vmrunx - $ipaserv -- ipa group-add-member devel --users={ben,jeff,steve}
 vmrunx - $ipaserv -- sssctl domain-list
 vmrunx - $ipaserv -- sssctl user-show admin
 
-NIC=$(vmrunx - $nfsserv -- nmcli -g DEVICE connection show|sed -n '2p')
 #-------------------------------------------------------------------------------
 #configure nfsserver to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
-vmrunx - $nfsserv -- "nmcli connection modify 'System $NIC' ipv4.dns $_ipa_serv_addr; nmcli connection up 'System $NIC'"
+NIC=$(vmrunx - $nfsserv -- nmcli -g DEVICE connection show|sed -n 2p)
+conn=$(vmrunx - $nfsserv -- nmcli -g GENERAL.CONNECTION device show $NIC)
+vmrunx - $nfsserv -- "nmcli connection modify '$conn' ipv4.dns $_ipa_serv_addr; nmcli connection up '$conn'"
 vmrunx - $nfsserv -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf
 vmrunx - $nfsserv -- cat /etc/resolv.conf
 
@@ -109,29 +110,11 @@ vmrunx - $ipaserv -- "journalctl -u named-pkcs11.service | grep ${nfsserv}.*upda
 vmrunx - $nfsserv -- 'ipa host-show $(hostname)'
 
 #-------------------------------------------------------------------------------
-#configure nfs-client to join the realm
-#Change host's DNS nameserver configuration to use the ipa/idm server.
-vmrunx - $nfsclnt -- "nmcli connection modify 'System $NIC' ipv4.dns $_ipa_serv_addr; nmcli connection up 'System $NIC'"
-vmrunx - $nfsclnt -- cat /etc/resolv.conf
-vmrunx - $nfsclnt -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf
-vmrunx - $nfsclnt -- cat /etc/resolv.conf
-
-vmrunx - $nfsclnt -- dig +short SRV _ldap._tcp.$dnsdomain
-vmrunx - $nfsclnt -- dig +short SRV _kerberos._tcp.$dnsdomain
-vmrunx - $nfsclnt -- ipa-client-install --domain=$domain --realm=${realm} --principal=admin --password=$password \
-	--unattended --mkhomedir #--server=$ipaserv.$domain
-vmrunx - $nfsclnt -- kinit.sh admin $password
-vmrunx - $nfsclnt -- klist
-
-vmrunx - $nfsclnt -- 'ipa host-show $(hostname)'
-vmrunx - $nfsclnt -- authselect list
-vmrunx - $nfsclnt -- authselect show sssd
-vmrunx - $nfsclnt -- authselect test -a sssd with-mkhomedir with-sudo
-
-#-------------------------------------------------------------------------------
 #configure nfs-clientx to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
-vmrunx - $nfsclntx -- "nmcli connection modify 'System $NIC' ipv4.dns $_ipa_serv_addr; nmcli connection up 'System $NIC'"
+NIC=$(vmrunx - $nfsclntx -- nmcli -g DEVICE connection show|sed -n 2p)
+conn=$(vmrunx - $nfsclntx -- nmcli -g GENERAL.CONNECTION device show $NIC)
+vmrunx - $nfsclntx -- "nmcli connection modify '$conn' ipv4.dns $_ipa_serv_addr; nmcli connection up '$conn'"
 vmrunx - $nfsclntx -- cat /etc/resolv.conf
 vmrunx - $nfsclntx -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf
 vmrunx - $nfsclntx -- cat /etc/resolv.conf
@@ -147,6 +130,28 @@ vmrunx - $nfsclntx -- 'ipa host-show $(hostname)'
 vmrunx - $nfsclntx -- authselect list
 vmrunx - $nfsclntx -- authselect show sssd
 vmrunx - $nfsclntx -- authselect test -a sssd with-mkhomedir with-sudo
+
+#-------------------------------------------------------------------------------
+#configure nfs-client to join the realm
+#Change host's DNS nameserver configuration to use the ipa/idm server.
+NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|sed -n 2p)
+conn=$(vmrunx - $nfsclnt -- nmcli -g GENERAL.CONNECTION device show $NIC)
+vmrunx - $nfsclnt -- "nmcli connection modify '$conn' ipv4.dns $_ipa_serv_addr; nmcli connection up '$conn'"
+vmrunx - $nfsclnt -- cat /etc/resolv.conf
+vmrunx - $nfsclnt -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf
+vmrunx - $nfsclnt -- cat /etc/resolv.conf
+
+vmrunx - $nfsclnt -- dig +short SRV _ldap._tcp.$dnsdomain
+vmrunx - $nfsclnt -- dig +short SRV _kerberos._tcp.$dnsdomain
+vmrunx - $nfsclnt -- ipa-client-install --domain=$domain --realm=${realm} --principal=admin --password=$password \
+	--unattended --mkhomedir #--server=$ipaserv.$domain
+vmrunx - $nfsclnt -- kinit.sh admin $password
+vmrunx - $nfsclnt -- klist
+
+vmrunx - $nfsclnt -- 'ipa host-show $(hostname)'
+vmrunx - $nfsclnt -- authselect list
+vmrunx - $nfsclnt -- authselect show sssd
+vmrunx - $nfsclnt -- authselect test -a sssd with-mkhomedir with-sudo
 
 #-------------------------------------------------------------------------------
 #nfs-server: configure krb5 nfs server
