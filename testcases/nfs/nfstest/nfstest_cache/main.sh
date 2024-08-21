@@ -32,7 +32,7 @@ vmrunx - $nfsclnt -- showmount -e $servaddr
 #nfstest_cache
 nfsmp=/mnt/nfsmp
 expdir=/nfsshare/rw
-NIC=any  #$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show||sed -n '2p;q')
+NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|sed -n '2p')
 clntxaddr=$(vm ifaddr $nfsclntx)
 vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin/.
 vmrunx - $nfsclnt -- install-nfstest.sh

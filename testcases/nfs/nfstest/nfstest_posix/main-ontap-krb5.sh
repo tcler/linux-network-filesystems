@@ -20,7 +20,7 @@ vmrunx 0 $clientvm -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 ONTAP_ENV_FILE=/tmp/ontap2info.env
 source "$ONTAP_ENV_FILE"
 
-NIC=any
+NIC=$(vmrunx - $clientvm -- nmcli -g DEVICE connection show|sed -n '2p')
 distrodir=$(gen_distro_dir_name $clientvm ${SUFFIX})
 resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir

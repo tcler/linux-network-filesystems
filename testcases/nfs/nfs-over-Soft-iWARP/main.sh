@@ -28,7 +28,7 @@ mkdir -p $resdir
 #-------------------------------------------------------------------------------
 #base mount test
 servAddr=$(vm ifaddr $vmserv|head -1)
-NIC=any  #$(vm exec $vmserv -- nmcli -g DEVICE connection show|sed -n 2p)
+NIC=$(vm exec $vmserv -- nmcli -g DEVICE connection show|sed -n 2p)
 vmrunx 0 $vmserv -- modprobe siw || exit 2
 vmrunx - $vmserv -- rdma link add siw0 type siw netdev $NIC
 vmrunx - $vmserv -- rdma link

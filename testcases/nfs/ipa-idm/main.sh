@@ -88,10 +88,10 @@ vmrunx - $ipaserv -- ipa group-add-member devel --users={ben,jeff,steve}
 vmrunx - $ipaserv -- sssctl domain-list
 vmrunx - $ipaserv -- sssctl user-show admin
 
-NIC=any  #$(vmrunx - $nfsserv -- nmcli -g DEVICE connection show|sed -n '2p;q')
 #-------------------------------------------------------------------------------
 #configure nfs-server to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
+NIC=$(vmrunx - $nfsserv -- nmcli -g DEVICE connection show|sed -n '2p')
 vmrunx - $nfsserv -- "nmcli connection modify 'System $NIC' ipv4.dns $_ipa_serv_addr; nmcli connection up 'System $NIC'"
 vmrunx - $nfsserv -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf
 vmrunx - $nfsserv -- cat /etc/resolv.conf
@@ -109,6 +109,7 @@ vmrunx - $nfsserv -- 'ipa host-show $(hostname)'
 #-------------------------------------------------------------------------------
 #configure nfs-client to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
+NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|sed -n '2p')
 vmrunx - $nfsclnt -- "nmcli connection modify 'System $NIC' ipv4.dns $_ipa_serv_addr; nmcli connection up 'System $NIC'"
 vmrunx - $nfsclnt -- cat /etc/resolv.conf
 vmrunx - $nfsclnt -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf

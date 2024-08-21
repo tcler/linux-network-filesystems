@@ -21,7 +21,7 @@ vm -v exec $vmserv -- make-nfs-server.sh --no-tlshd
 vm -v exec $vmserv -- mkdir -p /nfsshare/rw/testdir
 vm -v exec $vmserv -- touch /nfsshare/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $vmserv)
-NIC=any  #$(vmrunx - $vmserv -- nmcli -g DEVICE connection show|sed -n '2p;q')
+NIC=$(vmrunx - $vmserv -- nmcli -g DEVICE connection show|sed -n '2p')
 pcapf=nfs.pcap
 
 vmrunx - $vmclnt -- showmount -e $servaddr
