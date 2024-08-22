@@ -183,7 +183,7 @@ servaddr=$(vm ifaddr $nfsserv)
 clntxaddr=$(vm ifaddr $nfsclntx)
 servfqdn=${nfsserv}.${domain}
 clntxfqdn=${nfsclntx}.${domain}
-vm cpto $nfsclnt /usr/bin/{install-nfstest.sh,ssh-copy-id.sh} /usr/bin/.
+vm cpto $nfsclnt /usr/bin/{install-nfstest.sh,ssh-copy-id.sh,get-ip.sh} /usr/bin/.
 vmrunx 0 $nfsclnt -- install-nfstest.sh
 vmrunx 0 $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 vmrunx 0 $nfsclnt -- ssh-copy-id.sh $servaddr root redhat
@@ -193,13 +193,14 @@ vmrunx 0 $nfsclnt -- ssh-copy-id.sh $clntxaddr root redhat
 #2174870#c5
 vmrunx 0 $nfsclnt -- ip link set "$NIC" promisc on
 vmrunx 0 $nfsclnt -- tc qdisc add dev $NIC root netem delay 28ms
+clntaddr=$(vm ifaddr $nfsclnt)
 
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vmrunx -  $nfsclnt -- uname -r;
-  vmrunx -  $nfsclnt -- nfstest_delegation --server=$servfqdn --export=$expdir --nfsversion=4.2 --sec=krb5 --nconnect 16;
+  vmrunx -  $nfsclnt -- nfstest_delegation --server=$servfqdn --export=$expdir --nfsversion=4.2 --sec=krb5 --interface=$NIC --client-ipaddr=$clntaddr --nconnect 16;
 } |& tee $resdir/delegation-krb5.log
 
-vm stop $ipaserv $nfsserv $nfsclnt $nfsclntx
+#vm stop $ipaserv $nfsserv $nfsclnt $nfsclntx

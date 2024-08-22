@@ -21,8 +21,8 @@ echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
-vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh .
-vmrunx - $nfsserv -- bash make-nfs-server.sh
+vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/.
+vmrunx - $nfsserv -- make-nfs-server.sh
 vmrunx - $nfsserv -- mkdir -p /nfsshare/rw/testdir
 vmrunx - $nfsserv -- touch /nfsshare/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $nfsserv)
@@ -34,7 +34,7 @@ nfsmp=/mnt/nfsmp
 expdir=/nfsshare/rw
 NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|sed -n '2p')
 clntxaddr=$(vm ifaddr $nfsclntx)
-vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin/.
+vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin/get-ip.sh /usr/bin/.
 vmrunx - $nfsclnt -- install-nfstest.sh
 vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 vmrunx - foo@$nfsclnt -- ssh-copy-id.sh $servaddr foo redhat
@@ -44,6 +44,7 @@ vmrunx - foo@$nfsclnt -- ssh-copy-id.sh $clntxaddr root redhat
 
 vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
 vmrunx - $nfsclnt -- usermod -a -G nobody foo
+clntaddr=$(vm ifaddr $nfsclnt)
 
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfstest
@@ -54,7 +55,7 @@ mkdir -p $resdir
   vmrunx - $nfsclntx -- 'echo "foo ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers'
 
   vmrunx - foo@$nfsclnt -- uname -r;
-  vmrunx - foo@$nfsclnt -- nfstest_cache --server $servaddr --client $clntxaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --nfsversion=4.2;
+  vmrunx - foo@$nfsclnt -- nfstest_cache --server $servaddr --client $clntxaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2;
 } |& tee $resdir/cache.log
 
 vm stop $nfsserv $nfsclnt $nfsclntx

@@ -19,7 +19,7 @@ echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
-vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin
+vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/get-ip.sh /usr/bin
 vmrunx - $nfsserv -- make-nfs-server.sh
 vmrunx - $nfsserv -- mkdir -p /nfsshare/rw/testdir
 vmrunx - $nfsserv -- touch /nfsshare/rw/testdir/file{1..128}
@@ -35,13 +35,14 @@ vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin
 vmrunx - $nfsclnt -- install-nfstest.sh
 vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
 vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
+clntaddr=$(vm ifaddr $nfsclnt)
 
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
-  vmrunx - $nfsclnt -- nfstest_posix --server $servaddr --export=$expdir --mtpoint=$nfsmp --mtopts=rw --interface=$NIC --trcdelay=3 --nfsversion=4.2;
+  vmrunx - $nfsclnt -- nfstest_posix --server $servaddr --export=$expdir --mtpoint=$nfsmp --mtopts=rw --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2;
 } |& tee $resdir/posix.log
 
 vm stop $nfsserv $nfsclnt

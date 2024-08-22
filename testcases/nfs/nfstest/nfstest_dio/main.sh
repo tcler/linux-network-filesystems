@@ -31,11 +31,12 @@ vmrunx - $nfsclnt -- showmount -e $servaddr
 nfsmp=/mnt/nfsmp
 expdir=/nfsshare/rw
 NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|sed -n '2p')
-vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/.
+vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/get-ip.sh /usr/bin/.
 vmrunx - $nfsclnt -- install-nfstest.sh
 vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
 vmrunx - $nfsclnt -- getconf PAGESIZE
+clntaddr=$(vm ifaddr $nfsclnt)
 
 pgsize=$(vm exec $nfsclnt -- getconf PAGESIZE)
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
@@ -43,7 +44,7 @@ resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
-  vmrunx - $nfsclnt -- nfstest_dio --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --rsize=$pgsize --wsize=$pgsize --nfsversion=4.2;
+  vmrunx - $nfsclnt -- nfstest_dio --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --rsize=$pgsize --wsize=$pgsize --nfsversion=4.2;
 } |& tee $resdir/dio.log
 
 vm stop $nfsserv $nfsclnt

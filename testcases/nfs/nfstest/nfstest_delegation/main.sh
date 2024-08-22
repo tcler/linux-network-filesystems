@@ -21,8 +21,8 @@ trun       vm create $distro -n $vmclnt -m 4G -f -nointeract -p vim,nfs-utils,tc
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $vmserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
-vm cpto -v $vmserv /usr/bin/make-nfs-server.sh .
-vmrunx - $vmserv -- bash make-nfs-server.sh
+vm cpto -v $vmserv /usr/bin/make-nfs-server.sh /usr/bin/.
+vmrunx - $vmserv -- make-nfs-server.sh
 vmrunx - $vmserv -- mkdir -p /nfsshare/rw/testdir
 vmrunx - $vmserv -- touch /nfsshare/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $vmserv)
@@ -34,10 +34,10 @@ vmrunx - $vmclnt -- showmount -e $servaddr
 expdir=/nfsshare/rw
 NIC=$(vmrunx - $vmclnt -- nmcli -g DEVICE connection show|sed -n '2p')
 clntxaddr=$(vm ifaddr $vmclntx)
-vm cpto -v $vmclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh .
-vmrunx - $vmclnt -- bash install-nfstest.sh
+vm cpto -v $vmclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin/get-ip.sh /usr/bin/.
+vmrunx - $vmclnt -- install-nfstest.sh
 vmrunx - $vmclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
-vmrunx - $vmclnt -- bash ssh-copy-id.sh $clntxaddr root redhat
+vmrunx - $vmclnt -- ssh-copy-id.sh $clntxaddr root redhat
 vmrunx - $vmclnt -- ip link set "$NIC" promisc on
 
 distrodir=$(gen_distro_dir_name $vmclnt ${SUFFIX})

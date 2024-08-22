@@ -13,7 +13,7 @@ stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
 #create netapp ontap-simulator
-trun -x0 make-ontap-simulator.sh $distro $nfsclnt || exit $?
+trun -x0 make-ontap-simulator.sh $distro $nfsclnt "$@" || exit $?
 timeout 300 vm port-available -w $nfsclnt || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 ONTAP_ENV_FILE=/tmp/ontap2info.env
 source "$ONTAP_ENV_FILE"
@@ -28,18 +28,19 @@ vmrunx - $nfsclnt -- mkdir -p $nfsmp
 
 #nfstest_pnfs
 expdir=/share2
-NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|sed -n '2p')
-vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/.
+NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|head -1)
+vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/get-ip.sh /usr/bin/.
 vmrunx - $nfsclnt -- install-nfstest.sh
 vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
 vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
+clntaddr=$(vm ifaddr $nfsclnt)
 
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
-  vmrunx - $nfsclnt -- nfstest_pnfs --server $lservaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --nfsversion=4.2;
+  vmrunx - $nfsclnt -- nfstest_pnfs --server $lservaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2;
 } |& tee $resdir/pnfs.log
 
 vm stop $nfsclnt

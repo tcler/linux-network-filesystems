@@ -5,7 +5,7 @@ export LANG=C LANGUAGE=C   #nfstest only works on english lang env
 
 [[ -n "$1" && "$1" != -* ]] && { distro=${1}; shift; [[ -n "$1" && "$1" != -* ]] && { clientvm=${1}; shift 1; }; }
 distro=${distro:-9}
-clientvm=${clientvm:-nfstest-interop-OK-clnt}
+clientvm=${clientvm:-nfstest-posix-OK-clnt}
 
 ### __prepare__ test env build
 #create Windows AD server, ONTAP simulator and client VMs
@@ -13,9 +13,10 @@ trun -x0 make-ontap-with-windows-ad.sh $distro $clientvm "$@" || exit $?
 timeout 300 vm port-available -w $clientvm || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 #install nfstest on $clientvm
-vm cpto $clientvm /usr/bin/install-nfstest.sh /usr/bin/.
+vm cpto $clientvm /usr/bin/install-nfstest.sh /usr/bin/get-ip.sh /usr/bin/.
 vmrunx 0 $clientvm -- install-nfstest.sh
 vmrunx 0 $clientvm -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
+clntaddr=$(vm ifaddr $clientvm)
 
 ONTAP_ENV_FILE=/tmp/ontap2info.env
 source "$ONTAP_ENV_FILE"
@@ -26,7 +27,7 @@ resdir=~/testres/${distrodir}/nfstest
 mkdir -p $resdir
 {
   vmrunx - $clientvm -- uname -r;
-  vmrunx - $clientvm -- nfstest_posix --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5p --nfsversion=4.2 --interface=$NIC --trcdelay=3;
+  vmrunx - $clientvm -- nfstest_posix --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5p --nfsversion=4.2 --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr;
 } |& tee $resdir/posix-ontap-krb5.log
 
 vm stop $clientvm
