@@ -38,11 +38,13 @@ vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
 clntaddr=$(vm ifaddr $nfsclnt)
 
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfstest
+resdir=~/testres/${distrodir}/nfstest/posix
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
+  trun -tmux=server.console -logpath=$resdir vm console $nfsserv
+  trun -tmux=client.console -logpath=$resdir vm console $nfsclnt
   vmrunx - $nfsclnt -- nfstest_posix --server $servaddr --export=$expdir --mtpoint=$nfsmp --mtopts=rw --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2;
-} |& tee $resdir/posix.log
+} |& tee $resdir/std.log
 
 vm stop $nfsserv $nfsclnt

@@ -23,11 +23,12 @@ source "$ONTAP_ENV_FILE"
 
 NIC=$(vmrunx - $clientvm -- nmcli -g DEVICE connection show|sed -n '2p')
 distrodir=$(gen_distro_dir_name $clientvm ${SUFFIX})
-resdir=~/testres/${distrodir}/nfstest
+resdir=~/testres/${distrodir}/nfstest/posix-ontap-krb5
 mkdir -p $resdir
 {
   vmrunx - $clientvm -- uname -r;
+  trun -tmux=client.console -logpath=$resdir vm console $clientvm
   vmrunx - $clientvm -- nfstest_posix --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5p --nfsversion=4.2 --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr;
-} |& tee $resdir/posix-ontap-krb5.log
+} |& tee $resdir/std.log
 
 vm stop $clientvm

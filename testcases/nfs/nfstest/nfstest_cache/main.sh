@@ -47,7 +47,7 @@ vmrunx - $nfsclnt -- usermod -a -G nobody foo
 clntaddr=$(vm ifaddr $nfsclnt)
 
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfstest
+resdir=~/testres/${distrodir}/nfstest/cache
 mkdir -p $resdir
 {
   vmrunx - $nfsserv -- 'echo "foo ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers'
@@ -55,7 +55,10 @@ mkdir -p $resdir
   vmrunx - $nfsclntx -- 'echo "foo ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers'
 
   vmrunx - foo@$nfsclnt -- uname -r;
+  trun -tmux=server.console -logpath=$resdir vm console $nfsserv
+  trun -tmux=client.console -logpath=$resdir vm console $nfsclnt
+  trun -tmux=clientx.console -logpath=$resdir vm console $nfsclntx
   vmrunx - foo@$nfsclnt -- nfstest_cache --server $servaddr --client $clntxaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2;
-} |& tee $resdir/cache.log
+} |& tee $resdir/std.log
 
 vm stop $nfsserv $nfsclnt $nfsclntx

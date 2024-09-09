@@ -40,11 +40,13 @@ clntaddr=$(vm ifaddr $nfsclnt)
 
 pgsize=$(vm exec $nfsclnt -- getconf PAGESIZE)
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfstest
+resdir=~/testres/${distrodir}/nfstest/dio
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
+  trun -tmux=server.console -logpath=$resdir vm console $nfsserv
+  trun -tmux=client.console -logpath=$resdir vm console $nfsclnt
   vmrunx - $nfsclnt -- nfstest_dio --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --rsize=$pgsize --wsize=$pgsize --nfsversion=4.2;
-} |& tee $resdir/dio.log
+} |& tee $resdir/std.log
 
 vm stop $nfsserv $nfsclnt

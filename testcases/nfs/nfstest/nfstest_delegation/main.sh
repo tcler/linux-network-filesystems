@@ -41,11 +41,14 @@ vmrunx - $vmclnt -- ssh-copy-id.sh $clntxaddr root redhat
 vmrunx - $vmclnt -- ip link set "$NIC" promisc on
 
 distrodir=$(gen_distro_dir_name $vmclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfstest
+resdir=~/testres/${distrodir}/nfstest/delegation
 mkdir -p $resdir
 {
   vmrunx - $vmclnt -- uname -r;
+  trun -tmux=server.console -logpath=$resdir vm console $vmserv
+  trun -tmux=client.console -logpath=$resdir vm console $vmclnt
+  trun -tmux=clientx.console -logpath=$resdir vm console $vmclntx
   vmrunx - $vmclnt -- nfstest_delegation --server=$servaddr --export=$expdir --nfsversion=4.2 --client $clntxaddr --client-nfsvers=4.0,4.1,4.2;
-} |& tee $resdir/delegation.log
+} |& tee $resdir/std.log
 
 vm stop $vmserv $vmclnt $vmclntx

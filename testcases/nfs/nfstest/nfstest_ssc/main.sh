@@ -42,11 +42,14 @@ vmrunx - $nfsclnt -- install-nfstest.sh
 vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfstest
+resdir=~/testres/${distrodir}/nfstest/ssc
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
+  trun -tmux=server.console -logpath=$resdir vm console $nfsserv
+  trun -tmux=server2.console -logpath=$resdir vm console $nfsserv2
+  trun -tmux=client.console -logpath=$resdir vm console $nfsclnt
   vmrunx - $nfsclnt -- nfstest_ssc -s $serv1addr -e /nfsshare/rw --dst-server $serv2addr --dst-export /nfsshare/async inter;
-} |& tee $resdir/ssc.log
+} |& tee $resdir/std.log
 
 vm stop $nfsserv $nfsserv2 $nfsclnt
