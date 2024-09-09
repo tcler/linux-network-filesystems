@@ -91,7 +91,7 @@ TEST_FS_MOUNT_OPTS='-ousername=$USERNAME,password=$PASSWORD,nounix,noperm,cifsac
 EOF"
 
 distrodir=$(gen_distro_dir_name $cifsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/xfstest
+resdir=~/testres/${distrodir}/cifs
 mkdir -p $resdir
 {
   vmrunx - $cifsclnt -- uname -r;

@@ -61,7 +61,7 @@ tests=(
 vmnfsservaddr=$(vm if $vmnfsserv)
 
 distrodir=$(gen_distro_dir_name $vmnfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfs-function
+resdir=~/testres/${distrodir}/nfs
 mkdir -p $resdir
 {
 for key in "${!tests[@]}"; do

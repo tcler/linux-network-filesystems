@@ -51,7 +51,7 @@ export WORKAREA=/var/lib/xfstests
 EOF"
 
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfstest
+resdir=~/testres/${distrodir}/nfs
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;

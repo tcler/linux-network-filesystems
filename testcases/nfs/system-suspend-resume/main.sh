@@ -19,7 +19,7 @@ echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfs-function
+resdir=~/testres/${distrodir}/nfs
 mkdir -p $resdir
 {
 #-------------------------------------------------------------------------------

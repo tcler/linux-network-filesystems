@@ -22,7 +22,7 @@ timeout 300 vm port-available -w $vmserv || { echo "{TENV:ERROR} vm port 22 not 
 
 ### __main__ test start
 distrodir=$(gen_distro_dir_name $vmclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfs-function
+resdir=~/testres/${distrodir}/nfs
 mkdir -p $resdir
 {
 #-------------------------------------------------------------------------------

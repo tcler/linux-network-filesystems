@@ -27,7 +27,7 @@ while ps axf|grep tmux.new.*$$-nfs.*-d.vm.creat[e]; do sleep 10; done
 timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfs-function
+resdir=~/testres/${distrodir}/nfs
 mkdir -p $resdir
 {
 vm cpto -v $ipaserv /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.

@@ -32,7 +32,7 @@ vmrunx - $nfsservd -- make-nfs-server.sh
 
 ### __main__ test start
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfs-function
+resdir=~/testres/${distrodir}/nfs
 mkdir -p $resdir
 {
 #-------------------------------------------------------------------------------

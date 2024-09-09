@@ -66,7 +66,7 @@ EOF"
 vmrunx 0 $vmname -- "for dev in ${devs[*]}; do mkfs.${fs} $mkfsOpt /dev/\$dev; done"
 
 distrodir=$(gen_distro_dir_name $vmname ${SUFFIX})
-resdir=~/testres/${distrodir}/xfstest
+resdir=~/testres/${distrodir}/localfs
 mkdir -p $resdir
 {
   vmrunx - $vmname -- uname -r;
