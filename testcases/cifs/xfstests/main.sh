@@ -91,11 +91,13 @@ TEST_FS_MOUNT_OPTS='-ousername=$USERNAME,password=$PASSWORD,nounix,noperm,cifsac
 EOF"
 
 distrodir=$(gen_distro_dir_name $cifsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/cifs
+resdir=~/testres/${distrodir}/cifs/xfstest
 mkdir -p $resdir
 {
   vmrunx - $cifsclnt -- uname -r;
+  trun -tmux=server.console -logpath=$resdir vm console $smbserv
+  trun -tmux=client.console -logpath=$resdir vm console $cifsclnt
   vmrunx - $cifsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -cifs -s default-version ${TESTS};"
-} |& tee $resdir/xfstests-cifs.log
+} |& tee $resdir/std.log
 
 vm stop $smbserv $cifsclnt
