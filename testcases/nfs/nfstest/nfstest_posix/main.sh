@@ -37,13 +37,14 @@ vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
 vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
 clntaddr=$(vm ifaddr $nfsclnt)
 
+_test=posix
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfstest/posix
+resdir=~/testres/${distrodir}/nfstest/$_test
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
-  trun -tmux=server.console -logpath=$resdir vm console $nfsserv
-  trun -tmux=client.console -logpath=$resdir vm console $nfsclnt
+  trun -tmux=$_test-server.console -logpath=$resdir vm console $nfsserv
+  trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
   vmrunx - $nfsclnt -- nfstest_posix --server $servaddr --export=$expdir --mtpoint=$nfsmp --mtopts=rw --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2;
 } |& tee $resdir/std.log
 

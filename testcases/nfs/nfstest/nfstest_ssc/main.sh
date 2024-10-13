@@ -41,14 +41,15 @@ vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin
 vmrunx - $nfsclnt -- install-nfstest.sh
 vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 
+_test=ssc
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfstest/ssc
+resdir=~/testres/${distrodir}/nfstest/$_test
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
-  trun -tmux=server.console -logpath=$resdir vm console $nfsserv
-  trun -tmux=server2.console -logpath=$resdir vm console $nfsserv2
-  trun -tmux=client.console -logpath=$resdir vm console $nfsclnt
+  trun -tmux=$_test-server.console -logpath=$resdir vm console $nfsserv
+  trun -tmux=$_test-server2.console -logpath=$resdir vm console $nfsserv2
+  trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
   vmrunx - $nfsclnt -- nfstest_ssc -s $serv1addr -e /nfsshare/rw --dst-server $serv2addr --dst-export /nfsshare/async inter;
 } |& tee $resdir/std.log
 

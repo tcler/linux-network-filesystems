@@ -20,12 +20,13 @@ vmrunx 0 $clientvm -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 ONTAP_ENV_FILE=/tmp/ontap2info.env
 source "$ONTAP_ENV_FILE"
 
+_test=interop-ontap-krb5
 distrodir=$(gen_distro_dir_name $clientvm ${SUFFIX})
-resdir=~/testres/${distrodir}/nfstest/interop-ontap-krb5
+resdir=~/testres/${distrodir}/nfstest/$_test
 mkdir -p $resdir
 {
   vmrunx -  $clientvm -- uname -r;
-  trun -tmux=client.console -logpath=$resdir vm console $clientvm
+  trun -tmux=$_test-client.console -logpath=$resdir vm console $clientvm
   vmrunx -  $clientvm -- nfstest_interop --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5 --datadir datadir --nfsversion=4.2;
 } |& tee $resdir/std.log
 

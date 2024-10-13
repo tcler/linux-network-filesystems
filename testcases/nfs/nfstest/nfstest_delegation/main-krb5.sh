@@ -195,14 +195,15 @@ vmrunx 0 $nfsclnt -- ip link set "$NIC" promisc on
 vmrunx 0 $nfsclnt -- tc qdisc add dev $NIC root netem delay 28ms
 clntaddr=$(vm ifaddr $nfsclnt)
 
+_test=delegation-krb5
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfstest/delegation-krb5
+resdir=~/testres/${distrodir}/nfstest/$_test
 mkdir -p $resdir
 {
   vmrunx -  $nfsclnt -- uname -r;
-  trun -tmux=server.console -logpath=$resdir vm console $nfsserv
-  trun -tmux=client.console -logpath=$resdir vm console $nfsclnt
-  trun -tmux=clientx.console -logpath=$resdir vm console $nfsclntx
+  trun -tmux=$_test-server.console -logpath=$resdir vm console $nfsserv
+  trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
+  trun -tmux=$_test-clientx.console -logpath=$resdir vm console $nfsclntx
   vmrunx -  $nfsclnt -- nfstest_delegation --server=$servfqdn --export=$expdir --nfsversion=4.2 --sec=krb5 --interface=$NIC --client-ipaddr=$clntaddr --nconnect 16;
 } |& tee $resdir/std.log
 
