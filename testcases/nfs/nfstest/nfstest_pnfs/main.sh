@@ -42,7 +42,7 @@ mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
   trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
-  vmrunx - $nfsclnt -- nfstest_pnfs --server $lservaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2;
+  vmrunx - $nfsclnt -- nfstest_pnfs --server $lservaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2 $TESTS;
 } |& tee $resdir/std.log
 
 vm stop $nfsclnt
