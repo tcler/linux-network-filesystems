@@ -205,6 +205,7 @@ mkdir -p $resdir
   trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
   trun -tmux=$_test-clientx.console -logpath=$resdir vm console $nfsclntx
   vmrunx -  $nfsclnt -- nfstest_delegation --server=$servfqdn --export=$expdir --nfsversion=4.2 --sec=krb5 --interface=$NIC --client-ipaddr=$clntaddr --nconnect 16 $TESTS;
+  trun -x1-255 grep RI[P]: $resdir/*console.log
 } |& tee $resdir/std.log
 
 #vm stop $ipaserv $nfsserv $nfsclnt $nfsclntx

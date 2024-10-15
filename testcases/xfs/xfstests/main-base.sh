@@ -66,10 +66,12 @@ EOF"
 vmrunx 0 $vmname -- "for dev in ${devs[*]}; do mkfs.${fs} $mkfsOpt /dev/\$dev; done"
 
 distrodir=$(gen_distro_dir_name $vmname ${SUFFIX})
-resdir=~/testres/${distrodir}/localfs
+resdir=~/testres/${distrodir}/localfs/xfstests/$fs
 mkdir -p $resdir
 {
   vmrunx - $vmname -- uname -r;
   #vmrunx - $vmname -- "cd /var/lib/xfstests/; ./check -n -g auto;"
+  trun -tmux=$$-vm.console -logpath=$resdir vm console $vmname
   vmrunx - $vmname -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check ${TESTS};"
-} |& tee $resdir/xfstests-${fs}.log
+  trun -x1-255 grep RI[P]: $resdir/*console.log
+} |& tee $resdir/std.log

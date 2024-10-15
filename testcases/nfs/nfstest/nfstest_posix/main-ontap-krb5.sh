@@ -30,6 +30,7 @@ mkdir -p $resdir
   vmrunx - $clientvm -- uname -r;
   trun -tmux=$_test-client.console -logpath=$resdir vm console $clientvm
   vmrunx - $clientvm -- nfstest_posix --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5p --nfsversion=4.2 --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr $TESTS;
+  trun -x1-255 grep RI[P]: $resdir/*console.log
 } |& tee $resdir/std.log
 
 vm stop $clientvm

@@ -45,6 +45,7 @@ mkdir -p $resdir
   trun -tmux=$_test-server.console -logpath=$resdir vm console $nfsserv
   trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
   vmrunx - $nfsclnt -- nfstest_interop --server ${servaddr} --export=${expdir} --nfsversion=4.2 $TESTS;
+  trun -x1-255 grep RI[P]: $resdir/*console.log
 } |& tee $resdir/std.log
 
 vm stop $nfsserv $nfsclnt

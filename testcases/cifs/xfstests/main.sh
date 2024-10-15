@@ -95,9 +95,10 @@ resdir=~/testres/${distrodir}/cifs/xfstest
 mkdir -p $resdir
 {
   vmrunx - $cifsclnt -- uname -r;
-  trun -tmux=server.console -logpath=$resdir vm console $smbserv
-  trun -tmux=client.console -logpath=$resdir vm console $cifsclnt
+  trun -tmux=$$-server.console -logpath=$resdir vm console $smbserv
+  trun -tmux=$$-client.console -logpath=$resdir vm console $cifsclnt
   vmrunx - $cifsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -cifs -s default-version ${TESTS};"
+  trun -x1-255 grep RI[P]: $resdir/*console.log
 } |& tee $resdir/std.log
 
 vm stop $smbserv $cifsclnt

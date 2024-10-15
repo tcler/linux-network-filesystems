@@ -48,6 +48,7 @@ mkdir -p $resdir
   trun -tmux=$_test-server.console -logpath=$resdir vm console $nfsserv
   trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
   vmrunx - $nfsclnt -- nfstest_dio --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --rsize=$pgsize --wsize=$pgsize --nfsversion=4.2 $TESTS;
+  trun -x1-255 grep RI[P]: $resdir/*console.log
 } |& tee $resdir/std.log
 
 vm stop $nfsserv $nfsclnt

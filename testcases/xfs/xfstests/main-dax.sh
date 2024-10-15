@@ -72,10 +72,12 @@ vmrunx 0 $vmname -- "for dev in ${pdevs[*]:0:2}; do mkfs.${fs} $MKFS_OPTIONS /de
 TESTS=${TESTS:--g dax}
 
 distrodir=$(gen_distro_dir_name $vmname ${SUFFIX})
-resdir=~/testres/${distrodir}/xfstest
+resdir=~/testres/${distrodir}/localfs/xfstests/$fs-dax
 mkdir -p $resdir
 {
   vmrunx - $vmname -- uname -r;
   #vmrunx - $vmname -- "cd /var/lib/xfstests/; ./check -n -g auto;"
+  trun -tmux=$$-vm.console -logpath=$resdir vm console $vmname
   vmrunx - $vmname -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check ${TESTS};"
-} |& tee $resdir/xfstests-${fs}-dax.log
+  trun -x1-255 grep RI[P]: $resdir/*console.log
+} |& tee $resdir/std.log

@@ -51,11 +51,14 @@ export WORKAREA=/var/lib/xfstests
 EOF"
 
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfs
+resdir=~/testres/${distrodir}/nfs/xfstest
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
+  trun -tmux=$$-server.console -logpath=$resdir vm console $nfsserv
+  trun -tmux=$$-client.console -logpath=$resdir vm console $nfsclnt
   vmrunx - $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
-} |& tee $resdir/xfstests-nfs.log
+  trun -x1-255 grep RI[P]: $resdir/*console.log
+} |& tee $resdir/std.log
 
 vm stop $nfsserv $nfsclnt
