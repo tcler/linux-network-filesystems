@@ -18,8 +18,9 @@ trun       vm create -n $nfsclnt $distro -p bind-utils,vim,nfs-utils,tmux --noin
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
+_test=suspend
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfs
+resdir=~/testres/${distrodir}/nfs/$_test
 mkdir -p $resdir
 {
 #-------------------------------------------------------------------------------
@@ -87,6 +88,6 @@ vm vnc "$nfsserv" -putln ""
 trun port-available.sh $serv_addr 22 -w
 vmrunx 1-255 $nfsserv -- 'dmesg|grep Freezing.of.tasks.failed.after'
 
-} |& tee $resdir/nfs-suspend.log
+} |& tee $resdir/std.log
 
 vm stop $nfsserv $nfsclnt

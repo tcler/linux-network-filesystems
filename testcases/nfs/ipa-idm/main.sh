@@ -26,10 +26,15 @@ echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-nfs.*-d.vm.creat[e]; do sleep 10; done
 timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
+_test=ipa-idm
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfs
+resdir=~/testres/${distrodir}/nfs/$_test
 mkdir -p $resdir
 {
+trun -tmux=$_test-ipa-server.console -logpath=$resdir vm console $ipaserv
+trun -tmux=$_test-nfs-server.console -logpath=$resdir vm console $nfsserv
+trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
+
 vm cpto -v $ipaserv /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.
 vm cpto -v $nfsserv /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,make-nfs-server.sh} /usr/bin/.
 vm cpto -v $nfsclnt /usr/bin/ipa-client-install.sh /usr/bin/kinit.sh /usr/bin/.
@@ -162,6 +167,7 @@ vmrunx 0 $nfsclnt -- mount -osec=krb5 ${nfsserv}.${domain}:/nfsshare/qe /mnt/nfs
 vmrunx 0 $nfsclnt -- mount -t nfs4
 vmrunx 0 $nfsclnt -- umount -a -t nfs4
 
-} |& tee $resdir/ipa-idm-nfs.log
+trun -x1-255 grep RI[P]: $resdir/*console.log
+} |& tee $resdir/std.log
 
 vm stop $ipaserv $nfsserv $nfsclnt

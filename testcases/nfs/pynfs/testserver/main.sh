@@ -33,12 +33,13 @@ vm cpto -v $nfsclnt /usr/bin/install-pynfs.sh /usr/bin/
 vmrunx - $nfsclnt -- install-pynfs.sh
 vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
 
+_test=pynfs-testserver
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/pynfs
+resdir=~/testres/${distrodir}/nfs/$_test
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
   vmrunx - $nfsclnt -- testserver.py --maketree $servaddr:$expdir all;
-} |& tee $resdir/testserver.log
+} |& tee $resdir/std.log
 
 vm stop $nfsserv $nfsclnt

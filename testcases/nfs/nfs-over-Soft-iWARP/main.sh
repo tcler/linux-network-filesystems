@@ -21,8 +21,9 @@ while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $vmserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 ### __main__ test start
+_test=soft-iwarp
 distrodir=$(gen_distro_dir_name $vmclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfs
+resdir=~/testres/${distrodir}/nfs/$_test
 mkdir -p $resdir
 {
 #-------------------------------------------------------------------------------
@@ -83,4 +84,4 @@ EOF"
 
 vmrunx - $vmclnt -- uname -r;
 vmrunx - $vmclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
-} |& tee $resdir/nfs-soft-iwarp.log
+} |& tee $resdir/std.log

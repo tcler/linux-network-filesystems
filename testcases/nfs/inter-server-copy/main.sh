@@ -31,10 +31,15 @@ vmrunx - $nfsservs -- dd if=/dev/urandom of=/nfsshare/rw/largefile.img bs=1M cou
 vmrunx - $nfsservd -- make-nfs-server.sh
 
 ### __main__ test start
+_test=inter-server-copy
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfs
+resdir=~/testres/${distrodir}/nfs/$_test
 mkdir -p $resdir
 {
+trun -tmux=$_test-servers.console -logpath=$resdir vm console $nfsservs
+trun -tmux=$_test-serverd.console -logpath=$resdir vm console $nfsservd
+trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
+
 #-------------------------------------------------------------------------------
 #enable inter-server copy
 modulef=/sys/module/nfsd/parameters/inter_copy_offload_enable
@@ -74,6 +79,7 @@ vmrunx 0 $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY):'"
 
 vmrunx - $nfsclnt -- "dmesg | grep TECH.PREVIEW /var/log/messages"
 
-} |& tee $resdir/nfs-ssc.log
+trun -x1-255 grep RI[P]: $resdir/*console.log
+} |& tee $resdir/std.log
 
 vm stop $nfsservs $nfsservd $nfsclnt
