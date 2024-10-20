@@ -170,4 +170,4 @@ vmrunx 0 $nfsclnt -- umount -a -t nfs4
 trun -x1-255 grep RI[P]: $resdir/*console.log
 } |& tee $resdir/std.log
 
-vm stop $ipaserv $nfsserv $nfsclnt
+[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $ipaserv $nfsserv $nfsclnt

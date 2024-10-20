@@ -82,4 +82,4 @@ vmrunx - $nfsclnt -- "dmesg | grep TECH.PREVIEW /var/log/messages"
 trun -x1-255 grep RI[P]: $resdir/*console.log
 } |& tee $resdir/std.log
 
-vm stop $nfsservs $nfsservd $nfsclnt
+[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsservs $nfsservd $nfsclnt

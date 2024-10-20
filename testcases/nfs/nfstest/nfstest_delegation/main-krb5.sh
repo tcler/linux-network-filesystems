@@ -208,4 +208,4 @@ mkdir -p $resdir
   trun -x1-255 grep RI[P]: $resdir/*console.log
 } |& tee $resdir/std.log
 
-#vm stop $ipaserv $nfsserv $nfsclnt $nfsclntx
+[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $ipaserv $nfsserv $nfsclnt $nfsclntx

@@ -118,4 +118,4 @@ done
 
 } |& tee $resdir/labeled-nfs.log
 
-vm stop $vmnfsserv $vmnfsclnt
+[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $vmnfsserv $vmnfsclnt

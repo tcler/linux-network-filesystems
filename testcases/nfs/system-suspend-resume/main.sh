@@ -90,4 +90,4 @@ vmrunx 1-255 $nfsserv -- 'dmesg|grep Freezing.of.tasks.failed.after'
 
 } |& tee $resdir/std.log
 
-vm stop $nfsserv $nfsclnt
+[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt

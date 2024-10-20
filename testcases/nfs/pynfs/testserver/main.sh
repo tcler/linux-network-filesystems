@@ -42,4 +42,4 @@ mkdir -p $resdir
   vmrunx - $nfsclnt -- testserver.py --maketree $servaddr:$expdir all;
 } |& tee $resdir/std.log
 
-vm stop $nfsserv $nfsclnt
+[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt
