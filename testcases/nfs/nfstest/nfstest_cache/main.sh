@@ -25,7 +25,7 @@ vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/.
 vmrunx - $nfsserv -- make-nfs-server.sh
 vmrunx - $nfsserv -- mkdir -p /nfsshare/rw/testdir
 vmrunx - $nfsserv -- touch /nfsshare/rw/testdir/file{1..128}
-servaddr=$(vm ifaddr $nfsserv)
+servaddr=$(vm ifaddr $nfsserv|head -1)
 
 vmrunx - $nfsclnt -- showmount -e $servaddr
 
@@ -33,7 +33,7 @@ vmrunx - $nfsclnt -- showmount -e $servaddr
 nfsmp=/mnt/nfsmp
 expdir=/nfsshare/rw
 NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|sed -n '2p')
-clntxaddr=$(vm ifaddr $nfsclntx)
+clntxaddr=$(vm ifaddr $nfsclntx|head -1)
 vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin/get-ip.sh /usr/bin/.
 vmrunx - $nfsclnt -- install-nfstest.sh
 vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
@@ -44,7 +44,7 @@ vmrunx - foo@$nfsclnt -- ssh-copy-id.sh $clntxaddr root redhat
 
 vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
 vmrunx - $nfsclnt -- usermod -a -G nobody foo
-clntaddr=$(vm ifaddr $nfsclnt)
+clntaddr=$(vm ifaddr $nfsclnt|head -1)
 
 _test=cache
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})

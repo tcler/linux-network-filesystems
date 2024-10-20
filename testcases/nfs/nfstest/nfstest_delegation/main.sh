@@ -25,7 +25,7 @@ vm cpto -v $vmserv /usr/bin/make-nfs-server.sh /usr/bin/.
 vmrunx - $vmserv -- make-nfs-server.sh
 vmrunx - $vmserv -- mkdir -p /nfsshare/rw/testdir
 vmrunx - $vmserv -- touch /nfsshare/rw/testdir/file{1..128}
-servaddr=$(vm ifaddr $vmserv)
+servaddr=$(vm ifaddr $vmserv|head -1)
 
 vmrunx - $vmclntx -- showmount -e $servaddr
 vmrunx - $vmclnt -- showmount -e $servaddr
@@ -33,7 +33,7 @@ vmrunx - $vmclnt -- showmount -e $servaddr
 #nfstest_delegation
 expdir=/nfsshare/rw
 NIC=$(vmrunx - $vmclnt -- nmcli -g DEVICE connection show|sed -n '2p')
-clntxaddr=$(vm ifaddr $vmclntx)
+clntxaddr=$(vm ifaddr $vmclntx|head -1)
 vm cpto -v $vmclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin/get-ip.sh /usr/bin/.
 vmrunx - $vmclnt -- install-nfstest.sh
 vmrunx - $vmclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'

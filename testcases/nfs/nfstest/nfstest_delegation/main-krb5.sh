@@ -59,7 +59,7 @@ vmrunx - $ipaserv -- firewall-cmd --add-service=kerberos --permanent
 vmrunx - $ipaserv -- firewall-cmd --add-service=dns --permanent
 vmrunx - $ipaserv -- firewall-cmd --reload
 _hostname=$(vm exec $ipaserv -- hostname)
-_ipa_serv_addr=$(vm ifaddr $ipaserv)
+_ipa_serv_addr=$(vm ifaddr $ipaserv|head -1)
 vmrunx - $ipaserv -- "echo '$_ipa_serv_addr    $_hostname' >>/etc/hosts"
 vmrunx - $ipaserv -- dig +short $hostname A
 vmrunx - $ipaserv -- dig +short -x $_ipa_serv_addr
@@ -179,8 +179,8 @@ vmrunx - $nfsclntx -- systemctl restart nfs-client.target gssproxy.service rpc-s
 ### __main__ test start
 #-------------------------------------------------------------------------------
 expdir=/nfsshare/rw
-servaddr=$(vm ifaddr $nfsserv)
-clntxaddr=$(vm ifaddr $nfsclntx)
+servaddr=$(vm ifaddr $nfsserv|head -1)
+clntxaddr=$(vm ifaddr $nfsclntx|head -1)
 servfqdn=${nfsserv}.${domain}
 clntxfqdn=${nfsclntx}.${domain}
 vm cpto $nfsclnt /usr/bin/{install-nfstest.sh,ssh-copy-id.sh,get-ip.sh} /usr/bin/.
@@ -193,7 +193,7 @@ vmrunx 0 $nfsclnt -- ssh-copy-id.sh $clntxaddr root redhat
 #2174870#c5
 vmrunx 0 $nfsclnt -- ip link set "$NIC" promisc on
 vmrunx 0 $nfsclnt -- tc qdisc add dev $NIC root netem delay 28ms
-clntaddr=$(vm ifaddr $nfsclnt)
+clntaddr=$(vm ifaddr $nfsclnt|head -1)
 
 _test=delegation-krb5
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})

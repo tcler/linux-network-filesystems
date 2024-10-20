@@ -23,7 +23,7 @@ vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/.
 vmrunx - $nfsserv -- make-nfs-server.sh
 vmrunx - $nfsserv -- mkdir -p /nfsshare/rw/testdir
 vmrunx - $nfsserv -- touch /nfsshare/rw/testdir/file{1..128}
-servaddr=$(vm ifaddr $nfsserv)
+servaddr=$(vm ifaddr $nfsserv|head -1)
 
 vmrunx - $nfsclnt -- showmount -e $servaddr
 
@@ -35,7 +35,7 @@ vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/get-ip.sh /usr/bin/.
 vmrunx - $nfsclnt -- install-nfstest.sh
 vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
 vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
-clntaddr=$(vm ifaddr $nfsclnt)
+clntaddr=$(vm ifaddr $nfsclnt|head -1)
 
 _test=alloc
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})

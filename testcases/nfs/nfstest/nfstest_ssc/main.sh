@@ -28,8 +28,8 @@ vmrunx 0 $nfsserv2 -- make-nfs-server.sh
 vmrunx 0 $nfsserv  -- "echo Y >/sys/module/nfsd/parameters/inter_copy_offload_enable"
 vmrunx 0 $nfsserv2 -- "echo Y >/sys/module/nfsd/parameters/inter_copy_offload_enable"
 
-serv1addr=$(vm ifaddr $nfsserv)
-serv2addr=$(vm ifaddr $nfsserv2)
+serv1addr=$(vm ifaddr $nfsserv|head -1)
+serv2addr=$(vm ifaddr $nfsserv2|head -1)
 vmrunx - $nfsclnt -- showmount -e $serv1addr
 vmrunx - $nfsclnt -- showmount -e $serv2addr
 

@@ -16,7 +16,7 @@ timeout 300 vm port-available -w $clientvm || { echo "{TENV:ERROR} vm port 22 no
 vm cpto $clientvm /usr/bin/install-nfstest.sh /usr/bin/get-ip.sh /usr/bin/.
 vmrunx 0 $clientvm -- install-nfstest.sh
 vmrunx 0 $clientvm -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
-clntaddr=$(vm ifaddr $clientvm)
+clntaddr=$(vm ifaddr $clientvm|head -1)
 
 ONTAP_ENV_FILE=/tmp/ontap2info.env
 source "$ONTAP_ENV_FILE"

@@ -26,7 +26,7 @@ trun -tmux vm create $distro -n $nfsserv -m 4G -f -nointeract -p ${pkglist}     
 trun       vm create $distro -n $nfsclnt -m 4G -f -nointeract -p ${pkglist},git $insOpt "$@" || exit $?
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 10; done
-servaddr=$(vm ifaddr $nfsserv)
+servaddr=$(vm ifaddr $nfsserv|head -1)
 
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh .
 tmux new -s nfsServer -d "vm exec -v $nfsserv -- bash make-nfs-server.sh"

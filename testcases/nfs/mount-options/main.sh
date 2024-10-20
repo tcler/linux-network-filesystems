@@ -20,7 +20,7 @@ vm -v cpto $vmserv /usr/bin/make-nfs-server.sh .
 vm -v exec $vmserv -- bash make-nfs-server.sh
 vm -v exec $vmserv -- mkdir -p /nfsshare/rw/testdir
 vm -v exec $vmserv -- touch /nfsshare/rw/testdir/file{1..128}
-servaddr=$(vm ifaddr $vmserv)
+servaddr=$(vm ifaddr $vmserv|head -1)
 pcapf=nfs.pcap
 
 vmrunx 0 $vmclnt -- showmount -e $servaddr

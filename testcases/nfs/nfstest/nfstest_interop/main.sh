@@ -24,7 +24,7 @@ vmrunx - $nfsserv -- make-nfs-server.sh
 vmrunx - $nfsserv -- mkdir -p /nfsshare/rw/testdir
 vmrunx - $nfsserv -- touch /nfsshare/rw/testdir/file{1..128}
 
-servaddr=$(vm ifaddr $nfsserv)
+servaddr=$(vm ifaddr $nfsserv|head -1)
 vmrunx - $nfsclnt -- showmount -e $servaddr
 
 #nfstest_posix

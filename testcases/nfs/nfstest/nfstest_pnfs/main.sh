@@ -33,7 +33,7 @@ vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/get-ip.sh /usr/bin/.
 vmrunx - $nfsclnt -- install-nfstest.sh
 vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
 vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
-clntaddr=$(vm ifaddr $nfsclnt)
+clntaddr=$(vm ifaddr $nfsclnt|head -1)
 
 _test=pnfs-ontap
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})

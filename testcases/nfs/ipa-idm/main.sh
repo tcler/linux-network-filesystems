@@ -62,7 +62,7 @@ vmrunx - $ipaserv -- firewall-cmd --add-service=kerberos --permanent
 vmrunx - $ipaserv -- firewall-cmd --add-service=dns --permanent
 vmrunx - $ipaserv -- firewall-cmd --reload
 _hostname=$(vm exec $ipaserv -- hostname)
-_ipa_serv_addr=$(vm ifaddr $ipaserv)
+_ipa_serv_addr=$(vm ifaddr $ipaserv|head -1)
 vmrunx - $ipaserv -- "echo '$_ipa_serv_addr    $_hostname' >>/etc/hosts"
 vmrunx - $ipaserv -- dig +short $_hostname A
 vmrunx - $ipaserv -- dig +short -x $_ipa_serv_addr
