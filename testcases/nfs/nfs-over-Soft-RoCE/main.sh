@@ -26,10 +26,12 @@ distrodir=$(gen_distro_dir_name $vmclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfs/$_test
 mkdir -p $resdir
 {
+vm cpto -v $vmserv /usr/bin/make-nfs-server.sh /usr/bin/get-if-by-ip.sh /usr/bin/
+vm cpto -v $vmclnt /usr/bin/xfstests-install.sh /usr/bin/get-if-by-ip.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/
 #-------------------------------------------------------------------------------
 #base mount test
 servAddr=$(vm ifaddr $vmserv|head -1)
-NIC=$(vm exec $vmserv -- nmcli -g DEVICE connection show|sed -n 2p)
+NIC=$(vm exec $vmserv -- get-if-by-ip.sh $servAddr)
 vmrunx 0 $vmserv -- modprobe rdma_rxe || exit 2
 vmrunx - $vmserv -- rdma link add rxe0 type rxe netdev $NIC
 vmrunx - $vmserv -- rdma link
@@ -44,6 +46,8 @@ vmrunx - $vmserv -- systemctl stop firewalld   #seems this's necessary for rdma,
 vmrunx - $vmserv -- showmount -e localhost
 vmrunx - $vmserv -- cat /proc/fs/nfsd/portlist
 
+read clntaddr < <(vm ifaddr $vmclnt | grep ${servAddr%.*})
+NIC=$(vm exec $nfsclnt -- get-if-by-ip.sh $clntaddr)
 vmrunx - $vmclnt -- modprobe rdma_rxe
 vmrunx - $vmclnt -- rdma link add rxe0 type rxe netdev $NIC
 vmrunx - $vmclnt -- rdma link
@@ -59,10 +63,8 @@ vmrunx - $vmclnt -- ib_send_bw -d rxe0 $servAddr
 
 #-------------------------------------------------------------------------------
 ##xfstest
-vm cpto -v $vmserv /usr/bin/make-nfs-server.sh .
 tmux new -s roceNfsServer -d "vm exec -v $vmserv -- bash make-nfs-server.sh"
 
-vm cpto -v $vmclnt /usr/bin/xfstests-install.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/.
 vmrunx 0 $vmclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
 vmrunx 0 $vmclnt -- "xfstests-install.sh nouring=$NOURING" || exit 1
 while tmux ls | grep roceNfsServer; do sleep 8; done

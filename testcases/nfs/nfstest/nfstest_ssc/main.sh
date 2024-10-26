@@ -28,16 +28,17 @@ vmrunx 0 $nfsserv2 -- make-nfs-server.sh
 vmrunx 0 $nfsserv  -- "echo Y >/sys/module/nfsd/parameters/inter_copy_offload_enable"
 vmrunx 0 $nfsserv2 -- "echo Y >/sys/module/nfsd/parameters/inter_copy_offload_enable"
 
-serv1addr=$(vm ifaddr $nfsserv|head -1)
-serv2addr=$(vm ifaddr $nfsserv2|head -1)
+read serv1addr < <(vm ifaddr $nfsserv)
+read serv2addr < <(vm ifaddr $nfsserv2 | grep ${serv1addr%.*})
 vmrunx - $nfsclnt -- showmount -e $serv1addr
 vmrunx - $nfsclnt -- showmount -e $serv2addr
 
 #nfstest_ssc
 nfsmp=/mnt/nfsmp
 expdir=/nfsshare/rw
-NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|sed -n '2p')
-vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin/get-ip.sh /usr/bin/.
+vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin/get-if-by-ip.sh /usr/bin/.
+read clntaddr < <(vm ifaddr $nfsclnt | grep ${serv1addr%.*})
+NIC=$(vm exec $nfsclnt -- get-if-by-ip.sh $clntaddr)
 vmrunx - $nfsclnt -- install-nfstest.sh
 vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 

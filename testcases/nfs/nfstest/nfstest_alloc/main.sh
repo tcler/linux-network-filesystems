@@ -30,12 +30,12 @@ vmrunx - $nfsclnt -- showmount -e $servaddr
 #nfstest_alloc
 expdir=/nfsshare/rw
 nfsmp=/mnt/nfsmp
-NIC=$(vmrunx - $nfsserv -- nmcli -g DEVICE connection show|sed -n '2p')
-vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/get-ip.sh /usr/bin/.
+vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/get-if-by-ip.sh /usr/bin/.
+read clntaddr < <(vm ifaddr $nfsclnt | grep ${servaddr%.*})
+NIC=$(vm exec $nfsclnt -- get-if-by-ip.sh $clntaddr)
 vmrunx - $nfsclnt -- install-nfstest.sh
 vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
 vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
-clntaddr=$(vm ifaddr $nfsclnt|head -1)
 
 _test=alloc
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})

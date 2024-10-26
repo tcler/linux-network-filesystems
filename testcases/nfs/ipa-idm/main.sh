@@ -36,8 +36,8 @@ trun -tmux=$_test-nfs-server.console -logpath=$resdir vm console $nfsserv
 trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
 
 vm cpto -v $ipaserv /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.
-vm cpto -v $nfsserv /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,make-nfs-server.sh} /usr/bin/.
-vm cpto -v $nfsclnt /usr/bin/ipa-client-install.sh /usr/bin/kinit.sh /usr/bin/.
+vm cpto -v $nfsserv /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,make-nfs-server.sh,get-if-by-ip.sh} /usr/bin/.
+vm cpto -v $nfsclnt /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,get-if-by-ip.sh} /usr/bin/.
 trun -tmux=$$-tmp1 vm exec -v $nfsserv -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
 trun -tmux=$$-tmp2 vm exec -v $nfsclnt -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
 trun               vm exec -v $ipaserv -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-server-install.sh"
@@ -96,7 +96,8 @@ vmrunx - $ipaserv -- sssctl user-show admin
 #-------------------------------------------------------------------------------
 #configure nfs-server to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
-NIC=$(vmrunx - $nfsserv -- nmcli -g DEVICE connection show|sed -n 2p)
+read nfsservaddr < <(vm ifaddr $nfsserv | grep ${_ipa_serv_addr%.*})
+NIC=$(vm exec $nfsserv -- get-if-by-ip.sh $nfsservaddr)
 conn=$(vmrunx - $nfsserv -- nmcli -g GENERAL.CONNECTION device show $NIC)
 vmrunx - $nfsserv -- "nmcli connection modify '$conn' ipv4.dns $_ipa_serv_addr; nmcli connection up '$conn'"
 vmrunx - $nfsserv -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf
@@ -115,7 +116,8 @@ vmrunx - $nfsserv -- 'ipa host-show $(hostname)'
 #-------------------------------------------------------------------------------
 #configure nfs-client to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
-NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|sed -n 2p)
+read nfsclntaddr < <(vm ifaddr $nfsclnt | grep ${_ipa_serv_addr%.*})
+NIC=$(vm exec $nfsclnt -- get-if-by-ip.sh $nfsclntaddr)
 conn=$(vmrunx - $nfsclnt -- nmcli -g GENERAL.CONNECTION device show $NIC)
 vmrunx - $nfsclnt -- "nmcli connection modify '$conn' ipv4.dns $_ipa_serv_addr; nmcli connection up '$conn'"
 vmrunx - $nfsclnt -- cat /etc/resolv.conf

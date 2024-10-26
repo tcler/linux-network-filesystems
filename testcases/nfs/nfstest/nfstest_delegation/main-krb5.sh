@@ -28,11 +28,15 @@ echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $ipaserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
+read servaddr < <(vm ifaddr $nfsserv)
+read clntxaddr < <(vm ifaddr $nfsclntx|grep ${servaddr%.*})
+read clntaddr < <(vm ifaddr $nfsclnt|grep ${servaddr%.*})
+
 ### __prepare__ test env build: install requirements: ipa-server/ipa-client
 vm cpto $ipaserv  /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.
-vm cpto $nfsserv  /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,make-nfs-server.sh} /usr/bin/.
-vm cpto $nfsclnt  /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,ssh-copy-id.sh} /usr/bin/.
-vm cpto $nfsclntx /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,ssh-copy-id.sh} /usr/bin/.
+vm cpto $nfsserv  /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,make-nfs-server.sh,get-if-by-ip.sh} /usr/bin/.
+vm cpto $nfsclnt  /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,ssh-copy-id.sh,get-if-by-ip.sh} /usr/bin/.
+vm cpto $nfsclntx /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,ssh-copy-id.sh,get-if-by-ip.sh} /usr/bin/.
 
 trun -tmux vm exec -v $nfsserv -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
 trun -tmux vm exec -v $nfsclnt -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
@@ -93,7 +97,7 @@ vmrunx - $ipaserv -- sssctl user-show admin
 #-------------------------------------------------------------------------------
 #configure nfsserver to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
-NIC=$(vmrunx - $nfsserv -- nmcli -g DEVICE connection show|sed -n 2p)
+NIC=$(vmrunx - $nfsserv -- get-if-by-ip.sh $servaddr)
 conn=$(vmrunx - $nfsserv -- nmcli -g GENERAL.CONNECTION device show $NIC)
 vmrunx - $nfsserv -- "nmcli connection modify '$conn' ipv4.dns $_ipa_serv_addr; nmcli connection up '$conn'"
 vmrunx - $nfsserv -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf
@@ -112,7 +116,7 @@ vmrunx - $nfsserv -- 'ipa host-show $(hostname)'
 #-------------------------------------------------------------------------------
 #configure nfs-clientx to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
-NIC=$(vmrunx - $nfsclntx -- nmcli -g DEVICE connection show|sed -n 2p)
+NIC=$(vmrunx - $nfsclntx -- get-if-by-ip.sh $clntxaddr)
 conn=$(vmrunx - $nfsclntx -- nmcli -g GENERAL.CONNECTION device show $NIC)
 vmrunx - $nfsclntx -- "nmcli connection modify '$conn' ipv4.dns $_ipa_serv_addr; nmcli connection up '$conn'"
 vmrunx - $nfsclntx -- cat /etc/resolv.conf
@@ -134,7 +138,7 @@ vmrunx - $nfsclntx -- authselect test -a sssd with-mkhomedir with-sudo
 #-------------------------------------------------------------------------------
 #configure nfs-client to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
-NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|sed -n 2p)
+NIC=$(vmrunx - $nfsclnt -- get-if-by-ip.sh $clntaddr)
 conn=$(vmrunx - $nfsclnt -- nmcli -g GENERAL.CONNECTION device show $NIC)
 vmrunx - $nfsclnt -- "nmcli connection modify '$conn' ipv4.dns $_ipa_serv_addr; nmcli connection up '$conn'"
 vmrunx - $nfsclnt -- cat /etc/resolv.conf
@@ -179,8 +183,6 @@ vmrunx - $nfsclntx -- systemctl restart nfs-client.target gssproxy.service rpc-s
 ### __main__ test start
 #-------------------------------------------------------------------------------
 expdir=/nfsshare/rw
-servaddr=$(vm ifaddr $nfsserv|head -1)
-clntxaddr=$(vm ifaddr $nfsclntx|head -1)
 servfqdn=${nfsserv}.${domain}
 clntxfqdn=${nfsclntx}.${domain}
 vm cpto $nfsclnt /usr/bin/{install-nfstest.sh,ssh-copy-id.sh,get-ip.sh} /usr/bin/.
@@ -193,7 +195,6 @@ vmrunx 0 $nfsclnt -- ssh-copy-id.sh $clntxaddr root redhat
 #2174870#c5
 vmrunx 0 $nfsclnt -- ip link set "$NIC" promisc on
 vmrunx 0 $nfsclnt -- tc qdisc add dev $NIC root netem delay 28ms
-clntaddr=$(vm ifaddr $nfsclnt|head -1)
 
 _test=delegation-krb5
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})

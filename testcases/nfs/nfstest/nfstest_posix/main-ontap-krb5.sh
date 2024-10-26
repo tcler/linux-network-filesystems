@@ -13,16 +13,16 @@ trun -x0 make-ontap-with-windows-ad.sh $distro $clientvm "$@" || exit $?
 timeout 300 vm port-available -w $clientvm || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 #install nfstest on $clientvm
-vm cpto $clientvm /usr/bin/install-nfstest.sh /usr/bin/get-ip.sh /usr/bin/.
+vm cpto -v $clientvm /usr/bin/install-nfstest.sh /usr/bin/get-if-by-ip.sh /usr/bin/.
+read clntaddr < <(vm ifaddr $clientvm | grep ${servaddr%.*})
+NIC=$(vm exec $clientvm -- get-if-by-ip.sh $clntaddr)
 vmrunx 0 $clientvm -- install-nfstest.sh
 vmrunx 0 $clientvm -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
-clntaddr=$(vm ifaddr $clientvm|head -1)
 
 ONTAP_ENV_FILE=/tmp/ontap2info.env
 source "$ONTAP_ENV_FILE"
 
 _test=posix-ontap-krb5
-NIC=$(vmrunx - $clientvm -- nmcli -g DEVICE connection show|sed -n '2p')
 distrodir=$(gen_distro_dir_name $clientvm ${SUFFIX})
 resdir=~/testres/${distrodir}/nfstest/$_test
 mkdir -p $resdir

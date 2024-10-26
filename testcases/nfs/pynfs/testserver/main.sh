@@ -28,8 +28,9 @@ vmrunx - $nfsclnt -- showmount -e $servaddr
 #nfstest_alloc
 expdir=/nfsshare/rw
 nfsmp=/mnt/nfsmp
-NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|sed -n '2p')
-vm cpto -v $nfsclnt /usr/bin/install-pynfs.sh /usr/bin/
+vm cpto -v $nfsclnt /usr/bin/install-pynfs.sh /usr/bin/get-if-by-ip.sh /usr/bin/
+read nfsclntaddr < <(vm ifaddr $nfsclnt | grep ${servaddr%.*})
+NIC=$(vm exec $nfsclnt -- get-if-by-ip.sh $nfsclntaddr)
 vmrunx - $nfsclnt -- install-pynfs.sh
 vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
 

@@ -32,9 +32,10 @@ vmrunx - $vmclnt -- showmount -e $servaddr
 
 #nfstest_delegation
 expdir=/nfsshare/rw
-NIC=$(vmrunx - $vmclnt -- nmcli -g DEVICE connection show|sed -n '2p')
-clntxaddr=$(vm ifaddr $vmclntx|head -1)
-vm cpto -v $vmclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin/get-ip.sh /usr/bin/.
+vm cpto -v $vmclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin/get-if-by-ip.sh /usr/bin/.
+read clntxaddr < <(vm ifaddr $vmclntx | grep ${servaddr%.*})
+read clntaddr < <(vm ifaddr $vmclnt | grep ${servaddr%.*})
+NIC=$(vmrunx - $vmclnt -- get-if-by-ip.sh $clntaddr)
 vmrunx - $vmclnt -- install-nfstest.sh
 vmrunx - $vmclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 vmrunx - $vmclnt -- ssh-copy-id.sh $clntxaddr root redhat
