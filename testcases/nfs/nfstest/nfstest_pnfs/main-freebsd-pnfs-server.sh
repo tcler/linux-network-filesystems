@@ -26,12 +26,12 @@ vmrunx - $nfsclnt -- showmount -e $mdsaddr
 vmrunx - $nfsclnt -- mkdir -p $nfsmp
 
 #nfstest_pnfs
-NIC=$(vmrunx - $nfsclnt -- nmcli -g DEVICE connection show|sed -n 2p)
-vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/get-ip.sh /usr/bin/.
+vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/get-if-by-ip.sh /usr/bin/.
+read clntaddr < <(vm ifaddr $nfsclnt | grep ${mdsaddr%.*})
+NIC=$(vm exec $nfsclnt -- get-if-by-ip.sh $clntaddr)
 vmrunx - $nfsclnt -- install-nfstest.sh
 vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
 vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
-clntaddr=$(vm ifaddr $nfsclnt|head -1)
 
 _test=pnfs-freebsd
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
