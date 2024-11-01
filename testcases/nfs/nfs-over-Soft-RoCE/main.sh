@@ -9,72 +9,72 @@ distro=${1:-9}; shift
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
-vmserv=nfs-o-soft-roce-serv
-vmclnt=nfs-o-soft-roce-clnt
+nfsserv=nfs-o-soft-roce-serv
+nfsclnt=nfs-o-soft-roce-clnt
 
 ### __prepare__ test env build
 pkgs=firewalld,libibverbs-utils,perftest,iproute,tmux
-trun -tmux vm create -n $vmserv -p $pkgs -f $distro -I=$imgf --nointeract "$@"
-trun       vm create -n $vmclnt -p $pkgs -f $distro -I=$imgf --nointeract "$@"
+trun -tmux vm create -n $nfsserv -p $pkgs -f $distro -I=$imgf --nointeract "$@"
+trun       vm create -n $nfsclnt -p $pkgs -f $distro -I=$imgf --nointeract "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
-timeout 300 vm port-available -w $vmserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
+timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 ### __main__ test start
 _test=soft-roce
-distrodir=$(gen_distro_dir_name $vmclnt ${SUFFIX})
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfs/$_test
 mkdir -p $resdir
 {
-vm cpto -v $vmserv /usr/bin/make-nfs-server.sh /usr/bin/get-if-by-ip.sh /usr/bin/
-vm cpto -v $vmclnt /usr/bin/xfstests-install.sh /usr/bin/get-if-by-ip.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/
+vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/get-if-by-ip.sh /usr/bin/
+vm cpto -v $nfsclnt /usr/bin/xfstests-install.sh /usr/bin/get-if-by-ip.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/
 #-------------------------------------------------------------------------------
 #base mount test
-servAddr=$(vm ifaddr $vmserv|head -1)
-NIC=$(vm exec $vmserv -- get-if-by-ip.sh $servAddr)
-vmrunx 0 $vmserv -- modprobe rdma_rxe || exit 2
-vmrunx - $vmserv -- rdma link add rxe0 type rxe netdev $NIC
-vmrunx - $vmserv -- rdma link
-vmrunx - $vmserv -- mkdir -p /expdir
-vmrunx - $vmserv -- "echo '/expdir *(rw,no_root_squash)' > /etc/exports"
-vmrunx - $vmserv -- cat /etc/exports
-vmrunx - $vmserv -- sed -i -e '/rdma/s/^#//' -e 's/rdma=n/rdma=y/' /etc/nfs.conf
-vmrunx - $vmserv -- grep -v '^#' /etc/nfs.conf
-vmrunx - $vmserv -- systemctl restart nfs-server
-vmrunx - $vmserv -- "firewall-cmd --permanent --add-service={mountd,nfs,rpc-bind}; firewall-cmd --reload"
-vmrunx - $vmserv -- systemctl stop firewalld   #seems this's necessary for rdma, fixme if it's not true
-vmrunx - $vmserv -- showmount -e localhost
-vmrunx - $vmserv -- cat /proc/fs/nfsd/portlist
+servAddr=$(vm ifaddr $nfsserv|head -1)
+NIC=$(vm exec $nfsserv -- get-if-by-ip.sh $servAddr)
+vmrunx 0 $nfsserv -- modprobe rdma_rxe || exit 2
+vmrunx - $nfsserv -- rdma link add rxe0 type rxe netdev $NIC
+vmrunx - $nfsserv -- rdma link
+vmrunx - $nfsserv -- mkdir -p /expdir
+vmrunx - $nfsserv -- "echo '/expdir *(rw,no_root_squash)' > /etc/exports"
+vmrunx - $nfsserv -- cat /etc/exports
+vmrunx - $nfsserv -- sed -i -e '/rdma/s/^#//' -e 's/rdma=n/rdma=y/' /etc/nfs.conf
+vmrunx - $nfsserv -- grep -v '^#' /etc/nfs.conf
+vmrunx - $nfsserv -- systemctl restart nfs-server
+vmrunx - $nfsserv -- "firewall-cmd --permanent --add-service={mountd,nfs,rpc-bind}; firewall-cmd --reload"
+vmrunx - $nfsserv -- systemctl stop firewalld   #seems this's necessary for rdma, fixme if it's not true
+vmrunx - $nfsserv -- showmount -e localhost
+vmrunx - $nfsserv -- cat /proc/fs/nfsd/portlist
 
-read clntaddr < <(vm ifaddr $vmclnt | grep ${servAddr%.*})
+read clntaddr < <(vm ifaddr $nfsclnt | grep ${servAddr%.*})
 NIC=$(vm exec $nfsclnt -- get-if-by-ip.sh $clntaddr)
-vmrunx - $vmclnt -- modprobe rdma_rxe
-vmrunx - $vmclnt -- rdma link add rxe0 type rxe netdev $NIC
-vmrunx - $vmclnt -- rdma link
-vmrunx - $vmclnt -- mkdir -p /mnt/nfsmp
-vmrunx 0 $vmclnt -- showmount -e $servAddr
-vmrunx - $vmclnt -- systemctl stop firewalld   #seems this's necessary for rdma, fixme if it's not true
-vmrunx 0 $vmclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049 -v
-vmrunx 0 $vmclnt -- mount -t nfs4
-vmrunx 0 $vmclnt -- umount /mnt/nfsmp
+vmrunx - $nfsclnt -- modprobe rdma_rxe
+vmrunx - $nfsclnt -- rdma link add rxe0 type rxe netdev $NIC
+vmrunx - $nfsclnt -- rdma link
+vmrunx - $nfsclnt -- mkdir -p /mnt/nfsmp
+vmrunx 0 $nfsclnt -- showmount -e $servAddr
+vmrunx - $nfsclnt -- systemctl stop firewalld   #seems this's necessary for rdma, fixme if it's not true
+vmrunx 0 $nfsclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049 -v
+vmrunx 0 $nfsclnt -- mount -t nfs4
+vmrunx 0 $nfsclnt -- umount /mnt/nfsmp
 
-vmrunx - $vmserv -- tmux new -s listen -d 'ib_send_bw -d rxe0'
-vmrunx - $vmclnt -- ib_send_bw -d rxe0 $servAddr
+vmrunx - $nfsserv -- tmux new -s listen -d 'ib_send_bw -d rxe0'
+vmrunx - $nfsclnt -- ib_send_bw -d rxe0 $servAddr
 
 #-------------------------------------------------------------------------------
 ##xfstest
-tmux new -s roceNfsServer -d "vm exec -v $vmserv -- bash make-nfs-server.sh"
+tmux new -s roceNfsServer -d "vm exec -v $nfsserv -- bash make-nfs-server.sh"
 
-vmrunx 0 $vmclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
-vmrunx 0 $vmclnt -- "xfstests-install.sh nouring=$NOURING" || exit 1
+vmrunx 0 $nfsclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
+vmrunx 0 $nfsclnt -- "xfstests-install.sh nouring=$NOURING" || exit 1
 while tmux ls | grep roceNfsServer; do sleep 8; done
-vmrunx 0 $vmclnt -- showmount -e $servAddr
+vmrunx 0 $nfsclnt -- showmount -e $servAddr
 
 TESTS=${TESTS:--g quick}
 #prepare TEST_DEV TEST_DIR SCRATCH_DEV SCRATCH_MNT for xfstests
-vmrunx - $vmclnt -- "mkdir -p /mnt/xfstests_test /mnt/xfstests_scratch"
-vmrunx - $vmclnt -- "useradd -m fsgqa; useradd 123456-fsgqa; useradd fsgqa2; groupadd fsgqa"
-vmrunx - $vmclnt -- "cat >/var/lib/xfstests/local.config <<EOF
+vmrunx - $nfsclnt -- "mkdir -p /mnt/xfstests_test /mnt/xfstests_scratch"
+vmrunx - $nfsclnt -- "useradd -m fsgqa; useradd 123456-fsgqa; useradd fsgqa2; groupadd fsgqa"
+vmrunx - $nfsclnt -- "cat >/var/lib/xfstests/local.config <<EOF
 export TEST_DEV=$servAddr:/nfsshare/qe
 export TEST_DIR=/mnt/xfstests_test
 export TEST_FS_MOUNT_OPTS='-ordma,port=20049'
@@ -84,7 +84,7 @@ export SCRATCH_MNT=/mnt/xfstests_scratch
 export WORKAREA=/var/lib/xfstests
 EOF"
 
-vmrunx - $vmclnt -- uname -r;
-vmrunx - $vmclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
+vmrunx - $nfsclnt -- uname -r;
+vmrunx - $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
 
 } |& tee $resdir/std.log
