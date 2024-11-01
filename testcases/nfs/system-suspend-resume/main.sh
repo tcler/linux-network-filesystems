@@ -32,8 +32,8 @@ vmrunx - $nfsserv -- dd if=/dev/urandom of=/nfsshare/rw/largefile.img bs=1M coun
 ### __main__ test start
 ## virsh suspend and resume test
 #-------------------------------------------------------------------------------
-serv_addr=$(vm if $nfsserv)
-clnt_addr=$(vm if $nfsclnt)
+read serv_addr < <(vm if $nfsserv)
+read clnt_addr < <(vm if $nfsclnt)
 vmrunx 0 $nfsclnt -- showmount -e ${nfsserv}
 vmrunx 0 $nfsclnt -- mkdir /mnt/nfsmp
 vmrunx 0 $nfsclnt -- mount $serv_addr:/nfsshare/rw /mnt/nfsmp
