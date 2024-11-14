@@ -20,7 +20,7 @@ vmrunx 0 $clientvm -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 ONTAP_ENV_FILE=/tmp/ontap2info.env
 source "$ONTAP_ENV_FILE"
 
-read NIC clntaddr < <(vm exec $clientvm -- get-network-info.sh | grep ${NETAPP_NAS_IP%.*})
+read NIC clntaddr < <(vm exec $clientvm -- get-network-info.sh | grep ${NETAPP_NAS_IP%?.*})
 
 _test=posix-ontap-krb5
 distrodir=$(gen_distro_dir_name $clientvm ${SUFFIX})
