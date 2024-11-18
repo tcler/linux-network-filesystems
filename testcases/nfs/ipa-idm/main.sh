@@ -15,7 +15,7 @@ nfsserv=ipa-nfs-server
 nfsclnt=ipa-nfs-client
 password=redhat123
 
-### __prepare__ test env build
+### __prepare__ test env build: create vm
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
@@ -26,6 +26,9 @@ echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-nfs.*-d.vm.creat[e]; do sleep 10; done
 timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
+read nfsservaddr < <(vm ifaddr $nfsserv)
+read nfsclntaddr < <(vm ifaddr $nfsclnt|grep ${nfsservaddr%.*})
+
 _test=ipa-idm
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfs/$_test
@@ -35,9 +38,11 @@ trun -tmux=$_test-ipa-server.console -logpath=$resdir vm console $ipaserv
 trun -tmux=$_test-nfs-server.console -logpath=$resdir vm console $nfsserv
 trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
 
+### __prepare__ test env build: install requirements: ipa-server/ipa-client
 vm cpto -v $ipaserv /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.
 vm cpto -v $nfsserv /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,make-nfs-server.sh,get-if-by-ip.sh} /usr/bin/.
 vm cpto -v $nfsclnt /usr/bin/ipa-client-install.sh /usr/bin/{kinit.sh,get-if-by-ip.sh} /usr/bin/.
+
 trun -tmux=$$-tmp1 vm exec -v $nfsserv -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
 trun -tmux=$$-tmp2 vm exec -v $nfsclnt -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-client-install.sh"
 trun               vm exec -v $ipaserv -- "systemctl enable NetworkManager; systemctl start NetworkManager; ipa-server-install.sh"
@@ -62,7 +67,7 @@ vmrunx - $ipaserv -- firewall-cmd --add-service=kerberos --permanent
 vmrunx - $ipaserv -- firewall-cmd --add-service=dns --permanent
 vmrunx - $ipaserv -- firewall-cmd --reload
 _hostname=$(vm exec $ipaserv -- hostname)
-_ipa_serv_addr=$(vm ifaddr $ipaserv|head -1)
+read _ipa_serv_addr < <(vm ifaddr $ipaserv|grep ${nfsservaddr%.*})
 vmrunx - $ipaserv -- "echo '$_ipa_serv_addr    $_hostname' >>/etc/hosts"
 vmrunx - $ipaserv -- dig +short $_hostname A
 vmrunx - $ipaserv -- dig +short -x $_ipa_serv_addr
@@ -96,8 +101,7 @@ vmrunx - $ipaserv -- sssctl user-show admin
 #-------------------------------------------------------------------------------
 #configure nfs-server to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
-read nfsservaddr < <(vm ifaddr $nfsserv | grep ${_ipa_serv_addr%.*})
-NIC=$(vm exec $nfsserv -- get-if-by-ip.sh $nfsservaddr)
+NIC=$(vmrunx - $nfsserv -- get-if-by-ip.sh $nfsservaddr)
 conn=$(vmrunx - $nfsserv -- nmcli -g GENERAL.CONNECTION device show $NIC)
 vmrunx - $nfsserv -- "nmcli connection modify '$conn' ipv4.dns $_ipa_serv_addr; nmcli connection up '$conn'"
 vmrunx - $nfsserv -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf
@@ -116,8 +120,7 @@ vmrunx - $nfsserv -- 'ipa host-show $(hostname)'
 #-------------------------------------------------------------------------------
 #configure nfs-client to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
-read nfsclntaddr < <(vm ifaddr $nfsclnt | grep ${_ipa_serv_addr%.*})
-NIC=$(vm exec $nfsclnt -- get-if-by-ip.sh $nfsclntaddr)
+NIC=$(vmrunx - $nfsclnt -- get-if-by-ip.sh $nfsclntaddr)
 conn=$(vmrunx - $nfsclnt -- nmcli -g GENERAL.CONNECTION device show $NIC)
 vmrunx - $nfsclnt -- "nmcli connection modify '$conn' ipv4.dns $_ipa_serv_addr; nmcli connection up '$conn'"
 vmrunx - $nfsclnt -- cat /etc/resolv.conf

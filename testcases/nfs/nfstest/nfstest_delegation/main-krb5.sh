@@ -5,7 +5,6 @@ export LANG=C LANGUAGE=C   #nfstest only works on english lang env
 
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
-
 dnsdomain=lab.kissvm.net
 domain=${dnsdomain}
 realm=${domain^^}
@@ -15,11 +14,10 @@ nfsclnt=nfstest-deleg-nfs-clnt
 nfsclntx=nfstest-deleg-nfs-clntx
 password=redhat123
 
-### download vm image
+### __prepare__ test env build: create vm
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
-### __prepare__ test env build: create vm
 trun -tmux vm create -n $ipaserv  $distro --msize 4096 -p vim,tcpdump,bind-utils,firewalld,expect,tomcat,NetworkManager,sssd-tools --nointeract -I=$imgf -f "$@"
 trun -tmux vm create -n $nfsserv  $distro --msize 4096 -p vim,tcpdump,nfs-utils,bind-utils,NetworkManager --nointeract -I=$imgf -f --kdump "$@"
 trun -tmux vm create -n $nfsclntx $distro --msize 4096 -p vim,tcpdump,nfs-utils,bind-utils,NetworkManager,python3 --nointeract -I=$imgf -f --kdump "$@"
@@ -28,9 +26,9 @@ echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $ipaserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
-read servaddr < <(vm ifaddr $nfsserv)
-read clntxaddr < <(vm ifaddr $nfsclntx|grep ${servaddr%.*})
-read clntaddr < <(vm ifaddr $nfsclnt|grep ${servaddr%.*})
+read nfsservaddr < <(vm ifaddr $nfsserv)
+read nfsclntaddr < <(vm ifaddr $nfsclnt|grep ${nfsservaddr%.*})
+read clntxaddr < <(vm ifaddr $nfsclntx|grep ${nfsservaddr%.*})
 
 ### __prepare__ test env build: install requirements: ipa-server/ipa-client
 vm cpto $ipaserv  /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.
@@ -63,9 +61,9 @@ vmrunx - $ipaserv -- firewall-cmd --add-service=kerberos --permanent
 vmrunx - $ipaserv -- firewall-cmd --add-service=dns --permanent
 vmrunx - $ipaserv -- firewall-cmd --reload
 _hostname=$(vm exec $ipaserv -- hostname)
-_ipa_serv_addr=$(vm ifaddr $ipaserv|head -1)
+read _ipa_serv_addr < <(vm ifaddr $ipaserv|grep ${nfsservaddr%.*})
 vmrunx - $ipaserv -- "echo '$_ipa_serv_addr    $_hostname' >>/etc/hosts"
-vmrunx - $ipaserv -- dig +short $hostname A
+vmrunx - $ipaserv -- dig +short $_hostname A
 vmrunx - $ipaserv -- dig +short -x $_ipa_serv_addr
 
 #vmrunx - $ipaserv -- ipa-server-install --realm  ${realm} --ds-password $password --admin-password $password \
@@ -95,9 +93,9 @@ vmrunx - $ipaserv -- sssctl domain-list
 vmrunx - $ipaserv -- sssctl user-show admin
 
 #-------------------------------------------------------------------------------
-#configure nfsserver to join the realm
+#configure nfs-server to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
-NIC=$(vmrunx - $nfsserv -- get-if-by-ip.sh $servaddr)
+NIC=$(vmrunx - $nfsserv -- get-if-by-ip.sh $nfsservaddr)
 conn=$(vmrunx - $nfsserv -- nmcli -g GENERAL.CONNECTION device show $NIC)
 vmrunx - $nfsserv -- "nmcli connection modify '$conn' ipv4.dns $_ipa_serv_addr; nmcli connection up '$conn'"
 vmrunx - $nfsserv -- sed -i -e "/${_ipa_serv_addr%.*}/d" -e "s/^search.*/&\nnameserver ${_ipa_serv_addr}\nnameserver ${_ipa_serv_addr%.*}.1/" /etc/resolv.conf
@@ -138,7 +136,7 @@ vmrunx - $nfsclntx -- authselect test -a sssd with-mkhomedir with-sudo
 #-------------------------------------------------------------------------------
 #configure nfs-client to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
-NIC=$(vmrunx - $nfsclnt -- get-if-by-ip.sh $clntaddr)
+NIC=$(vmrunx - $nfsclnt -- get-if-by-ip.sh $nfsclntaddr)
 conn=$(vmrunx - $nfsclnt -- nmcli -g GENERAL.CONNECTION device show $NIC)
 vmrunx - $nfsclnt -- "nmcli connection modify '$conn' ipv4.dns $_ipa_serv_addr; nmcli connection up '$conn'"
 vmrunx - $nfsclnt -- cat /etc/resolv.conf
@@ -153,9 +151,9 @@ vmrunx - $nfsclnt -- kinit.sh admin $password
 vmrunx - $nfsclnt -- klist
 
 vmrunx - $nfsclnt -- 'ipa host-show $(hostname)'
-vmrunx - $nfsclnt -- authselect list
-vmrunx - $nfsclnt -- authselect show sssd
-vmrunx - $nfsclnt -- authselect test -a sssd with-mkhomedir with-sudo
+vmrunx - $nfsclnt -- 'command -v authselect && { authselect list; }'
+vmrunx - $nfsclnt -- 'command -v authselect && { authselect show sssd; }'
+vmrunx - $nfsclnt -- 'command -v authselect && { authselect test -a sssd with-mkhomedir with-sudo; }'
 
 #-------------------------------------------------------------------------------
 #nfs-server: configure krb5 nfs server
@@ -170,14 +168,14 @@ vmrunx - $ipaserv -- kadmin.local list_principals
 vmrunx - $nfsserv -- klist
 
 #-------------------------------------------------------------------------------
-#ipa-client: configure krb5 nfs client
+#nfs-client: configure krb5 nfs client
 vmrunx - $nfsclnt -- mkdir /mnt/nfsmp
 vmrunx - $nfsclnt -- systemctl restart nfs-client.target gssproxy.service rpc-statd.service rpc-gssd.service
 vmrunx - $ipaserv -- kadmin.local list_principals
 vmrunx - $nfsclnt -- klist
 
 #-------------------------------------------------------------------------------
-#ipa-clientx: configure krb5 nfs clientx
+#nfs-clientx: configure krb5 nfs clientx
 vmrunx - $nfsclntx -- systemctl restart nfs-client.target gssproxy.service rpc-statd.service rpc-gssd.service
 
 ### __main__ test start
@@ -188,7 +186,7 @@ clntxfqdn=${nfsclntx}.${domain}
 vm cpto $nfsclnt /usr/bin/{install-nfstest.sh,ssh-copy-id.sh,get-ip.sh} /usr/bin/.
 vmrunx 0 $nfsclnt -- install-nfstest.sh
 vmrunx 0 $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
-vmrunx 0 $nfsclnt -- ssh-copy-id.sh $servaddr root redhat
+vmrunx 0 $nfsclnt -- ssh-copy-id.sh $nfsservaddr root redhat
 vmrunx 0 $nfsclnt -- ssh-copy-id.sh $clntxaddr root redhat
 
 #-------------------------------------------------------------------------------
@@ -205,7 +203,7 @@ mkdir -p $resdir
   trun -tmux=$_test-server.console -logpath=$resdir vm console $nfsserv
   trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
   trun -tmux=$_test-clientx.console -logpath=$resdir vm console $nfsclntx
-  vmrunx -  $nfsclnt -- nfstest_delegation --server=$servfqdn --export=$expdir --nfsversion=4.2 --sec=krb5 --interface=$NIC --client-ipaddr=$clntaddr --nconnect 16 $TESTS;
+  vmrunx -  $nfsclnt -- nfstest_delegation --server=$servfqdn --export=$expdir --nfsversion=4.2 --sec=krb5 --interface=$NIC --client-ipaddr=$nfsclntaddr --nconnect 16 $TESTS;
   trun -x1-255 grep RI[P]: $resdir/*console.log
 } |& tee $resdir/std.log
 
