@@ -44,4 +44,4 @@ mkdir -p $resdir
   trun -x1-255 grep RI[P]: $resdir/*console.log
 } |& tee $resdir/std.log
 
-[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsclnt
+[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsclnt $vm_mds $vm_ds1 $vm_ds2

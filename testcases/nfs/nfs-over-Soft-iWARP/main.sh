@@ -87,3 +87,5 @@ EOF"
 vmrunx - $nfsclnt -- uname -r;
 vmrunx - $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
 } |& tee $resdir/std.log
+
+[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt
