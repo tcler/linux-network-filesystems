@@ -18,6 +18,7 @@ expdir1=/export1
 vm_ds1=freebsd-pnfs-ds1
 vm_ds2=freebsd-pnfs-ds2
 vm_mds=freebsd-pnfs-mds
+vm_fbclient=freebsd-pnfs-client
 trun -x0 make-freebsd-pnfsserver.sh $distro $nfsclnt "$@" || exit $?
 timeout 300 vm port-available -w $nfsclnt || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
@@ -44,4 +45,4 @@ mkdir -p $resdir
   trun -x1-255 grep RI[P]: $resdir/*console.log
 } |& tee $resdir/std.log
 
-[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsclnt $vm_mds $vm_ds1 $vm_ds2
+[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsclnt $vm_mds $vm_ds1 $vm_ds2 $vm_fbclient
