@@ -42,12 +42,13 @@ mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
   trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
-  vmrunx 0 $nfsclnt -- mount -overs=4.1,noresvport $NETAPP_NAS_IP_LOC:$NETAPP_NFS_SHARE2 $nfsmp
+  vmrunx 0 $nfsclnt -- mount -overs=4.1,noresvport ${NETAPP_NAS_IP_LOC}:${NETAPP_NFS_SHARE2} $nfsmp
   vmrunx 0 $nfsclnt -- tmux new -s ddSession -d "dd if=/dev/zero of=$nfsmp/testfile bs=1b count=10000000"
-  vmrunx 0 $nfsclnt -- 'sleep 2; ss -nat | grep :2049'
-  vmrunx 0 $nfsclnt -- 'ss -nat | grep 192.168.20.21:2049'
-  vmrunx 0 $nfsclnt -- 'ss -nat | grep 192.168.20.22:2049'
+  vmrunx 0 $nfsclnt -- 'sleep 3; ss -nat | grep :2049'
+  vmrunx 0 $nfsclnt -- "ss -nat | grep ${NETAPP_NAS_IP_LOC}:2049"
+  vmrunx 0 $nfsclnt -- "ss -nat | grep -v ${NETAPP_NAS_IP_LOC} | grep :2049"   #the connect to DS may be not 192.168.20.22, but through the macvtap IF
   vmrunx 0 $nfsclnt -- tmux kill-session -t ddSession
+  vmrunx - $nfsclnt -- 'sleep 16; ss -nat | grep :2049'   #tcp connect may not be release immediately
   vmrunx 0 $nfsclnt -- rm -f $nfsmp/testfile
   vmrunx 0 $nfsclnt -- umount $nfsmp
 
