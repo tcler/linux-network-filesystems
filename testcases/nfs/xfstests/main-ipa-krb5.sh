@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #author: Jianhong Yin <yin-jianhong@163.com>
 #ipa-server,ipa-client setup test, based on kiss-vm
-#test pass on CentOS-7,CentOS-{8,9}-stream,Fedora-38 and RHEL-7.9,RHEL-8.9,RHEL-9.3
+#test pass on CentOS-7,CentOS-{8,9}-stream,Fedora-40 and RHEL-7.9,RHEL-8.9,RHEL-9.5
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
@@ -194,6 +194,8 @@ EOF"
 vmrunx - $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS:--g quick};"
 
 trun -x1-255 grep RI[P]: $resdir/*console.log
-} |& tee $resdir/std.log
+} &> (tee $resdir/std.log)
+
+tcnt
 
 [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $ipaserv $nfsserv $nfsclnt

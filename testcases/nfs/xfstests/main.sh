@@ -59,6 +59,8 @@ mkdir -p $resdir
   trun -tmux=$$-client.console -logpath=$resdir vm console $nfsclnt
   vmrunx - $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
   trun -x1-255 grep RI[P]: $resdir/*console.log
-} |& tee $resdir/std.log
+} &> >(tee $resdir/std.log)
+
+tcnt
 
 [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt

@@ -80,6 +80,8 @@ vmrunx 0 $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY):'"
 vmrunx - $nfsclnt -- "dmesg | grep TECH.PREVIEW /var/log/messages"
 
 trun -x1-255 grep RI[P]: $resdir/*console.log
-} |& tee $resdir/std.log
+} &> >(tee $resdir/std.log)
+
+tcnt
 
 [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsservs $nfsservd $nfsclnt

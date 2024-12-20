@@ -116,6 +116,8 @@ for key in "${!tests[@]}"; do
 	echo
 done
 
-} |& tee $resdir/labeled-nfs.log
+} &> (tee $resdir/labeled-nfs.log)
+
+tcnt
 
 [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $vmnfsserv $vmnfsclnt

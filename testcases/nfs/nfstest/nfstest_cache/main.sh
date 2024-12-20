@@ -61,6 +61,8 @@ mkdir -p $resdir
   trun -tmux=$_test-clientx.console -logpath=$resdir vm console $nfsclntx
   vmrunx - foo@$nfsclnt -- nfstest_cache --server $servaddr --client $clntxaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2 $TESTS;
   trun -x1-255 grep RI[P]: $resdir/*console.log
-} |& tee $resdir/std.log
+} &> >(tee $resdir/std.log)
+
+tcnt
 
 [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt $nfsclntx

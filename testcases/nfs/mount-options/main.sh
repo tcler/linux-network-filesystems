@@ -8,31 +8,42 @@ nfsmp=/mnt/nfsmp
 
 #create nfs-server vm
 distro=${1:-9}; shift
-vmserv=nfs-server
-vmclnt=nfs-client
-trun -tmux vm create $distro -n $vmserv -f -nointeract -p 'nfs-utils wireshark tmux' "$@"
-trun       vm create $distro -n $vmclnt -f -nointeract -p 'nfs-utils wireshark tmux' "$@"
+nfsserv=nfs-server
+nfsclnt=nfs-client
+trun -tmux vm create $distro -n $nfsserv -f -nointeract -p 'nfs-utils wireshark tmux' "$@"
+trun       vm create $distro -n $nfsclnt -f -nointeract -p 'nfs-utils wireshark tmux' "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
-timeout 300 vm port-available -w $vmserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
+timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
-vm -v cpto $vmserv /usr/bin/make-nfs-server.sh .
-vm -v exec $vmserv -- bash make-nfs-server.sh
-vm -v exec $vmserv -- mkdir -p /nfsshare/rw/testdir
-vm -v exec $vmserv -- touch /nfsshare/rw/testdir/file{1..128}
-servaddr=$(vm ifaddr $vmserv|head -1)
+vm -v cpto $nfsserv /usr/bin/make-nfs-server.sh .
+vm -v exec $nfsserv -- bash make-nfs-server.sh
+vm -v exec $nfsserv -- mkdir -p /nfsshare/rw/testdir
+vm -v exec $nfsserv -- touch /nfsshare/rw/testdir/file{1..128}
+servaddr=$(vm ifaddr $nfsserv|head -1)
 pcapf=nfs.pcap
 
-vmrunx 0 $vmclnt -- showmount -e $servaddr
-vmrunx 0 $vmclnt -- mkdir -p $nfsmp
-vmrunx 0 $vmclnt -- "mount $servaddr:/nfsshare/rw $nfsmp || mount -vvv $servaddr:/nfsshare/rw $nfsmp"
-vmrunx 0 $vmclnt -- umount $nfsmp
+_test=mount-options
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+resdir=~/testres/${distrodir}/nfs/$_test
+mkdir -p $resdir
+{
+vmrunx - $nfsclnt -- uname -r;
+vmrunx - $nfsclnt -- rpm -q nfs-utils;
+
+vmrunx 0 $nfsclnt -- showmount -e $servaddr
+vmrunx 0 $nfsclnt -- mkdir -p $nfsmp
+vmrunx 0 $nfsclnt -- "mount $servaddr:/nfsshare/rw $nfsmp || mount -vvv $servaddr:/nfsshare/rw $nfsmp"
+vmrunx 0 $nfsclnt -- umount $nfsmp
 
 #Test1: softreval
-vmrunx - $vmclnt -- mount -osoftreval $servaddr:/nfsshare/rw $nfsmp
-vmrunx - $vmclnt -- mount -t nfs,nfs4
-vmrunx - $vmclnt -- ls -l $nfsmp $nfsmp/testdir
-vmrunx - $vmserv -- systemctl stop nfs-server
+vmrunx 0 $nfsclnt -- mount -osoftreval $servaddr:/nfsshare/rw $nfsmp
+vmrunx 0 $nfsclnt -- mount -t nfs,nfs4
+vmrunx 0 $nfsclnt -- ls -l $nfsmp $nfsmp/testdir
+vmrunx - $nfsserv -- systemctl stop nfs-server
 #should umount success even nfs-server stop
-vmrunx 0 $vmclnt -- umount $nfsmp
-vmrunx - $vmserv -- systemctl start nfs-server
+vmrunx 0:"umount success even nfs-server stop" $nfsclnt -- umount $nfsmp
+vmrunx - $nfsserv -- systemctl start nfs-server
+} &> >(tee $resdir/std.log)
+
+tcnt

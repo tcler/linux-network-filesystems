@@ -88,6 +88,8 @@ vm vnc "$nfsserv" -putln ""
 trun port-available.sh $serv_addr 22 -w
 vmrunx 1-255 $nfsserv -- 'dmesg|grep Freezing.of.tasks.failed.after'
 
-} |& tee $resdir/std.log
+} &> >(tee $resdir/std.log)
+
+tcnt
 
 [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt

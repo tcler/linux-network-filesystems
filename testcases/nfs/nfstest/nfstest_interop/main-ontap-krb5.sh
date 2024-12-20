@@ -29,6 +29,8 @@ mkdir -p $resdir
   trun -tmux=$_test-client.console -logpath=$resdir vm console $clientvm
   vmrunx -  $clientvm -- nfstest_interop --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5 --datadir datadir --nfsversion=4.2 $TESTS;
   trun -x1-255 grep RI[P]: $resdir/*console.log
-} |& tee $resdir/std.log
+} &> >(tee $resdir/std.log)
+
+tcnt
 
 [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $clientvm
