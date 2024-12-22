@@ -13,6 +13,7 @@ stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
 #create netapp ontap-simulator
+PUBIF=${PUBIF:-no} \
 trun -x0 make-ontap-simulator.sh $distro $nfsclnt "$@" || exit $?
 timeout 300 vm port-available -w $nfsclnt || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 ONTAP_ENV_FILE=/tmp/ontap2info.env
