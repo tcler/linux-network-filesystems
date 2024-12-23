@@ -74,6 +74,6 @@ mkdir -p $resdir
   trun -tmux=$$-vm.console -logpath=$resdir vm console $vmname
   vmrunx - $vmname -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check ${TESTS};"
   trun -x1-255 grep RI[P]: $resdir/*console.log
-} &> (tee $resdir/std.log)
+} &> >(tee $resdir/std.log)
 
 tcnt

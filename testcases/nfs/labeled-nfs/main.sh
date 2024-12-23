@@ -116,7 +116,7 @@ for key in "${!tests[@]}"; do
 	echo
 done
 
-} &> (tee $resdir/labeled-nfs.log)
+} &> >(tee $resdir/labeled-nfs.log)
 
 tcnt
 
