@@ -25,9 +25,9 @@ while :; do
 		totest=("${testarr[@]::${testn}}")
 		testarr=("${testarr[@]:${testn}}")
 		for f in "${totest[@]}"; do
-			#$f "$@";   #$distro $vm-create-options
-			echo [run] tmux new -d \"$f $*\"
-			tmux new -s "fsparallel-test-${f#./}" -d "$f $*"
+			sessionName="fsparallel-test-${f#./}"
+			echo [run] tmux new -s $sessionName -d \"$f $*\"
+			tmux new -s "$sessionName" -d "$f $*"
 		done
 		sleep 10m
 	else
