@@ -11,6 +11,8 @@ else
 fi
 
 [[ $# -eq 0 ]] && { echo "Usage: <$0> [vmmax=N] <distro> [vm-create-options]"; exit 1; }
+TS=$(tmux ls | awk -F: '/fsparallel-test-/ {print $1}')
+for ts in ${TS}; do tmux kill-session -t ${ts}; done
 
 testarr=($(find . -name main*.sh|grep -v ontap))
 while :; do
@@ -25,7 +27,7 @@ while :; do
 		for f in "${totest[@]}"; do
 			#$f "$@";   #$distro $vm-create-options
 			echo [run] tmux new -d \"$f $*\"
-			tmux new -d "$f $*"
+			tmux new -s "fsparallel-test-${f#./}" -d "$f $*"
 		done
 		sleep 10m
 	else
