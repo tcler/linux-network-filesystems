@@ -1,18 +1,22 @@
 #!/bin/bash
 
 available_ramsize() { LANG=C free -g | awk '/^Mem:/{print $NF}'; }
+get_vmmax() {
+	local mempervm=${1:-4}
+	local availablemem=$(available_ramsize)
+	echo $((availablemem/mempervm))
+}
 
 vmmax=$1
 if [[ "$vmmax" =~ ^vmmax=[0-9]+$ ]]; then
 	vmmax=${vmmax#vmmax=}; shift
 else
-	availableMemSize=$(available_ramsize)
-	vmmax=$((availableMemSize/4))
+	vmmax=$(get_vmmax 4)
 fi
 
 [[ $# -eq 0 ]] && { echo "Usage: <$0> [vmmax=N] <distro> [vm-create-options]"; exit 1; }
-TS=$(tmux ls | awk -F: '/fsparallel-test-/ {print $1}')
-for ts in ${TS}; do tmux kill-session -t ${ts}; done
+for ts in $(tmux ls | awk -F: '/fsparallel-test/ {print $1}'); do tmux kill-session -t ${ts}; done
+for ts in $(tmux ls | awk -F: '/kissrun-/ {print $1}'); do tmux kill-session -t ${ts}; done
 
 testarr=($(find . -name main*.sh|grep -v ontap))
 while :; do
@@ -33,9 +37,11 @@ while :; do
 	else
 		sleep 10m
 	fi
+	vmmax=$(get_vmmax 4)
 done
 
-ontaptestarr=($(find . -name main*ontap*.sh))
-for f in "${ontaptestarr[@]}"; do
-	$f "$@"
-done
+tmux new -s fsparallel-test-ontap/ bash -c '
+	ontaptestarr=($(find . -name main*ontap*.sh))
+	for f in "${ontaptestarr[@]}"; do
+		$f "$@"
+	done'
