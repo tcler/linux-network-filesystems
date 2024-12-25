@@ -22,7 +22,7 @@ for ts in $(tmux ls 2>/dev/null | awk -F: '/kissrun-/ {print $1}'); do tmux kill
 
 ontap_vmmax=6
 if [[ $vmmax -ge $ontap_vmmax ]]; then
-	echo "{INFO $(date +%F_%T)} submit ontap-simulator related test cases in background ..."
+	echo -e "{INFO $(date +%F_%T)} submit ontap-simulator related test cases in background ..."
 	tmux new -s fsparallel-test-ontap/ -d bash -c '
 		ontaptestarr=($(find . -name main*ontap*.sh))
 		for f in "${ontaptestarr[@]}"; do
@@ -37,8 +37,8 @@ testarr=($(find . -name main*.sh|grep -v ontap))
 while :; do
 	[[ "${#testarr[@]}" = 0 ]] && { echo "{INFO $(date +%F_%T)} all tests submmitted."; break; }
 	if [[ $vmmax -ge $((2*avg_vmcnt)) ]]; then
-		echo "{INFO $(date +%F_%T)} vmmax=$vmmax(>=2*avg_vmcnt($avg_vmcnt)), submit more tests ..."
-		testn=$((vmmax/avg_vmcnt+1))
+		echo -e "\n{INFO $(date +%F_%T)} vmmax=$vmmax(>=2*avg_vmcnt($avg_vmcnt)), submit more tests ..."
+		testn=$((vmmax/avg_vmcnt-1))
 		[[ "$testn" -gt ${#testarr[@]} ]] && testn=${#testarr[@]}
 		totest=("${testarr[@]::${testn}}")
 		testarr=("${testarr[@]:${testn}}")
@@ -49,18 +49,18 @@ while :; do
 		done
 		sleep 8m
 	else
-		echo "{INFO $(date +%F_%T)} vmmax=$vmmax(<2*avg_vmcnt($avg_vmcnt)), waiting some tests finish ..."
+		echo -e "\n{INFO $(date +%F_%T)} vmmax=$vmmax(<2*avg_vmcnt($avg_vmcnt)), waiting some tests finish ..."
 		sleep 8m
 	fi
 	vmmax=$(get_vmmax $avg_msize)
 done
 
 while :; do
-	echo "{INFO $(date +%F_%T)} waiting all tests done ..."
+	echo -e "\n{INFO $(date +%F_%T)} waiting all tests done ..."
 	if tmux ls 2>/dev/null | grep fsparallel-test; then
 		sleep 5m;
 	else
-		echo "{INFO $(date +%F_%T)} all tests have done, please check the results:"
+		echo -e "\n{INFO $(date +%F_%T)} all tests have done, please check the results:"
 		ls -l $(ls ~/testres/* -1td|head -1)
 		break
 	fi
