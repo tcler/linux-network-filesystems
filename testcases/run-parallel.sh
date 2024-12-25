@@ -15,15 +15,27 @@ else
 fi
 
 [[ $# -eq 0 ]] && { echo "Usage: <$0> [vmmax=N] <distro> [vm-create-options]"; exit 1; }
-for ts in $(tmux ls | awk -F: '/fsparallel-test/ {print $1}'); do tmux kill-session -t ${ts}; done
-for ts in $(tmux ls | awk -F: '/kissrun-/ {print $1}'); do tmux kill-session -t ${ts}; done
+for ts in $(tmux ls 2>/dev/null | awk -F: '/fsparallel-test/ {print $1}'); do tmux kill-session -t ${ts}; done
+for ts in $(tmux ls 2>/dev/null | awk -F: '/kissrun-/ {print $1}'); do tmux kill-session -t ${ts}; done
+
+if [[ $vmmax -ge 6 ]]; then
+	echo "{INFO} submit ontap-simulator related test cases in background ..."
+	tmux new -s fsparallel-test-ontap/ -d bash -c '
+		ontaptestarr=($(find . -name main*ontap*.sh))
+		for f in "${ontaptestarr[@]}"; do
+			$f "$@"
+		done'
+	sleep 5
+	tmux ls
+	let vmmax-=6
+fi
 
 testarr=($(find . -name main*.sh|grep -v ontap))
 while :; do
 	vmn=$(LANG=C vm ls|grep running|wc -l)
-	[[ "${#testarr[@]}" = 0 ]] && { echo "[INFO] all tests submmitted."; break; }
-	echo "{INFO} $vmn/$vmmax VM is running"
+	[[ "${#testarr[@]}" = 0 ]] && { echo "{INFO} all tests submmitted."; break; }
 	if [[ $vmmax -gt $vmn ]]; then
+		echo "{INFO} $vmn(<$vmmax) VM is running, submit more tests ..."
 		testn=$(((vmmax-vmn)/3))
 		[[ "$testn" -gt ${#testarr[@]} ]] && testn=${#testarr[@]}
 		totest=("${testarr[@]::${testn}}")
@@ -33,15 +45,13 @@ while :; do
 			echo [run] tmux new -s $sessionName -d \"$f $*\"
 			tmux new -s "$sessionName" -d "$f $*"
 		done
-		sleep 10m
+		sleep 8m
 	else
-		sleep 10m
+		echo "{INFO} $vmn(>$vmmax) VM is running, waiting some tests finish ..."
+		sleep 8m
 	fi
 	vmmax=$(get_vmmax 4)
 done
 
-tmux new -s fsparallel-test-ontap/ bash -c '
-	ontaptestarr=($(find . -name main*ontap*.sh))
-	for f in "${ontaptestarr[@]}"; do
-		$f "$@"
-	done'
+echo "{INFO} waiting all tests done ..."
+while tmux ls 2>/dev/null | grep fsparallel-test; do echo "# $(date +%F_%T)"; sleep 5m; done
