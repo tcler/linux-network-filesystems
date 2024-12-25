@@ -50,13 +50,14 @@ export SCRATCH_MNT=/mnt/xfstests_scratch
 export WORKAREA=/var/lib/xfstests
 EOF"
 
+_test=xfstests-nfs
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
-resdir=~/testres/${distrodir}/nfs/xfstest
+resdir=~/testres/${distrodir}/nfs/$_test
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
-  trun -tmux=$$-server.console -logpath=$resdir vm console $nfsserv
-  trun -tmux=$$-client.console -logpath=$resdir vm console $nfsclnt
+  trun -tmux=${_test}-${distrodir}-server.console -logpath=$resdir vm console $nfsserv
+  trun -tmux=${_test}-${distrodir}-client.console -logpath=$resdir vm console $nfsclnt
   vmrunx - $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
   trun -x1-255 grep RI[P]: $resdir/*console.log
 } &> >(tee $resdir/std.log)
