@@ -7,19 +7,22 @@ get_vmmax() {
 	echo $((availablemem/mempervm))
 }
 
+avg_msize=4  #per VM
+avg_vmcnt=3  #per test
 vmmax=$1
 if [[ "$vmmax" =~ ^vmmax=[0-9]+$ ]]; then
 	vmmax=${vmmax#vmmax=}; shift
 else
-	vmmax=$(get_vmmax 4)
+	vmmax=$(get_vmmax $avg_msize)
 fi
 
 [[ $# -eq 0 ]] && { echo "Usage: <$0> [vmmax=N] <distro> [vm-create-options]"; exit 1; }
 for ts in $(tmux ls 2>/dev/null | awk -F: '/fsparallel-test/ {print $1}'); do tmux kill-session -t ${ts}; done
 for ts in $(tmux ls 2>/dev/null | awk -F: '/kissrun-/ {print $1}'); do tmux kill-session -t ${ts}; done
 
-if [[ $vmmax -ge 6 ]]; then
-	echo "{INFO} submit ontap-simulator related test cases in background ..."
+ontap_vmmax=6
+if [[ $vmmax -ge $ontap_vmmax ]]; then
+	echo "{INFO $(date +%F_%T)} submit ontap-simulator related test cases in background ..."
 	tmux new -s fsparallel-test-ontap/ -d bash -c '
 		ontaptestarr=($(find . -name main*ontap*.sh))
 		for f in "${ontaptestarr[@]}"; do
@@ -27,16 +30,15 @@ if [[ $vmmax -ge 6 ]]; then
 		done'
 	sleep 5
 	tmux ls
-	let vmmax-=6
+	let vmmax-=$ontap_vmmax
 fi
 
 testarr=($(find . -name main*.sh|grep -v ontap))
 while :; do
-	vmn=$(LANG=C vm ls|grep running|wc -l)
-	[[ "${#testarr[@]}" = 0 ]] && { echo "{INFO} all tests submmitted."; break; }
-	if [[ $vmmax -gt $vmn ]]; then
-		echo "{INFO} $vmn(<$vmmax) VM is running, submit more tests ..."
-		testn=$(((vmmax-vmn)/3))
+	[[ "${#testarr[@]}" = 0 ]] && { echo "{INFO $(date +%F_%T)} all tests submmitted."; break; }
+	if [[ $vmmax -ge $((2*avg_vmcnt)) ]]; then
+		echo "{INFO $(date +%F_%T)} vmmax=$vmmax(>=2*avg_vmcnt($avg_vmcnt)), submit more tests ..."
+		testn=$((vmmax/avg_vmcnt+1))
 		[[ "$testn" -gt ${#testarr[@]} ]] && testn=${#testarr[@]}
 		totest=("${testarr[@]::${testn}}")
 		testarr=("${testarr[@]:${testn}}")
@@ -47,11 +49,19 @@ while :; do
 		done
 		sleep 8m
 	else
-		echo "{INFO} $vmn(>$vmmax) VM is running, waiting some tests finish ..."
+		echo "{INFO $(date +%F_%T)} vmmax=$vmmax(<2*avg_vmcnt($avg_vmcnt)), waiting some tests finish ..."
 		sleep 8m
 	fi
-	vmmax=$(get_vmmax 4)
+	vmmax=$(get_vmmax $avg_msize)
 done
 
-echo "{INFO} waiting all tests done ..."
-while tmux ls 2>/dev/null | grep fsparallel-test; do echo "# $(date +%F_%T)"; sleep 5m; done
+while :; do
+	echo "{INFO $(date +%F_%T)} waiting all tests done ..."
+	if tmux ls 2>/dev/null | grep fsparallel-test; then
+		sleep 5m;
+	else
+		echo "{INFO $(date +%F_%T)} all tests have done, please check the results:"
+		ls -l $(ls ~/testres/* -1td|head -1)
+		break
+	fi
+done
