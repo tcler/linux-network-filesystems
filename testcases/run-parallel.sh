@@ -38,7 +38,7 @@ while :; do
 	[[ "${#testarr[@]}" = 0 ]] && { echo "{INFO $(date +%F_%T)} all tests submmitted."; break; }
 	if [[ $vmmax -ge $((2*avg_vmcnt)) ]]; then
 		echo -e "\n{INFO $(date +%F_%T)} vmmax=$vmmax(>=2*avg_vmcnt($avg_vmcnt)), submit more tests ..."
-		testn=$((vmmax/avg_vmcnt-1))
+		testn=$((vmmax/avg_vmcnt))
 		[[ "$testn" -gt ${#testarr[@]} ]] && testn=${#testarr[@]}
 		totest=("${testarr[@]::${testn}}")
 		testarr=("${testarr[@]:${testn}}")
