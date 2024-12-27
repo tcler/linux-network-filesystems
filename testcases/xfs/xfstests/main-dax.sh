@@ -71,15 +71,17 @@ vmrunx 0 $vmname -- ndctl list
 vmrunx 0 $vmname -- "for dev in ${pdevs[*]:0:2}; do mkfs.${fs} $MKFS_OPTIONS /dev/\${dev}; done"
 TESTS=${TESTS:--g dax}
 
+_test=${fs}-dax
 distrodir=$(gen_distro_dir_name $vmname ${SUFFIX})
-resdir=~/testres/${distrodir}/localfs/xfstests/$fs-dax
+resdir=~/testres/${distrodir}/localfs/xfstests/${_test}
 mkdir -p $resdir
 {
   vmrunx - $vmname -- uname -r;
   #vmrunx - $vmname -- "cd /var/lib/xfstests/; ./check -n -g auto;"
-  trun -tmux=$$-vm.console -logpath=$resdir vm console $vmname
+  trun -tmux=${_test}-xfstests-$$-vm.console -logpath=$resdir vm console $vmname
   vmrunx - $vmname -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check ${TESTS};"
   trun -x1-255 grep RI[P]: $resdir/*console.log
 } &> >(tee $resdir/std.log)
 
 tcnt
+[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $vmname

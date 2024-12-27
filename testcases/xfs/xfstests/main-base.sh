@@ -65,15 +65,17 @@ export WORKAREA=/var/lib/xfstests
 EOF"
 vmrunx 0 $vmname -- "for dev in ${devs[*]}; do mkfs.${fs} $mkfsOpt /dev/\$dev; done"
 
+_test=${fs}
 distrodir=$(gen_distro_dir_name $vmname ${SUFFIX})
-resdir=~/testres/${distrodir}/localfs/xfstests/$fs
+resdir=~/testres/${distrodir}/localfs/xfstests/${_test}
 mkdir -p $resdir
 {
   vmrunx - $vmname -- uname -r;
   #vmrunx - $vmname -- "cd /var/lib/xfstests/; ./check -n -g auto;"
-  trun -tmux=$$-vm.console -logpath=$resdir vm console $vmname
+  trun -tmux=${_test}-xfstests-$$-vm.console -logpath=$resdir vm console $vmname
   vmrunx - $vmname -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check ${TESTS};"
   trun -x1-255 grep RI[P]: $resdir/*console.log
 } &> >(tee $resdir/std.log)
 
 tcnt
+[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $vmname
