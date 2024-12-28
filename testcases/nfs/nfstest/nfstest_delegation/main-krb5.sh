@@ -205,8 +205,7 @@ mkdir -p $resdir
   trun -tmux=$_test-clientx.console -logpath=$resdir vm console $nfsclntx
   vmrunx -  $nfsclnt -- nfstest_delegation --server=$servfqdn --export=$expdir --nfsversion=4.2 --sec=krb5 --interface=$NIC --client-ipaddr=$nfsclntaddr --nconnect 16 $TESTS;
   trun -x1-255 grep RI[P]: $resdir/*console.log
+  [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $ipaserv $nfsserv $nfsclnt $nfsclntx
 } &> >(tee $resdir/std.log)
 
 tcnt
-
-[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $ipaserv $nfsserv $nfsclnt $nfsclntx
