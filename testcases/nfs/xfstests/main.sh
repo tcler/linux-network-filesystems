@@ -15,6 +15,10 @@ nfsserv=fstest-nfsserv
 nfsclnt=fstest-nfsclnt
 pkglist=vim,nfs-utils,tmux
 
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 #download image file
 if [[ "${*}" != *-[lL]* ]]; then
 	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
@@ -60,7 +64,7 @@ mkdir -p $resdir
   trun -tmux=${_test}-${distrodir}-client.console -logpath=$resdir vm console $nfsclnt
   vmrunx - $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
   trun -x1-255 grep RI[P]: $resdir/*console.log
-  [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt
+  stopvms
 } &> >(tee $resdir/std.log)
 
 tcnt

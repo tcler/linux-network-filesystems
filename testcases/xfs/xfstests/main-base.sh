@@ -18,6 +18,10 @@ fs=${FSTYPE:-xfs}
 vmname=fstest-${fs}; for ((i=0;i<${#at};i++)); do [[ ${at[$i]} = -n ]] && vmname=${at[$((i+1))]}; done
 pkglist=git,tmux,vim
 
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $vmname; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 ### __prepare__ test env build
 if [[ "${*}" != *-[lL]* ]]; then
 	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
@@ -75,7 +79,7 @@ mkdir -p $resdir
   trun -tmux=${_test}-xfstests-$$-vm.console -logpath=$resdir vm console $vmname
   vmrunx - $vmname -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check ${TESTS};"
   trun -x1-255 grep RI[P]: $resdir/*console.log
-  [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $vmname
+  stopvms
 } &> >(tee $resdir/std.log)
 
 tcnt

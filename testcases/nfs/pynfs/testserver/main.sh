@@ -8,6 +8,10 @@ distro=${distro:-9}
 nfsserv=pynfs-server
 nfsclnt=pynfs-client
 
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
@@ -41,7 +45,7 @@ mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
   vmrunx - $nfsclnt -- testserver.py --maketree $servaddr:$expdir all;
-  [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt
+  stopvms
 } &> >(tee $resdir/std.log)
 
 tcnt

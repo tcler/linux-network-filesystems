@@ -9,6 +9,10 @@ distro=${distro:-9}
 nfsserv=nfs-suspend-serv
 nfsclnt=nfs-suspend-clnt
 
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 ### __prepare__ test env build
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
@@ -87,8 +91,7 @@ vm vnc "$nfsserv" -putln ""
 
 trun port-available.sh $serv_addr 22 -w
 vmrunx 1-255 $nfsserv -- 'dmesg|grep Freezing.of.tasks.failed.after'
-
-[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt
+stopvms
 } &> >(tee $resdir/std.log)
 
 tcnt

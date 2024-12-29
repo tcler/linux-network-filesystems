@@ -15,6 +15,10 @@ nfsserv=ipa-nfs-server
 nfsclnt=ipa-nfs-client
 password=redhat123
 
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $ipaserv $nfsserv $nfsclnt; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 ### __prepare__ test env build: create vm
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
@@ -194,7 +198,7 @@ EOF"
 vmrunx - $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS:--g quick};"
 
 trun -x1-255 grep RI[P]: $resdir/*console.log
-[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $ipaserv $nfsserv $nfsclnt
+stopvms
 } &> >(tee $resdir/std.log)
 
 tcnt

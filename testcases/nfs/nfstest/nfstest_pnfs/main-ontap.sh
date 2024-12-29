@@ -8,6 +8,10 @@ distro=${distro:-9}
 nfsclnt=nfstest-pnfs-Ontap-client
 nfsmp=/mnt/nfsmp
 
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsclnt; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
@@ -55,7 +59,7 @@ mkdir -p $resdir
 
   vmrunx - $nfsclnt -- nfstest_pnfs --server $lservaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2 $TESTS;
   trun -x1-255 grep RI[P]: $resdir/*console.log
-  [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsclnt
+  stopvms
 } &> >(tee $resdir/std.log)
 
 tcnt

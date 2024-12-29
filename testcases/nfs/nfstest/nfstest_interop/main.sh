@@ -9,6 +9,10 @@ distro=${distro:-9}
 nfsserv=nfstest-interop-serv
 nfsclnt=nfstest-interop-clnt
 
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
@@ -47,7 +51,7 @@ mkdir -p $resdir
   trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
   vmrunx - $nfsclnt -- nfstest_interop --server ${servaddr} --export=${expdir} --nfsversion=4.2 $TESTS;
   trun -x1-255 grep RI[P]: $resdir/*console.log
-  [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt
+  stopvms
 } &> >(tee $resdir/std.log)
 
 tcnt

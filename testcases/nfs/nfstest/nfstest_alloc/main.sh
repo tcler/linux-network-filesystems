@@ -9,6 +9,10 @@ distro=${distro:-9}
 nfsserv=nfstest-alloc-serv
 nfsclnt=nfstest-alloc-clnt
 
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
@@ -48,7 +52,7 @@ mkdir -p $resdir
   vmrunx - $nfsclnt -- nfstest_alloc --server $servaddr --export=$expdir --mtpoint=$nfsmp --mtopts=rw --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr $TESTS;
   trun -x1-255 grep RI[P]: $resdir/*console.log
 
-  [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt
+  stopvms
 } &> >(tee $resdir/std.log)
 
 tcnt

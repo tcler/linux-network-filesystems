@@ -14,6 +14,10 @@ nfsclnt=nfstest-deleg-nfs-clnt
 nfsclntx=nfstest-deleg-nfs-clntx
 password=redhat123
 
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $ipaserv $nfsserv $nfsclnt $nfsclntx; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 ### __prepare__ test env build: create vm
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
@@ -205,7 +209,7 @@ mkdir -p $resdir
   trun -tmux=$_test-clientx.console -logpath=$resdir vm console $nfsclntx
   vmrunx -  $nfsclnt -- nfstest_delegation --server=$servfqdn --export=$expdir --nfsversion=4.2 --sec=krb5 --interface=$NIC --client-ipaddr=$nfsclntaddr --nconnect 16 $TESTS;
   trun -x1-255 grep RI[P]: $resdir/*console.log
-  [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $ipaserv $nfsserv $nfsclnt $nfsclntx
+  stopvms
 } &> >(tee $resdir/std.log)
 
 tcnt

@@ -7,10 +7,15 @@
 nfsmp=/mnt/nfsmp
 script_dir=$(readlink -f $(dirname $0))
 
-#create nfs-server vm
 distro=${1:-9}; shift
 nfsserv=nfs-server
 nfsclnt=nfs-client
+
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
+#create nfs-server vm
 trun -tmux vm create $distro -n $nfsserv -f -nointeract -p nfs-utils,wireshark,tmux "$@"
 trun       vm create $distro -n $nfsclnt -f -nointeract -p nfs-utils,wireshark,tmux "$@"
 echo "{INFO} waiting all vm create process finished ..."
@@ -42,4 +47,4 @@ trun "fhlist='$(vm exec $nfsclnt -- cat fhlist.txt)'"
 vmrunx - $nfsclnt -- "./nfsv3-read.py $servaddr readdirplus $maxblksize $fh1 -s | grep nfs.status3.=.0"
 	xrc 0 "output of test log should include 'nfs.status3 = 0'"
 
-[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt
+stopvms

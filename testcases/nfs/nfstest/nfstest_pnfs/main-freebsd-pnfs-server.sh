@@ -19,6 +19,11 @@ vm_ds1=freebsd-pnfs-ds1
 vm_ds2=freebsd-pnfs-ds2
 vm_mds=freebsd-pnfs-mds
 vm_fbclient=freebsd-pnfs-client
+
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsclnt $vm_mds $vm_ds1 $vm_ds2 $vm_fbclient; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 trun -x0 make-freebsd-pnfsserver.sh $distro $nfsclnt "$@" || exit $?
 timeout 300 vm port-available -w $nfsclnt || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
@@ -43,7 +48,7 @@ mkdir -p $resdir
   trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
   vmrunx - $nfsclnt -- nfstest_pnfs --server $mdsaddr --export=$expdir0 --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2 $TESTS;
   trun -x1-255 grep RI[P]: $resdir/*console.log
-  [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsclnt $vm_mds $vm_ds1 $vm_ds2 $vm_fbclient
+  stopvms
 } &> >(tee $resdir/std.log)
 
 tcnt

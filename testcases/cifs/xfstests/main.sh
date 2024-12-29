@@ -17,6 +17,10 @@ pkglist=vim,cifs-utils,samba-client,tmux
 USERNAME=root
 PASSWORD=redhat
 
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $smbserv $cifsclnt; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 #download image file
 if [[ "${*}" != *-[lL]* ]]; then
 	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
@@ -100,7 +104,7 @@ mkdir -p $resdir
   trun -tmux=${_test}-${distrodir}-client.console -logpath=$resdir vm console $cifsclnt
   vmrunx - $cifsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -cifs -s default-version ${TESTS};"
   trun -x1-255 grep RI[P]: $resdir/*console.log
-  [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $smbserv $cifsclnt
+  stopvms
 } &> >(tee $resdir/std.log)
 
 tcnt

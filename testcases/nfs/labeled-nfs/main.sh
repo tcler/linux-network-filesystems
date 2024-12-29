@@ -19,6 +19,10 @@ distro=${1:-9}; shift
 vmnfsserv=labeled-nfs-serv
 vmnfsclnt=labeled-nfs-clnt
 
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $vmnfsserv $vmnfsclnt; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
@@ -116,7 +120,7 @@ for key in "${!tests[@]}"; do
 	echo
 done
 
-[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $vmnfsserv $vmnfsclnt
+stopvms
 } &> >(tee $resdir/labeled-nfs.log)
 
 tcnt

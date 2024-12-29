@@ -11,6 +11,10 @@ nfsservs=nfs-ssc-serverS
 nfsservd=nfs-ssc-serverD
 nfsclnt=nfs-ssc-client
 
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsservs $nfsservd $nfsclnt; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 ### __prepare__ test env build
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
@@ -80,7 +84,7 @@ vmrunx 0 $nfsclnt -- "mountstats mountstats /mnt/dst | grep -EA 3 '(^COPY):'"
 vmrunx - $nfsclnt -- "dmesg | grep TECH.PREVIEW /var/log/messages"
 
 trun -x1-255 grep RI[P]: $resdir/*console.log
-[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsservs $nfsservd $nfsclnt
+stopvms
 } &> >(tee $resdir/std.log)
 
 tcnt

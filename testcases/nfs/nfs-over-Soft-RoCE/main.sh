@@ -12,6 +12,10 @@ imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 nfsserv=nfs-o-soft-roce-serv
 nfsclnt=nfs-o-soft-roce-clnt
 
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 ### __prepare__ test env build
 pkgs=firewalld,libibverbs-utils,perftest,iproute,tmux
 trun -tmux vm create -n $nfsserv -p $pkgs -f $distro -I=$imgf --nointeract "$@"
@@ -86,7 +90,7 @@ EOF"
 
 vmrunx - $nfsclnt -- uname -r;
 vmrunx - $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
-[[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt
+stopvms
 } &> >(tee $resdir/std.log)
 
 tcnt

@@ -11,6 +11,10 @@ vmserv=nfstest-deleg-serv
 vmclnt=nfstest-deleg-clnt
 vmclntx=nfstest-deleg-clntx
 
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $vmserv $vmclnt $vmclntx; }
+cleanup() { stopvms 2>/dev/null; }
+trap "cleanup" EXIT
+
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
@@ -52,7 +56,7 @@ mkdir -p $resdir
   trun -tmux=$_test-clientx.console -logpath=$resdir vm console $vmclntx
   vmrunx - $vmclnt -- nfstest_delegation --server=$servaddr --export=$expdir --nfsversion=4.2 --client $clntxaddr --client-nfsvers=4.0,4.1,4.2 $TESTS;
   trun -x1-255 grep RI[P]: $resdir/*console.log
-  [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $vmserv $vmclnt $vmclntx
+  stopvms
 } &> >(tee $resdir/std.log)
 
 tcnt
