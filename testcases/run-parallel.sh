@@ -6,6 +6,10 @@ P=${0##*/}
 avg_msize=4  #per VM
 avg_vmcnt=3  #per test
 available_ramsize() { LANG=C free -g | awk '/^Mem:/{print $NF}'; }
+get_vcpumax() {
+	local nproc=$(nproc)
+	echo $((nproc*nproc/2))
+}
 get_vmmax() {
 	local mempervm=${1:-4}
 	local availablemem=$(available_ramsize)
@@ -46,6 +50,8 @@ fi
 [[ -n "${otherTests}" ]] && echo -e "Other tests:\n ${otherTests//$'\n'/$'\n' }"
 
 vmmax=$(get_vmmax $avg_msize)
+vcpumax=$(get_vcpumax); vcpus=$((vcpumax/vmmax))
+export VCPUS=$vcpus,sockets=1,cores=$vcpus
 ontap_vmmax=6
 if [[ -n "${ontapTests}" && $vmmax -ge $ontap_vmmax ]]; then
 	echo -e "{INFO $(date +%F_%T)} submit ontap-simulator related test cases in background ..."
