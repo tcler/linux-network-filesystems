@@ -90,8 +90,11 @@ while :; do
 	if tmux ls 2>/dev/null | grep fsparallel-test; then
 		sleep 5m;
 	else
-		echo -e "\n{INFO $(date +%F_%T)} all tests have done, please check the results:"
-		ls -l $(ls ~/testres/* -1td|head -1)
+		resdir=$(ls ~/testres/* -1td|head -1)
+		echo -e "\n{INFO $(date +%F_%T)} all tests have done, please check the results at ${resdir}"
+		ls -l ${resdir}
+		grep -Ei RIP[:] -r ${resdir}
+		grep -Ei KISS.TEST.FAIL -r ${resdir}
 		break
 	fi
 done
