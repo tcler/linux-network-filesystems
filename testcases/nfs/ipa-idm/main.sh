@@ -38,9 +38,9 @@ distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfs/$_test
 mkdir -p $resdir
 {
-trun -tmux=$_test-ipa-server.console -logpath=$resdir vm console $ipaserv
-trun -tmux=$_test-nfs-server.console -logpath=$resdir vm console $nfsserv
-trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
+trun -tmux=${_test}-console-$ipaserv -logpath=$resdir/console-$ipaserv.log vm console $ipaserv
+trun -tmux=${_test}-console-$nfsserv -logpath=$resdir/console-$nfsserv.log vm console $nfsserv
+trun -tmux=${_test}-console-$nfsclnt -logpath=$resdir/console-$nfsclnt.log vm console $nfsclnt
 
 ### __prepare__ test env build: install requirements: ipa-server/ipa-client
 vm cpto -v $ipaserv /usr/bin/ipa-server-install.sh /usr/bin/kinit.sh /usr/bin/.

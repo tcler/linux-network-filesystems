@@ -82,7 +82,7 @@ mkdir -p $resdir
 {
   vmrunx - $vmname -- uname -r;
   #vmrunx - $vmname -- "cd /var/lib/xfstests/; ./check -n -g auto;"
-  trun -tmux=${_test}-xfstests-$$-vm.console -logpath=$resdir vm console $vmname
+  trun -tmux=${_test}-xfstests-console -logpath=$resdir/console.log vm console $vmname
   vmrunx - $vmname -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check ${TESTS};"
   trun -x1-255 grep RI[P]: $resdir/*console.log
   stopvms

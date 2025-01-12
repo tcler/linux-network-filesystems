@@ -46,7 +46,7 @@ resdir=~/testres/${distrodir}/nfstest/$_test
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
-  trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
+  trun -tmux=${_test}-console-$nfsclnt -logf=$resdir/console-$nfsclnt.log vm console $nfsclnt
   vmrunx 0 $nfsclnt -- mount -overs=4.1,noresvport ${NETAPP_NAS_IP_LOC}:${NETAPP_NFS_SHARE2} $nfsmp
   vmrunx 0 $nfsclnt -- tmux new -s ddSession -d "dd if=/dev/zero of=$nfsmp/testfile bs=1b count=10000000"
   vmrunx 0 $nfsclnt -- 'sleep 3; ss -nat | grep :2049'

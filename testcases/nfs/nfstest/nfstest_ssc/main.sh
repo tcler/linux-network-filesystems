@@ -52,9 +52,9 @@ resdir=~/testres/${distrodir}/nfstest/$_test
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
-  trun -tmux=$_test-server.console -logpath=$resdir vm console $nfsserv
-  trun -tmux=$_test-server2.console -logpath=$resdir vm console $nfsserv2
-  trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
+  trun -tmux=${_test}-console-$nfsserv  -logf=$resdir/console-$nfsserv  vm console $nfsserv
+  trun -tmux=${_test}-console-$nfsserv2 -logf=$resdir/console-$nfsserv2 vm console $nfsserv2
+  trun -tmux=${_test}-console-$nfsclnt  -logf=$resdir/console-$nfsclnt  vm console $nfsclnt
   vmrunx - $nfsclnt -- nfstest_ssc -s $serv1addr -e /nfsshare/rw --dst-server $serv2addr --dst-export /nfsshare/async ${TESTS:-inter};
   trun -x1-255 grep RI[P]: $resdir/*console.log
   stopvms

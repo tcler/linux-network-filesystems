@@ -60,9 +60,9 @@ mkdir -p $resdir
   vmrunx - $nfsclntx -- 'echo "foo ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers'
 
   vmrunx - foo@$nfsclnt -- uname -r;
-  trun -tmux=$_test-server.console -logpath=$resdir vm console $nfsserv
-  trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
-  trun -tmux=$_test-clientx.console -logpath=$resdir vm console $nfsclntx
+  trun -tmux=${_test}-console-$nfsserv  -logf=$resdir/console-$nfsserv.log  vm console $nfsserv
+  trun -tmux=${_test}-console-$nfsclnt  -logf=$resdir/console-$nfsclnt.log  vm console $nfsclnt
+  trun -tmux=${_test}-console-$nfsclntx -logf=$resdir/console-$nfsclntx.log vm console $nfsclntx
   vmrunx - foo@$nfsclnt -- nfstest_cache --server $servaddr --client $clntxaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2 $TESTS;
   trun -x1-255 grep RI[P]: $resdir/*console.log
   stopvms

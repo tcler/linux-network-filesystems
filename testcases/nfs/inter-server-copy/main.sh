@@ -40,9 +40,9 @@ distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfs/$_test
 mkdir -p $resdir
 {
-trun -tmux=$_test-servers.console -logpath=$resdir vm console $nfsservs
-trun -tmux=$_test-serverd.console -logpath=$resdir vm console $nfsservd
-trun -tmux=$_test-client.console -logpath=$resdir vm console $nfsclnt
+trun -tmux=${_test}-console-$nfsservs -logf=$resdir/console.$nfsservs.log vm console $nfsservs
+trun -tmux=${_test}-console-$nfsservd -logf=$resdir/console.$nfsservd.log vm console $nfsservd
+trun -tmux=${_test}-console-$nfsclnt  -logf=$resdir/console.$nfsclnt.log  vm console $nfsclnt
 
 #-------------------------------------------------------------------------------
 #enable inter-server copy

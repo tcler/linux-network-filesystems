@@ -60,8 +60,8 @@ resdir=~/testres/${distrodir}/nfs/$_test
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
-  trun -tmux=${_test}-${distrodir}-server.console -logpath=$resdir vm console $nfsserv
-  trun -tmux=${_test}-${distrodir}-client.console -logpath=$resdir vm console $nfsclnt
+  trun -tmux=${_test}-console-$nfsserv -logf=$resdir/console-$nfsserv.log vm console $nfsserv
+  trun -tmux=${_test}-console-$nfsclnt -logf=$resdir/console-$nfsclnt.log vm console $nfsclnt
   vmrunx - $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
   trun -x1-255 grep RI[P]: $resdir/*console.log
   stopvms
