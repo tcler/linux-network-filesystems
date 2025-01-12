@@ -76,10 +76,10 @@ if [[ -n "${otherTests}" ]]; then
 				echo [run] tmux new -s $sessionName -d \"$f $*\"
 				tmux new -s "$sessionName" -d "$f $*"
 			done
-			sleep 8m
+			sleep 2m
 		else
 			echo -e "\n{INFO $(date +%F_%T)} vmmax=$vmmax(<2*avg_vmcnt($avg_vmcnt)), waiting some tests finish ..."
-			sleep 8m
+			sleep 2m
 		fi
 		vmmax=$(get_vmmax $avg_msize)
 	done
@@ -88,7 +88,7 @@ fi
 while :; do
 	echo -e "\n{INFO $(date +%F_%T)} waiting all tests done ..."
 	if tmux ls 2>/dev/null | grep fsparallel-test; then
-		sleep 5m;
+		sleep 4m;
 	else
 		resdir=$(ls ~/testres/* -1td|head -1)
 		echo -e "\n{INFO $(date +%F_%T)} all tests have done, please check the results at ${resdir}"
