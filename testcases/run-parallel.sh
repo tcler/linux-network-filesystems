@@ -39,7 +39,8 @@ _at=("$@")
 ! grep -Eq -- '(^| )(-I=[^ ]+|-[lL])' <<<"$*" && {
 	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 	imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
-	_at+=("-I=$imgf")
+	distro=$(awk '/getting fastest location/{print $(NF-1)}' <<<"$stdlog")
+	_at+=($distro "-I=$imgf")
 }
 
 for ts in $(tmux ls 2>/dev/null | awk -F: '/fsparallel-test/ {print $1}'); do tmux kill-session -t ${ts}; done
