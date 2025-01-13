@@ -14,8 +14,10 @@ cleanup() { stopvms 2>/dev/null; }
 trap "cleanup" EXIT
 
 #download image file
-stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+! grep -Eq -- '(^| )(-I=[^ ]+|-[lL])' <<<"$*" && {
+	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
+	imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+}
 
 trun -tmux vm create $distro -n $nfsserv -m 4G -f -nointeract -p nfs-utils,tcpdump,wireshark -I=$imgf "$@"
 trun       vm create $distro -n $nfsclnt -m 4G -f -nointeract -p nfs-utils,tcpdump,wireshark -I=$imgf "$@"

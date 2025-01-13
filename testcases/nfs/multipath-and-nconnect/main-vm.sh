@@ -15,8 +15,10 @@ subnet1=12
 brname1=vm-vbr$subnet1
 netname1=net$subnet1
 
-stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+! grep -Eq -- '(^| )(-I=[^ ]+|-[lL])' <<<"$*" && {
+	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
+	imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+}
 
 S=nfs-nconn-serv
 C=nfs-nconn-clnt

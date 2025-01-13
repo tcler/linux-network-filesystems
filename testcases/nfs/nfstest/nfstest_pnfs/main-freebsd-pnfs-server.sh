@@ -8,8 +8,10 @@ distro=${distro:-9}
 nfsclnt=fbpnfs-linux-client
 
 #download image file
-stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+! grep -Eq -- '(^| )(-I=[^ ]+|-[lL])' <<<"$*" && {
+	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
+	imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+}
 
 #create freebsd pnfs server. flex-file layout
 nfsmp=/mnt/nfsmp

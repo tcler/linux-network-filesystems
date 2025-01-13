@@ -22,7 +22,7 @@ cleanup() { stopvms 2>/dev/null; }
 trap "cleanup" EXIT
 
 #download image file
-if [[ "${*}" != *-[lL]* ]]; then
+if [[ "${*}" != *-[lL]* && "${*}" != *-I=[a-z]* ]]; then
 	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 	imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 	insOpt="-I=$imgf"

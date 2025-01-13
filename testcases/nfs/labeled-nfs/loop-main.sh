@@ -20,8 +20,10 @@ distro=${1:-9}; shift
 vmnfsserv=nfs-server
 vmnfsclnt=nfs-client
 
-stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+! grep -Eq -- '(^| )(-I=[^ ]+|-[lL])' <<<"$*" && {
+	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
+	imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+}
 
 trun -tmux vm create $distro -n $vmnfsserv -p nfs-utils --net default --nointeract -f $VMOPT "$@"
 trun       vm create $distro -n $vmnfsclnt -p nfs-utils --net default --nointeract -f $VMOPT "$@"

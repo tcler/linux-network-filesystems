@@ -19,8 +19,10 @@ cleanup() { stopvms 2>/dev/null; }
 trap "cleanup" EXIT
 
 ### __prepare__ test env build: create vm
-stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+! grep -Eq -- '(^| )(-I=[^ ]+|-[lL])' <<<"$*" && {
+	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
+	imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+}
 
 trun -tmux vm create -n $ipaserv  $distro --msize 4096 -p vim,tcpdump,bind-utils,firewalld,expect,tomcat,NetworkManager,sssd-tools --nointeract -I=$imgf -f "$@"
 trun -tmux vm create -n $nfsserv  $distro --msize 4096 -p vim,tcpdump,nfs-utils,bind-utils,NetworkManager --nointeract -I=$imgf -f --kdump "$@"

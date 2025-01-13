@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+
 export LANG=C
 P=${0##*/}
 
@@ -32,6 +34,14 @@ while true; do
 done
 
 [[ $# -eq 0 ]] && { Usage; exit 1; }
+distro=$1; shift
+_at=("$@")
+! grep -Eq -- '(^| )(-I=[^ ]+|-[lL])' <<<"$*" && {
+	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
+	imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+	_at+=("-I=$imgf")
+}
+
 for ts in $(tmux ls 2>/dev/null | awk -F: '/fsparallel-test/ {print $1}'); do tmux kill-session -t ${ts}; done
 for ts in $(tmux ls 2>/dev/null | awk -F: '/kissrun-/ {print $1}'); do tmux kill-session -t ${ts}; done
 
@@ -55,7 +65,7 @@ export VCPUS=$vcpus,sockets=1,cores=$vcpus
 ontap_vmmax=6
 if [[ -n "${ontapTests}" && $vmmax -ge $ontap_vmmax ]]; then
 	echo -e "{INFO $(date +%F_%T)} submit ontap-simulator related test cases in background ..."
-	tmux new -s fsparallel-test-ontap/ -d bash -c "for f in ${ontapTests//$'\n'/ }; do \$f $*; done"
+	tmux new -s fsparallel-test-ontap/ -d bash -c "for f in ${ontapTests//$'\n'/ }; do \$f ${_at[*]}; done"
 	sleep 5
 	tmux ls
 	let vmmax-=$ontap_vmmax
@@ -73,8 +83,8 @@ if [[ -n "${otherTests}" ]]; then
 			otArray=("${otArray[@]:${testn}}")
 			for f in "${totest[@]}"; do
 				sessionName="fsparallel-test-${f#./}"
-				echo [run] tmux new -s $sessionName -d \"$f $*\"
-				tmux new -s "$sessionName" -d "$f $*"
+				echo [run] tmux new -s $sessionName -d \"$f ${_at[*]}\"
+				tmux new -s "$sessionName" -d "$f ${_at[*]}"
 			done
 			sleep 2m
 		else
