@@ -64,34 +64,49 @@ vmrunx 0 $nfsclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049 -v
 vmrunx 0 $nfsclnt -- mount -t nfs4
 vmrunx 0 $nfsclnt -- umount /mnt/nfsmp
 
+##nconnect over rdma test
+for N in 1 4 16; do
+	vmrunx 0 $nfsclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049,nconnect=$N
+	vmrunx 0 $nfsclnt -- "test \$(grep xprt /proc/self/mountstats | wc -l) -eq $N"
+	vmrunx 0 $nfsclnt -- mount -t nfs4
+	vmrunx 0 $nfsclnt -- umount /mnt/nfsmp
+done
+for N in 0 17; do
+	vmrunx 1-255 $nfsclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049,nconnect=$N
+done
+vmrunx 0 $nfsclnt -- uname -a
+
 vmrunx - $nfsserv -- tmux new -s listen -d 'ib_send_bw -d rxe0'
 vmrunx - $nfsclnt -- ib_send_bw -d rxe0 $servAddr
 
 #-------------------------------------------------------------------------------
 ##xfstest
-tmux new -s roceNfsServer -d "vm exec -v $nfsserv -- bash make-nfs-server.sh"
+if [[ $XFSTEST = yes ]]; then
+	tmux new -s roceNfsServer -d "vm exec -v $nfsserv -- bash make-nfs-server.sh"
 
-vmrunx 0 $nfsclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
-vmrunx 0 $nfsclnt -- "xfstests-install.sh nouring=$NOURING" || exit 1
-while tmux ls | grep roceNfsServer; do sleep 8; done
-vmrunx 0 $nfsclnt -- showmount -e $servAddr
+	vmrunx 0 $nfsclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
+	vmrunx 0 $nfsclnt -- "xfstests-install.sh nouring=$NOURING" || exit 1
+	while tmux ls | grep roceNfsServer; do sleep 8; done
+	vmrunx 0 $nfsclnt -- showmount -e $servAddr
 
-TESTS=${TESTS:--g quick}
-#prepare TEST_DEV TEST_DIR SCRATCH_DEV SCRATCH_MNT for xfstests
-vmrunx - $nfsclnt -- "mkdir -p /mnt/xfstests_test /mnt/xfstests_scratch"
-vmrunx - $nfsclnt -- "useradd -m fsgqa; useradd 123456-fsgqa; useradd fsgqa2; groupadd fsgqa"
-vmrunx - $nfsclnt -- "cat >/var/lib/xfstests/local.config <<EOF
-export TEST_DEV=$servAddr:/nfsshare/qe
-export TEST_DIR=/mnt/xfstests_test
-export TEST_FS_MOUNT_OPTS='-ordma,port=20049'
-export MOUNT_OPTIONS='-ordma,port=20049'
-export SCRATCH_DEV=$servAddr:/nfsshare/devel
-export SCRATCH_MNT=/mnt/xfstests_scratch
-export WORKAREA=/var/lib/xfstests
-EOF"
+	TESTS=${TESTS:--g quick}
+	#prepare TEST_DEV TEST_DIR SCRATCH_DEV SCRATCH_MNT for xfstests
+	vmrunx - $nfsclnt -- "mkdir -p /mnt/xfstests_test /mnt/xfstests_scratch"
+	vmrunx - $nfsclnt -- "useradd -m fsgqa; useradd 123456-fsgqa; useradd fsgqa2; groupadd fsgqa"
+	vmrunx - $nfsclnt -- "cat >/var/lib/xfstests/local.config <<EOF
+	export TEST_DEV=$servAddr:/nfsshare/qe
+	export TEST_DIR=/mnt/xfstests_test
+	export TEST_FS_MOUNT_OPTS='-ordma,port=20049'
+	export MOUNT_OPTIONS='-ordma,port=20049'
+	export SCRATCH_DEV=$servAddr:/nfsshare/devel
+	export SCRATCH_MNT=/mnt/xfstests_scratch
+	export WORKAREA=/var/lib/xfstests
+	EOF"
 
-vmrunx - $nfsclnt -- uname -r;
-vmrunx - $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
+	vmrunx - $nfsclnt -- uname -r;
+	vmrunx - $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
+fi
+
 stopvms
 } &> >(tee $resdir/std.log)
 
