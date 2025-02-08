@@ -6,10 +6,8 @@
 
 distro=${1:-9}; shift 1
 
-! grep -Eq -- '(^| )(-I=[^ ]+|-[lL])' <<<"$*" && {
-	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-	imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
-}
+stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
+imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
 nfsserv=nfs-o-soft-iwarp-serv
 nfsclnt=nfs-o-soft-iwarp-clnt

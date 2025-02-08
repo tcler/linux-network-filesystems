@@ -23,11 +23,9 @@ cleanup() { stopvms 2>/dev/null; }
 trap "cleanup" EXIT
 
 ### __prepare__ test env build
-if [[ "${*}" != *-[lL]* && "${*}" != *-I=[a-z]* ]]; then
-	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-	imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
-	insOpt="-I=$imgf"
-fi
+stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
+imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+insOpt="-I=$imgf"
 
 trun vm create -n $vmname $distro --msize 4G -p $pkglist --nointeract ${insOpt} -f \
 	--nvdimm='4098+2 4098+2' --xdisk=16,${fs} --ks-only-use='vda' "$@" || exit $?

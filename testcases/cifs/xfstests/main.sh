@@ -22,11 +22,9 @@ cleanup() { stopvms 2>/dev/null; }
 trap "cleanup" EXIT
 
 #download image file
-if [[ "${*}" != *-[lL]* && "${*}" != *-I=[a-z]* ]]; then
-	stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-	imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
-	insOpt="-I=$imgf"
-fi
+stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
+imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+insOpt="-I=$imgf"
 
 trun -tmux vm create $distro -n $smbserv -m 4G -f -nointeract -p ${pkglist}     $insOpt "$@"
 trun       vm create $distro -n $cifsclnt -m 4G -f -nointeract -p ${pkglist},git $insOpt "$@" || exit $?
