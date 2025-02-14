@@ -64,12 +64,17 @@ vmmax=$(get_vmmax $avg_msize)
 vcpumax=$(get_vcpumax); vcpus=$((vcpumax/vmmax))
 export VCPUS=$vcpus,sockets=1,cores=$vcpus
 ontap_vmmax=6
-if [[ -n "${ontapTests}" && $vmmax -ge $ontap_vmmax ]]; then
-	echo -e "{INFO $(date +%F_%T)} submit ontap-simulator related test cases in background ..."
-	tmux new -s fsparallel-test-ontap/ -d bash -c "for f in ${ontapTests//$'\n'/ }; do \$f ${_at[*]}; done"
-	sleep 5
-	tmux ls
-	let vmmax-=$ontap_vmmax
+if [[ -n "${ontapTests}" ]]; then
+	if [[ $vmmax -ge $ontap_vmmax ]]; then
+		echo -e "{INFO $(date +%F_%T)} submit ontap-simulator related test cases in background ..."
+		tmux new -s fsparallel-test-ontap/ -d bash -c "for f in ${ontapTests//$'\n'/ }; do \$f ${_at[*]}; done"
+		sleep 5
+		tmux ls
+		let vmmax-=$ontap_vmmax
+	else
+		echo -e "\n{WARN} free memory(<$((ontap_vmmax*avg_msize))G) is not enough for ontap simulator tests ..."
+		exit 75
+	fi
 fi
 
 if [[ -n "${otherTests}" ]]; then
