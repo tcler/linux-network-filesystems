@@ -176,7 +176,7 @@ vmrunx 0 $nfsclnt -- mount -osec=krb5 ${nfsserv}.${domain}:/nfsshare/qe /mnt/nfs
 vmrunx 0 $nfsclnt -- mount -t nfs4
 vmrunx 0 $nfsclnt -- umount -a -t nfs4
 
-trun -x1-255 grep RI[P]: $resdir/*console.log
+trun -x1-255 grep RI[P]: $resdir/console*.log
 stopvms
 } &> >(tee $resdir/std.log)
 

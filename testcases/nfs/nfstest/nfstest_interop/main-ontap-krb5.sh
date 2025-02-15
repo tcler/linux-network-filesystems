@@ -32,7 +32,7 @@ mkdir -p $resdir
   vmrunx -  $clientvm -- uname -r;
   trun -tmux=${_test}-console-$clientvm -logf=$resdir/console-$clientvm.log vm console $clientvm
   vmrunx -  $clientvm -- nfstest_interop --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5 --datadir datadir --nfsversion=4.2 $TESTS;
-  trun -x1-255 grep RI[P]: $resdir/*console.log
+  trun -x1-255 grep RI[P]: $resdir/console*.log
   stopvms
 } &> >(tee $resdir/std.log)
 

@@ -58,7 +58,7 @@ mkdir -p $resdir
   vmrunx 0 $nfsclnt -- umount $nfsmp
 
   vmrunx - $nfsclnt -- nfstest_pnfs --server $lservaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2 $TESTS;
-  trun -x1-255 grep RI[P]: $resdir/*console.log
+  trun -x1-255 grep RI[P]: $resdir/console*.log
   stopvms
 } &> >(tee $resdir/std.log)
 

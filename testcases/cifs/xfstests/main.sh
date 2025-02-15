@@ -101,7 +101,7 @@ mkdir -p $resdir
   trun -tmux=${_test}-console-${smbserv}-${distrodir} -logf=$resdir/console-$smbserv.log  vm console $smbserv
   trun -tmux=${_test}-console-${cifsclnt}-${distrodir} -logf=$resdir/console-$cifsclnt.log vm console $cifsclnt
   vmrunx - $cifsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -cifs -s default-version ${TESTS};"
-  trun -x1-255 grep RI[P]: $resdir/*console.log
+  trun -x1-255 grep RI[P]: $resdir/console*.log
   stopvms
 } &> >(tee $resdir/std.log)
 

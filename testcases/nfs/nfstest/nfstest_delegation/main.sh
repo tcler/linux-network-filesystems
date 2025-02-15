@@ -55,7 +55,7 @@ mkdir -p $resdir
   trun -tmux=${_test}-console-$vmclnt  -logf=$resdir/console-$vmclnt.log  vm console $vmclnt
   trun -tmux=${_test}-console-$vmclntx -logf=$resdir/console-$vmclntx.log vm console $vmclntx
   vmrunx - $vmclnt -- nfstest_delegation --server=$servaddr --export=$expdir --nfsversion=4.2 --client $clntxaddr --client-nfsvers=4.0,4.1,4.2 $TESTS;
-  trun -x1-255 grep RI[P]: $resdir/*console.log
+  trun -x1-255 grep RI[P]: $resdir/console*.log
   stopvms
 } &> >(tee $resdir/std.log)
 

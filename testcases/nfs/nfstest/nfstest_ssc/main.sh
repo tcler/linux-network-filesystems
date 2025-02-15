@@ -56,7 +56,7 @@ mkdir -p $resdir
   trun -tmux=${_test}-console-$nfsserv2 -logf=$resdir/console-$nfsserv2 vm console $nfsserv2
   trun -tmux=${_test}-console-$nfsclnt  -logf=$resdir/console-$nfsclnt  vm console $nfsclnt
   vmrunx - $nfsclnt -- nfstest_ssc -s $serv1addr -e /nfsshare/rw --dst-server $serv2addr --dst-export /nfsshare/async ${TESTS:-inter};
-  trun -x1-255 grep RI[P]: $resdir/*console.log
+  trun -x1-255 grep RI[P]: $resdir/console*.log
   stopvms
 } &> >(tee $resdir/std.log)
 
