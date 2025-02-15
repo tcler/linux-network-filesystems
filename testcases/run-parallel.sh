@@ -64,7 +64,7 @@ export VCPUS=$vcpus,sockets=1,cores=$vcpus
 ontap_vmmax=6
 if [[ -n "${ontapTests}" ]]; then
 	if [[ $vmmax -ge $ontap_vmmax ]]; then
-		echo -e "{INFO $(date +%F_%T)} submit ontap-simulator related test cases in background ..."
+		echo -e "{INFO $(date +%F_%T) $distro} submit ontap-simulator related test cases in background ..."
 		tmux new -s fsparallel-test-ontap/ -d bash -c "for f in ${ontapTests//$'\n'/ }; do \$f ${_at[*]}; done"
 		sleep 5
 		tmux ls
@@ -78,9 +78,9 @@ fi
 if [[ -n "${otherTests}" ]]; then
 	otArray=(${otherTests})
 	while :; do
-		[[ "${#otArray[@]}" = 0 ]] && { echo "{INFO $(date +%F_%T)} all tests submmitted."; break; }
+		[[ "${#otArray[@]}" = 0 ]] && { echo "{INFO $(date +%F_%T) $distro} all tests submmitted."; break; }
 		if [[ $vmmax -ge $((2*avg_vmcnt)) ]]; then
-			echo -e "\n{INFO $(date +%F_%T)} vmmax=$vmmax(>=2*avg_vmcnt($avg_vmcnt)), submit more tests ..."
+			echo -e "\n{INFO $(date +%F_%T) $distro} vmmax=$vmmax(>=2*avg_vmcnt($avg_vmcnt)), submit more tests ..."
 			testn=$((vmmax/avg_vmcnt))
 			[[ "$testn" -gt ${#otArray[@]} ]] && testn=${#otArray[@]}
 			totest=("${otArray[@]::${testn}}")
@@ -92,7 +92,7 @@ if [[ -n "${otherTests}" ]]; then
 			done
 			sleep 2m
 		else
-			echo -e "\n{INFO $(date +%F_%T)} vmmax=$vmmax(<2*avg_vmcnt($avg_vmcnt)), waiting some tests finish ..."
+			echo -e "\n{INFO $(date +%F_%T) $distro} vmmax=$vmmax(<2*avg_vmcnt($avg_vmcnt)), waiting some tests finish ..."
 			sleep 2m
 		fi
 		vmmax=$(get_vmmax $avg_msize)
@@ -100,12 +100,12 @@ if [[ -n "${otherTests}" ]]; then
 fi
 
 while :; do
-	echo -e "\n{INFO $(date +%F_%T)} waiting all tests done ..."
+	echo -e "\n{INFO $(date +%F_%T) $distro} waiting all tests done ..."
 	if tmux ls 2>/dev/null | grep fsparallel-test; then
 		sleep 4m;
 	else
 		resdir=$(ls ~/testres/* -1td|head -1)
-		echo -e "\n{INFO $(date +%F_%T)} all tests have done, please check the results at ${resdir}"
+		echo -e "\n{INFO $(date +%F_%T) $distro} all tests have done, please check the results at ${resdir}"
 		ls -l ${resdir}
 		grep -E RIP[:] -r ${resdir}
 		grep -E '(KISS.)?TEST.FAIL' -r ${resdir}
