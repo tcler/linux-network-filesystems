@@ -8,6 +8,7 @@ distro=${1:-9}; shift 1
 
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+[[ -n "${imgf}" ]] && insOpt=-I=$imgf
 
 nfsserv=nfs-o-soft-iwarp-serv
 nfsclnt=nfs-o-soft-iwarp-clnt
@@ -18,8 +19,8 @@ trap "cleanup" EXIT
 
 ### __prepare__ test env build
 pkgs=firewalld,libibverbs-utils,perftest,iproute,tmux
-trun -tmux vm create -n $nfsserv -p $pkgs -f $distro -I=$imgf --nointeract "$@"
-trun       vm create -n $nfsclnt -p $pkgs -f $distro -I=$imgf --nointeract "$@"
+trun -tmux vm create -n $nfsserv -p $pkgs -f $distro --nointeract "$@" $insOpt
+trun       vm create -n $nfsclnt -p $pkgs -f $distro --nointeract "$@" $insOpt
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }

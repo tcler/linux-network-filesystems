@@ -25,7 +25,7 @@ trap "cleanup" EXIT
 ### __prepare__ test env build
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
-insOpt="-I=$imgf"
+[[ -n "${imgf}" ]] && insOpt=-I=$imgf
 
 case ${fs} in
 xfs)
@@ -36,8 +36,8 @@ xfs)
 esac
 mkfsOpt="${MKFS_OPTIONS} "
 case $fs in ext*) mkfsOpt+=-F;; btrfs|xfs) mkfsOpt+=-f;; esac
-trun vm create -n $vmname $distro --msize 4G -p $pkglist --nointeract ${insOpt} -f \
-	--xdisk=16,${fs} --xdisk=16,${fs} --xdisk=16,${fs} --ks-only-use='vda' "$@" || exit $?
+trun vm create -n $vmname $distro --msize 4G -p $pkglist --nointeract -f \
+	--xdisk=16,${fs} --xdisk=16,${fs} --xdisk=16,${fs} --ks-only-use='vda' "$@" $insOpt || exit $?
 timeout 300 vm port-available -w $vmname || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 vmrunx - $vmname -- yum install -y ${pkglist//,/ }  #avoid cloud-init install pkglist fail
 

@@ -21,11 +21,12 @@ trap "cleanup" EXIT
 ### __prepare__ test env build: create vm
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+[[ -n "${imgf}" ]] && insOpt=-I=$imgf
 
-trun -tmux vm create -n $ipaserv  $distro --msize 4096 -p vim,tcpdump,bind-utils,firewalld,expect,tomcat,NetworkManager,sssd-tools --nointeract -I=$imgf -f "$@"
-trun -tmux vm create -n $nfsserv  $distro --msize 4096 -p vim,tcpdump,nfs-utils,bind-utils,NetworkManager --nointeract -I=$imgf -f --kdump "$@"
-trun -tmux vm create -n $nfsclntx $distro --msize 4096 -p vim,tcpdump,nfs-utils,bind-utils,NetworkManager,python3 --nointeract -I=$imgf -f --kdump "$@"
-trun       vm create -n $nfsclnt $distro --msize 4096 -p vim,tcpdump,nfs-utils,bind-utils,NetworkManager,expect,iproute-tc,kernel-modules-extra --nointeract -I=$imgf -f --kdump "$@"
+trun -tmux vm create -n $ipaserv  $distro --msize 4096 -p vim,tcpdump,bind-utils,firewalld,expect,tomcat,NetworkManager,sssd-tools --nointeract -f "$@" $insOpt
+trun -tmux vm create -n $nfsserv  $distro --msize 4096 -p vim,tcpdump,nfs-utils,bind-utils,NetworkManager --nointeract -f --kdump "$@" $insOpt
+trun -tmux vm create -n $nfsclntx $distro --msize 4096 -p vim,tcpdump,nfs-utils,bind-utils,NetworkManager,python3 --nointeract -f --kdump "$@" $insOpt
+trun       vm create -n $nfsclnt $distro --msize 4096 -p vim,tcpdump,nfs-utils,bind-utils,NetworkManager,expect,iproute-tc,kernel-modules-extra --nointeract -f --kdump "$@" $insOpt
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $ipaserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }

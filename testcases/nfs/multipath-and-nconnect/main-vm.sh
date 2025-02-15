@@ -17,6 +17,7 @@ netname1=net$subnet1
 
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+[[ -n "${imgf}" ]] && insOpt=-I=$imgf
 
 S=nfs-nconn-serv
 C=nfs-nconn-clnt
@@ -30,8 +31,8 @@ pkgs=nfs-utils,firewalld
 vm netcreate netname=$netname1 brname=$brname1 subnet=$subnet1
 vm netinfo $netname1
 
-vm create "$distro" -n $S -p $pkgs --nointeract --net default --net $netname1 -I=$imgf -f "$@"
-vm create "$distro" -n $C -p $pkgs --nointeract --net default --net $netname1 -I=$imgf -f "$@"
+vm create "$distro" -n $S -p $pkgs --nointeract --net default --net $netname1 -f "$@" $insOpt
+vm create "$distro" -n $C -p $pkgs --nointeract --net default --net $netname1 -f "$@" $insOpt
 timeout 300 vm port-available -w $S || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 servIpAddrs=$(vm exec $S -- ip a s)

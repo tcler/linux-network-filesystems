@@ -25,9 +25,10 @@ trap "cleanup" EXIT
 
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+[[ -n "${imgf}" ]] && insOpt=-I=$imgf
 
-trun -tmux vm create $distro -n $vmnfsserv -p nfs-utils --net default --nointeract -I=$imgf -f $VMOPT "$@"
-trun       vm create $distro -n $vmnfsclnt -p nfs-utils --net default --nointeract -I=$imgf -f $VMOPT "$@"
+trun -tmux vm create $distro -n $vmnfsserv -p nfs-utils --net default --nointeract -f $VMOPT "$@" $insOpt
+trun       vm create $distro -n $vmnfsclnt -p nfs-utils --net default --nointeract -f $VMOPT "$@" $insOpt
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $vmnfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }

@@ -10,6 +10,7 @@ nfsclnt=fbpnfs-linux-client
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+[[ -n "${imgf}" ]] && insOpt=-I=$imgf
 
 #create freebsd pnfs server. flex-file layout
 nfsmp=/mnt/nfsmp
@@ -24,7 +25,7 @@ stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsclnt $vm_mds $vm
 cleanup() { stopvms 2>/dev/null; }
 trap "cleanup" EXIT
 
-trun -x0 make-freebsd-pnfsserver.sh $distro $nfsclnt "$@" || exit $?
+trun -x0 make-freebsd-pnfsserver.sh $distro $nfsclnt "$@" $insOpt || exit $?
 timeout 300 vm port-available -w $nfsclnt || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 mdsaddr=$(vm ifaddr $vm_mds|head -1)

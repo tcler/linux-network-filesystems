@@ -18,10 +18,11 @@ trap "cleanup" EXIT
 ### __prepare__ test env build
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
+[[ -n "${imgf}" ]] && insOpt=-I=$imgf
 
-trun -tmux vm create -n $nfsservs $distro -p bind-utils,vim,nfs-utils --nointeract -I=$imgf -f "$@"
-trun -tmux vm create -n $nfsservd $distro -p bind-utils,vim,nfs-utils --nointeract -I=$imgf -f "$@"
-trun       vm create -n $nfsclnt  $distro -p bind-utils,vim,nfs-utils --nointeract -I=$imgf -f "$@"
+trun -tmux vm create -n $nfsservs $distro -p bind-utils,vim,nfs-utils --nointeract -f "$@" $insOpt
+trun -tmux vm create -n $nfsservd $distro -p bind-utils,vim,nfs-utils --nointeract -f "$@" $insOpt
+trun       vm create -n $nfsclnt  $distro -p bind-utils,vim,nfs-utils --nointeract -f "$@" $insOpt
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $nfsservs || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
