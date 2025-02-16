@@ -42,6 +42,7 @@ vmrunx 0 $nfsclnt -- mount -t nfs,nfs4
 vmrunx 0 $nfsclnt -- ls -l $nfsmp $nfsmp/testdir
 vmrunx - $nfsserv -- systemctl stop nfs-server
 #should umount success even nfs-server stop
+sleep 1
 vmrunx 0:"umount success even nfs-server stop" $nfsclnt -- umount $nfsmp
 vmrunx - $nfsserv -- systemctl start nfs-server
 } &> >(tee $resdir/std.log)

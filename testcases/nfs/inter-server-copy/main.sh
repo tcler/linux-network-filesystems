@@ -48,7 +48,9 @@ trun -tmux=${_test}-console-$nfsclnt  -logf=$resdir/console.$nfsclnt.log  vm con
 #-------------------------------------------------------------------------------
 #enable inter-server copy
 modulef=/sys/module/nfsd/parameters/inter_copy_offload_enable
+vmrunx 0 $nfsservs -- systemctl status nfs-server
 vmrunx 0 $nfsservs -- "read val <$modulef; echo -n \$val' - '; echo Y >$modulef; cat $modulef"
+vmrunx 0 $nfsservd -- systemctl status nfs-server
 vmrunx 0 $nfsservd -- "read val <$modulef; echo -n \$val' - '; echo Y >$modulef; cat $modulef"
 
 #-------------------------------------------------------------------------------
