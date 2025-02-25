@@ -34,7 +34,7 @@ timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not
 read nfsservaddr < <(vm ifaddr $nfsserv)
 read nfsclntaddr < <(vm ifaddr $nfsclnt|grep ${nfsservaddr%.*})
 
-_test=ipa-idm
+_test=xfstests-nfs-ipa-krb5
 distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfs/$_test
 mkdir -p $resdir
