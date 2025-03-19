@@ -29,11 +29,14 @@ while true; do
 	case "$1" in
 	-h|--help)	Usage; shift 1; exit 0;;
 	-f|--filter)	pathPattern=$2; shift 2;;
-	--suffix)	export SUFFIX=${2// /_}; shift 2;;
+	--suffix)	SUFFIX=${2}; shift 2;;
+	--suffix=*)	SUFFIX=${1#*=}; shift 1;;
 	--no|--noontap)	noOntap=yes; shift 1; exit 0;;
 	*)		break;;
 	esac
 done
+SUFFIX=${SUFFIX//\//.}
+export SUFFIX=${SUFFIX// /_}
 
 [[ $# -eq 0 ]] && { Usage; exit 1; }
 distro=$1; shift
