@@ -10,6 +10,7 @@ distro=${distro:-9}
 nfsservs=nfs-ssc-serverS
 nfsservd=nfs-ssc-serverD
 nfsclnt=nfs-ssc-client
+NFSSHARE=/var/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsservs $nfsservd $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -32,8 +33,8 @@ timeout 300 vm port-available -w $nfsservs || { echo "{TENV:ERROR} vm port 22 no
 vm cpto -v $nfsservs /usr/bin/make-nfs-server.sh /usr/bin/.
 vm cpto -v $nfsservd /usr/bin/make-nfs-server.sh /usr/bin/.
 vmrunx - $nfsservs -- make-nfs-server.sh
-vmrunx - $nfsservs -- dd if=/dev/urandom of=/nfsshare/rw/largefile.img bs=1M count=256
-vmrunx - $nfsservd -- make-nfs-server.sh
+vmrunx - $nfsservs -- dd if=/dev/urandom of=$NFSSHARE/rw/largefile.img bs=1M count=256
+vmrunx - $nfsservd -- make-nfs-server.sh --prefix=$NFSSHARE
 
 ### __main__ test start
 _test=inter-server-copy
@@ -59,8 +60,8 @@ serv_dst_addr=$(vm if $nfsservd)
 vmrunx 0 $nfsclnt -- showmount -e ${nfsservs}
 vmrunx 0 $nfsclnt -- showmount -e ${nfsservd}
 vmrunx 0 $nfsclnt -- mkdir /mnt/src /mnt/dst
-vmrunx 0 $nfsclnt -- mount -vvv ${nfsservs}:/nfsshare/rw /mnt/src
-vmrunx 0 $nfsclnt -- mount -vvv ${nfsservd}:/nfsshare/rw /mnt/dst
+vmrunx 0 $nfsclnt -- mount -vvv ${nfsservs}:$NFSSHARE/rw /mnt/src
+vmrunx 0 $nfsclnt -- mount -vvv ${nfsservd}:$NFSSHARE/rw /mnt/dst
 vmrunx 0 $nfsclnt -- mount -t nfs4
 
 vmrunx 0 $nfsclnt -- time cp /mnt/src/largefile.img  /mnt/dst/.
@@ -75,8 +76,8 @@ vmrunx 0 $nfsclnt -- rm /mnt/dst/largefile.img
 vm reboot $nfsclnt -w
 vmrunx 0 $nfsclnt -- systemctl start proc-fs-nfsd.mount
 vmrunx 0 $nfsclnt -- "read val <$modulef; echo -n \$val' - '; echo Y >$modulef; cat $modulef"
-vmrunx 0 $nfsclnt -- mount -vvv ${nfsservs}:/nfsshare/rw /mnt/src
-vmrunx 0 $nfsclnt -- mount -vvv ${nfsservd}:/nfsshare/rw /mnt/dst
+vmrunx 0 $nfsclnt -- mount -vvv ${nfsservs}:$NFSSHARE/rw /mnt/src
+vmrunx 0 $nfsclnt -- mount -vvv ${nfsservd}:$NFSSHARE/rw /mnt/dst
 vmrunx 0 $nfsclnt -- mount -t nfs4
 vmrunx 0 $nfsclnt -- time cp /mnt/src/largefile.img  /mnt/dst/.
 vmrunx 0 $nfsclnt -- "mountstats mountstats /mnt/src | grep -EA 3 '(^COPY(_NOTIFY)?|^READ|^WRITE):'"

@@ -12,6 +12,7 @@ imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
 nfsserv=nfs-o-soft-roce-serv
 nfsclnt=nfs-o-soft-roce-clnt
+NFSSHARE=/var/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -81,7 +82,7 @@ vmrunx - $nfsclnt -- ib_send_bw -d rxe0 $servAddr
 #-------------------------------------------------------------------------------
 ##xfstest
 if [[ $XFSTEST = yes ]]; then
-	tmux new -s roceNfsServer -d "vm exec -v $nfsserv -- bash make-nfs-server.sh"
+	tmux new -s roceNfsServer -d "vm exec -v $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE"
 
 	vmrunx 0 $nfsclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
 	vmrunx 0 $nfsclnt -- "xfstests-install.sh nouring=$NOURING" || exit 1
@@ -93,11 +94,11 @@ if [[ $XFSTEST = yes ]]; then
 	vmrunx - $nfsclnt -- "mkdir -p /mnt/xfstests_test /mnt/xfstests_scratch"
 	vmrunx - $nfsclnt -- "useradd -m fsgqa; useradd 123456-fsgqa; useradd fsgqa2; groupadd fsgqa"
 	vmrunx - $nfsclnt -- "cat >/var/lib/xfstests/local.config <<EOF
-	export TEST_DEV=$servAddr:/nfsshare/qe
+	export TEST_DEV=$servAddr:$NFSSHARE/qe
 	export TEST_DIR=/mnt/xfstests_test
 	export TEST_FS_MOUNT_OPTS='-ordma,port=20049'
 	export MOUNT_OPTIONS='-ordma,port=20049'
-	export SCRATCH_DEV=$servAddr:/nfsshare/devel
+	export SCRATCH_DEV=$servAddr:$NFSSHARE/devel
 	export SCRATCH_MNT=/mnt/xfstests_scratch
 	export WORKAREA=/var/lib/xfstests
 	EOF"

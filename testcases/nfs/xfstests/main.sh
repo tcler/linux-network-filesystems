@@ -14,6 +14,7 @@ distro=${distro:-9}
 nfsserv=fstest-nfsserv
 nfsclnt=fstest-nfsclnt
 pkglist=vim,nfs-utils,tmux
+NFSSHARE=/var/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -30,8 +31,8 @@ echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 10; done
 servaddr=$(vm ifaddr $nfsserv|head -1)
 
-vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh .
-tmux new -s nfsServer -d "vm exec -v $nfsserv -- bash make-nfs-server.sh"
+vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin
+tmux new -s nfsServer -d "vm exec -v $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE"
 
 vm cpto -v  $nfsclnt /usr/bin/xfstests-install.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/.
 vmrunx 0 $nfsclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
@@ -45,9 +46,9 @@ vmrunx 0 $nfsclnt -- showmount -e $servaddr
 vmrunx - $nfsclnt -- "mkdir -p /mnt/xfstests_test /mnt/xfstests_scratch"
 vmrunx - $nfsclnt -- "useradd -m fsgqa; useradd 123456-fsgqa; useradd fsgqa2; groupadd fsgqa"
 vmrunx - $nfsclnt -- "cat >/var/lib/xfstests/local.config <<EOF
-export TEST_DEV=$servaddr:/nfsshare/qe
+export TEST_DEV=$servaddr:$NFSSHARE/qe
 export TEST_DIR=/mnt/xfstests_test
-export SCRATCH_DEV=$servaddr:/nfsshare/devel
+export SCRATCH_DEV=$servaddr:$NFSSHARE/devel
 export SCRATCH_MNT=/mnt/xfstests_scratch
 export WORKAREA=/var/lib/xfstests
 EOF"

@@ -13,6 +13,7 @@ nfsserv=nfstest-deleg-nfs-serv
 nfsclnt=nfstest-deleg-nfs-clnt
 nfsclntx=nfstest-deleg-nfs-clntx
 password=redhat123
+NFSSHARE=/var/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $ipaserv $nfsserv $nfsclnt $nfsclntx; }
 cleanup() { stopvms 2>/dev/null; }
@@ -162,10 +163,10 @@ vmrunx - $nfsclnt -- 'command -v authselect && { authselect test -a sssd with-mk
 
 #-------------------------------------------------------------------------------
 #nfs-server: configure krb5 nfs server
-vmrunx - $nfsserv -- make-nfs-server.sh --no-tlshd
-vmrunx 0 $nfsserv -- "chown :qe /nfsshare/qe; chown :devel /nfsshare/devel"
-vmrunx 0 $nfsserv -- chmod g+ws /nfsshare/qe /nfsshare/devel
-vmrunx - $nfsserv -- ls -l /nfsshare
+vmrunx - $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --no-tlshd
+vmrunx 0 $nfsserv -- "chown :qe $NFSSHARE/qe; chown :devel $NFSSHARE/devel"
+vmrunx 0 $nfsserv -- chmod g+ws $NFSSHARE/qe $NFSSHARE/devel
+vmrunx - $nfsserv -- ls -l $NFSSHARE
 
 vmrunx - $nfsserv -- ipa service-add nfs/${nfsserv}.${domain}
 vmrunx - $nfsserv -- ipa-getkeytab -s ${ipaserv}.${domain} -p nfs/${nfsserv}.${domain} -k /etc/krb5.keytab
@@ -185,7 +186,7 @@ vmrunx - $nfsclntx -- systemctl restart nfs-client.target gssproxy.service rpc-s
 
 ### __main__ test start
 #-------------------------------------------------------------------------------
-expdir=/nfsshare/rw
+expdir=$NFSSHARE/rw
 servfqdn=${nfsserv}.${domain}
 clntxfqdn=${nfsclntx}.${domain}
 vm cpto $nfsclnt /usr/bin/{install-nfstest.sh,ssh-copy-id.sh,get-ip.sh} /usr/bin/.

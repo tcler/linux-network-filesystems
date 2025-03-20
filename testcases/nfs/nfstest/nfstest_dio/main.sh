@@ -8,6 +8,7 @@ export LANG=C LANGUAGE=C   #nfstest only works on english lang env
 distro=${distro:-9}
 nfsserv=nfstest-dio-serv
 nfsclnt=nfstest-dio-clnt
+NFSSHARE=/var/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -25,16 +26,16 @@ while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/.
-vmrunx - $nfsserv -- make-nfs-server.sh
-vmrunx - $nfsserv -- mkdir -p /nfsshare/rw/testdir
-vmrunx - $nfsserv -- touch /nfsshare/rw/testdir/file{1..128}
+vmrunx - $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE
+vmrunx - $nfsserv -- mkdir -p $NFSSHARE/rw/testdir
+vmrunx - $nfsserv -- touch $NFSSHARE/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $nfsserv|head -1)
 
 vmrunx - $nfsclnt -- showmount -e $servaddr
 
 #nfstest_dio
 nfsmp=/mnt/nfsmp
-expdir=/nfsshare/rw
+expdir=$NFSSHARE/rw
 vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/get-if-by-ip.sh /usr/bin/.
 read clntaddr < <(vm ifaddr $nfsclnt | grep ${servaddr%.*})
 NIC=$(vm exec $nfsclnt -- get-if-by-ip.sh $clntaddr)

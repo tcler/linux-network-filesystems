@@ -14,6 +14,7 @@ ipaserv=ipa-server
 nfsserv=ipa-nfs-server
 nfsclnt=ipa-nfs-client
 password=redhat123
+NFSSHARE=/var/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $ipaserv $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -146,10 +147,10 @@ vmrunx - $nfsclnt -- 'command -v authselect && { authselect test -a sssd with-mk
 
 #-------------------------------------------------------------------------------
 #nfs-server: configure krb5 nfs server
-vmrunx - $nfsserv -- make-nfs-server.sh --no-tlshd
-vmrunx 0 $nfsserv -- "chown :qe /nfsshare/qe; chown :devel /nfsshare/devel"
-vmrunx 0 $nfsserv -- chmod g+ws /nfsshare/qe /nfsshare/devel
-vmrunx - $nfsserv -- ls -l /nfsshare
+vmrunx - $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --no-tlshd
+vmrunx 0 $nfsserv -- "chown :qe $NFSSHARE/qe; chown :devel $NFSSHARE/devel"
+vmrunx 0 $nfsserv -- chmod g+ws $NFSSHARE/qe $NFSSHARE/devel
+vmrunx - $nfsserv -- ls -l $NFSSHARE
 
 vmrunx - $nfsserv -- ipa service-add nfs/${nfsserv}.${domain}
 vmrunx - $nfsserv -- ipa-getkeytab -s ${ipaserv}.${domain} -p nfs/${nfsserv}.${domain} -k /etc/krb5.keytab
@@ -173,7 +174,7 @@ vmrunx 0 $nfsclnt -- umount -a -t nfs4
 
 #-------------------------------------------------------------------------------
 #simple krb5 nfs mount/umount test
-vmrunx 0 $nfsclnt -- mount -osec=krb5 ${nfsserv}.${domain}:/nfsshare/qe /mnt/nfsmp
+vmrunx 0 $nfsclnt -- mount -osec=krb5 ${nfsserv}.${domain}:$NFSSHARE/qe /mnt/nfsmp
 vmrunx 0 $nfsclnt -- mount -t nfs4
 vmrunx 0 $nfsclnt -- umount -a -t nfs4
 

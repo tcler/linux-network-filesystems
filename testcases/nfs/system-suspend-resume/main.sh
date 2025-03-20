@@ -8,6 +8,7 @@
 distro=${distro:-9}
 nfsserv=nfs-suspend-serv
 nfsclnt=nfs-suspend-clnt
+NFSSHARE=/var/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -31,8 +32,8 @@ mkdir -p $resdir
 #-------------------------------------------------------------------------------
 #nfs-serv: start nfs service
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/.
-vmrunx - $nfsserv -- make-nfs-server.sh
-vmrunx - $nfsserv -- dd if=/dev/urandom of=/nfsshare/rw/largefile.img bs=1M count=512
+vmrunx - $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE
+vmrunx - $nfsserv -- dd if=/dev/urandom of=$NFSSHARE/rw/largefile.img bs=1M count=512
 
 ### __main__ test start
 ## virsh suspend and resume test
@@ -41,7 +42,7 @@ read serv_addr < <(vm if $nfsserv)
 read clnt_addr < <(vm if $nfsclnt)
 vmrunx 0 $nfsclnt -- showmount -e ${nfsserv}
 vmrunx 0 $nfsclnt -- mkdir /mnt/nfsmp
-vmrunx 0 $nfsclnt -- mount $serv_addr:/nfsshare/rw /mnt/nfsmp
+vmrunx 0 $nfsclnt -- mount $serv_addr:$NFSSHARE/rw /mnt/nfsmp
 vmrunx 0 $nfsclnt -- mount -t nfs4
 
 #suspend server

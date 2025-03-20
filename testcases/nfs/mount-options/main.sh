@@ -5,6 +5,7 @@
 
 #export share dir by nfs
 nfsmp=/mnt/nfsmp
+NFSSHARE=/var/nfsshare
 
 #create nfs-server vm
 distro=${1:-9}; shift
@@ -17,9 +18,9 @@ while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 vm -v cpto $nfsserv /usr/bin/make-nfs-server.sh .
-vm -v exec $nfsserv -- bash make-nfs-server.sh
-vm -v exec $nfsserv -- mkdir -p /nfsshare/rw/testdir
-vm -v exec $nfsserv -- touch /nfsshare/rw/testdir/file{1..128}
+vm -v exec $nfsserv -- bash make-nfs-server.sh --prefix=$NFSSHARE
+vm -v exec $nfsserv -- mkdir -p $NFSSHARE/rw/testdir
+vm -v exec $nfsserv -- touch $NFSSHARE/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $nfsserv|head -1)
 pcapf=nfs.pcap
 
@@ -33,11 +34,11 @@ vmrunx - $nfsclnt -- rpm -q nfs-utils;
 
 vmrunx 0 $nfsclnt -- showmount -e $servaddr
 vmrunx 0 $nfsclnt -- mkdir -p $nfsmp
-vmrunx 0 $nfsclnt -- "mount $servaddr:/nfsshare/rw $nfsmp || mount -vvv $servaddr:/nfsshare/rw $nfsmp"
+vmrunx 0 $nfsclnt -- "mount $servaddr:$NFSSHARE/rw $nfsmp || mount -vvv $servaddr:$NFSSHARE/rw $nfsmp"
 vmrunx 0 $nfsclnt -- umount $nfsmp
 
 #Test1: softreval
-vmrunx 0 $nfsclnt -- mount -osoftreval $servaddr:/nfsshare/rw $nfsmp
+vmrunx 0 $nfsclnt -- mount -osoftreval $servaddr:$NFSSHARE/rw $nfsmp
 vmrunx 0 $nfsclnt -- mount -t nfs,nfs4
 vmrunx 0 $nfsclnt -- ls -l $nfsmp $nfsmp/testdir
 vmrunx - $nfsserv -- systemctl stop nfs-server

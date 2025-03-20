@@ -8,6 +8,7 @@ distro=${distro:-9}
 nfsserv=nfstest-ssc-serv
 nfsserv2=nfstest-ssc-serv2
 nfsclnt=nfstest-ssc-clnt
+NFSSHARE=/var/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsserv2 $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -28,8 +29,8 @@ timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not
 
 vm cpto -v $nfsserv  /usr/bin/make-nfs-server.sh /usr/bin/.
 vm cpto -v $nfsserv2 /usr/bin/make-nfs-server.sh /usr/bin/.
-vmrunx 0 $nfsserv  -- make-nfs-server.sh
-vmrunx 0 $nfsserv2 -- make-nfs-server.sh
+vmrunx 0 $nfsserv  -- make-nfs-server.sh --prefix=$NFSSHARE
+vmrunx 0 $nfsserv2 -- make-nfs-server.sh --prefix=$NFSSHARE
 vmrunx 0 $nfsserv  -- "echo Y >/sys/module/nfsd/parameters/inter_copy_offload_enable"
 vmrunx 0 $nfsserv2 -- "echo Y >/sys/module/nfsd/parameters/inter_copy_offload_enable"
 
@@ -40,7 +41,7 @@ vmrunx - $nfsclnt -- showmount -e $serv2addr
 
 #nfstest_ssc
 nfsmp=/mnt/nfsmp
-expdir=/nfsshare/rw
+expdir=$NFSSHARE/rw
 vm cpto -v $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/ssh-copy-id.sh /usr/bin/get-if-by-ip.sh /usr/bin/.
 read clntaddr < <(vm ifaddr $nfsclnt | grep ${serv1addr%.*})
 NIC=$(vm exec $nfsclnt -- get-if-by-ip.sh $clntaddr)
@@ -56,7 +57,7 @@ mkdir -p $resdir
   trun -tmux=${_test}-console-$nfsserv  -logf=$resdir/console-$nfsserv  vm console $nfsserv
   trun -tmux=${_test}-console-$nfsserv2 -logf=$resdir/console-$nfsserv2 vm console $nfsserv2
   trun -tmux=${_test}-console-$nfsclnt  -logf=$resdir/console-$nfsclnt  vm console $nfsclnt
-  vmrunx - $nfsclnt -- nfstest_ssc -s $serv1addr -e /nfsshare/rw --dst-server $serv2addr --dst-export /nfsshare/async ${TESTS:-inter};
+  vmrunx - $nfsclnt -- nfstest_ssc -s $serv1addr -e $expdir --dst-server $serv2addr --dst-export $NFSSHARE/async ${TESTS:-inter};
   trun -x1-255 grep RI[P]: $resdir/console*.log
   stopvms
 } &> >(tee $resdir/std.log)

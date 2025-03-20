@@ -10,6 +10,7 @@ script_dir=$(readlink -f $(dirname $0))
 distro=${1:-9}; shift
 nfsserv=nfs-server
 nfsclnt=nfs-client
+NFSSHARE=/var/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -22,9 +23,9 @@ echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/get-if-by-ip.sh /usr/bin/.
-vm exec -v $nfsserv -- make-nfs-server.sh --no-tlshd
-vm exec -v $nfsserv -- mkdir -p /nfsshare/rw/testdir
-vm exec -v $nfsserv -- touch /nfsshare/rw/testdir/file{1..128}
+vm exec -v $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --no-tlshd
+vm exec -v $nfsserv -- mkdir -p $NFSSHARE/rw/testdir
+vm exec -v $nfsserv -- touch $NFSSHARE/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $nfsserv|head -1)
 vm cpto -v $nfsclnt /usr/bin/get-if-by-ip.sh /usr/bin/.
 read clntaddr < <(vm ifaddr $nfsclnt | grep ${servaddr%.*})
@@ -33,7 +34,7 @@ pcapf=nfs.pcap
 
 vmrunx - $nfsclnt -- showmount -e $servaddr
 vmrunx - $nfsclnt -- mkdir -p $nfsmp
-vmrunx - $nfsclnt -- mount -overs=3 $servaddr:/nfsshare/rw $nfsmp
+vmrunx - $nfsclnt -- mount -overs=3 $servaddr:$NFSSHARE/rw $nfsmp
 vmrunx - $nfsclnt -- mount -t nfs,nfs4
 vmrunx - $nfsclnt -- "touch $pcapf; tmux new -d 'tshark -i $NIC -w ${pcapf}'"
 vmrunx - $nfsclnt -- ls -l $nfsmp $nfsmp/testdir
