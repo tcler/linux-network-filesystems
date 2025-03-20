@@ -36,13 +36,14 @@ vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/get-if-by-ip.sh /usr/bi
 vm cpto -v $nfsclnt /usr/bin/xfstests-install.sh /usr/bin/get-if-by-ip.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/.
 #-------------------------------------------------------------------------------
 #base mount test
+expdir=/var/nfsexport
 servAddr=$(vm ifaddr $nfsserv|head -1)
 NIC=$(vm exec $nfsserv -- get-if-by-ip.sh $servAddr)
 vmrunx 0 $nfsserv -- modprobe siw || exit 2
 vmrunx - $nfsserv -- rdma link add siw0 type siw netdev $NIC
 vmrunx - $nfsserv -- rdma link
-vmrunx - $nfsserv -- mkdir -p /expdir
-vmrunx - $nfsserv -- "echo '/expdir *(rw,no_root_squash)' > /etc/exports"
+vmrunx - $nfsserv -- mkdir -p $expdir
+vmrunx - $nfsserv -- "echo '$expdir *(rw,no_root_squash)' > /etc/exports"
 vmrunx - $nfsserv -- cat /etc/exports
 vmrunx - $nfsserv -- sed -i -e '/rdma/s/^#//' -e 's/rdma=n/rdma=y/' /etc/nfs.conf
 vmrunx - $nfsserv -- grep -v '^#' /etc/nfs.conf
@@ -60,19 +61,19 @@ vmrunx - $nfsclnt -- rdma link
 vmrunx - $nfsclnt -- mkdir -p /mnt/nfsmp
 vmrunx 0 $nfsclnt -- showmount -e $servAddr
 vmrunx - $nfsclnt -- systemctl stop firewalld   #seems this's necessary for rdma, fixme if it's not true
-vmrunx 0 $nfsclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049 -v
+vmrunx 0 $nfsclnt -- mount $servAddr:$expdir /mnt/nfsmp -ordma,port=20049 -v
 vmrunx 0 $nfsclnt -- mount -t nfs4
 vmrunx 0 $nfsclnt -- umount /mnt/nfsmp
 
 ##nconnect over rdma test
 for N in 1 4 16; do
-	vmrunx 0 $nfsclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049,nconnect=$N
+	vmrunx 0 $nfsclnt -- mount $servAddr:$expdir /mnt/nfsmp -ordma,port=20049,nconnect=$N
 	vmrunx 0 $nfsclnt -- "test \$(grep xprt /proc/self/mountstats | wc -l) -eq $N"
 	vmrunx 0 $nfsclnt -- mount -t nfs4
 	vmrunx 0 $nfsclnt -- umount /mnt/nfsmp
 done
 for N in 0 17; do
-	vmrunx 1-255 $nfsclnt -- mount $servAddr:/expdir /mnt/nfsmp -ordma,port=20049,nconnect=$N
+	vmrunx 1-255 $nfsclnt -- mount $servAddr:$expdir /mnt/nfsmp -ordma,port=20049,nconnect=$N
 done
 vmrunx 0 $nfsclnt -- uname -a
 
