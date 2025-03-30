@@ -41,7 +41,13 @@ export SUFFIX=${SUFFIX// /_}
 [[ $# -eq 0 ]] && { Usage; exit 1; }
 distro=$1; shift
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
-imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog"); [[ -n "${imgf}" ]] && IOpt=-I=${imgf}
+imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog");
+if [[ -n "${imgf}" ]]; then
+	IOpt=-I=${imgf}
+else
+	echo "{ERROR} download distro: $distro fail. maybe the image has been removed from beaker" >&2
+	exit 2
+fi
 distro=$(awk '/getting fastest location/{print $(NF-1)}' <<<"$stdlog")
 [[ -z $distro ]] && { echo "{WARN} distro name is empty, exit" >&2; exit; }
 _at=($distro "$@" "$IOpt")
