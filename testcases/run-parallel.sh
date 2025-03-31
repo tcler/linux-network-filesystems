@@ -6,16 +6,28 @@ export LANG=C
 P=${0##*/}
 
 avg_msize=4  #per VM
-avg_vmcnt=3  #per test
+avg_vmcnt=2  #per test
 available_ramsize() { LANG=C free -g | awk '/^Mem:/{print $NF}'; }
+total_ramsize() { LANG=C free -g | awk '/^Mem:/{print $2}'; }
+get_running_vms() { virsh list --state-running --name|wc -l; }
 get_vcpumax() {
 	local nproc=$(nproc)
 	echo $((nproc*nproc/2))
 }
-get_vmmax() {
+get_now_and_max_available_vms() {
 	local mempervm=${1:-4}
+
+	local totalmem=$(total_ramsize)
+	local runningvms=$(get_running_vms)
+	local totalavailablevms=$((totalmem/mempervm))
+	local nowavailablevms=$((totalavailablevms - runningvms))
+
 	local availablemem=$(available_ramsize)
-	echo $((availablemem/mempervm))
+	local memavailablevms=$((availablemem/mempervm))
+	local availablevms=$memavailablevms
+
+	[[ $availablevms -gt $nowavailablevms ]] && availablevms=$nowavailablevms
+	echo $availablevms $totalavailablevms
 }
 
 Usage() {
@@ -69,17 +81,16 @@ fi
 [[ -n "${ontapTests}" ]] && echo -e "Ontap related tests:\n ${ontapTests//$'\n'/$'\n' }"
 [[ -n "${otherTests}" ]] && echo -e "Other tests:\n ${otherTests//$'\n'/$'\n' }"
 
-vmmax=$(get_vmmax $avg_msize)
+read avmmax vmmax < <(get_now_and_max_available_vms $avg_msize)
 vcpumax=$(get_vcpumax); vcpus=$((vcpumax/vmmax))
 export VCPUS=$vcpus,sockets=1,cores=$vcpus
 ontap_vmmax=6
 if [[ -n "${ontapTests}" ]]; then
-	if [[ $vmmax -ge $ontap_vmmax ]]; then
+	if [[ $avmmax -ge $ontap_vmmax ]]; then
 		echo -e "{INFO $(date +%F_%T) $distro} submit ontap-simulator related test cases in background ..."
 		tmux new -s fsparallel-test-ontap/ -d bash -c "for f in ${ontapTests//$'\n'/ }; do \$f ${_at[*]}; done"
 		sleep 5
 		tmux ls
-		let vmmax-=$ontap_vmmax
 	else
 		echo -e "\n{WARN} free memory(<$((ontap_vmmax*avg_msize))G) is not enough for ontap simulator tests ..."
 		exit 75
@@ -90,9 +101,10 @@ if [[ -n "${otherTests}" ]]; then
 	otArray=(${otherTests})
 	while :; do
 		[[ "${#otArray[@]}" = 0 ]] && { echo "{INFO $(date +%F_%T) $distro} all tests submmitted."; break; }
-		if [[ $vmmax -ge $((2*avg_vmcnt)) ]]; then
-			echo -e "\n{INFO $(date +%F_%T) $distro} vmmax=$vmmax(>=2*avg_vmcnt($avg_vmcnt)), submit more tests ..."
-			testn=$((vmmax/avg_vmcnt))
+		read avmmax _ < <(get_now_and_max_available_vms $avg_msize)
+		if [[ $avmmax -ge 2 ]]; then
+			echo -e "\n{INFO $(date +%F_%T) $distro} available vms $avmmax > 2, submit more tests ..."
+			testn=$((avmmax/avg_vmcnt + 1))
 			[[ "$testn" -gt ${#otArray[@]} ]] && testn=${#otArray[@]}
 			totest=("${otArray[@]::${testn}}")
 			otArray=("${otArray[@]:${testn}}")
@@ -103,10 +115,9 @@ if [[ -n "${otherTests}" ]]; then
 			done
 			sleep 2m
 		else
-			echo -e "\n{INFO $(date +%F_%T) $distro} vmmax=$vmmax(<2*avg_vmcnt($avg_vmcnt)), waiting some tests finish ..."
+			echo -e "\n{INFO $(date +%F_%T) $distro} available vms: $avmmax, waiting some tests finish ..."
 			sleep 2m
 		fi
-		vmmax=$(get_vmmax $avg_msize)
 	done
 fi
 
