@@ -56,10 +56,9 @@ mkdir -p $resdir
 
   vmrunx - $clientvm -- nfstest_pnfs --server $lservaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2 $TESTS;
   trun -x1-255 grep RI[P]: $resdir/console*.log
-  stopvms
 } &> >(tee $resdir/std.log)
 
-_test=ontap-krb5-interop
+_test=interop-ontap-krb5
 resdir=~/testres/${distrodir}/nfstest/$_test
 mkdir -p $resdir
 {
@@ -67,7 +66,6 @@ mkdir -p $resdir
   trun -tmux=${_test}-console-$clientvm -logf=$resdir/console-$clientvm.log vm console $clientvm
   vmrunx -  $clientvm -- nfstest_interop --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5 --datadir datadir --nfsversion=4.2 $TESTS;
   trun -x1-255 grep RI[P]: $resdir/console*.log
-  stopvms
 } &> >(tee $resdir/std.log)
 
 _test=posix-ontap-krb5
