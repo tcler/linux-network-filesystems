@@ -211,9 +211,10 @@ mkdir -p $resdir
   trun -tmux=${_test}-console-$nfsclntx -logf=$resdir/console-$nfsclntx.log vm console $nfsclntx
   vmrunx -  $nfsclnt -- nfstest_delegation --server=$servfqdn --export=$expdir --nfsversion=4.2 --sec=krb5 --interface=$NIC --client-ipaddr=$nfsclntaddr --nconnect 16 $TESTS;
   stopvms
+
+  exFail=18
+  trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
 } &> >(tee $resdir/std.log)
-exFail=18
-trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
 
 trun -x1-255 grep RI[P]: $resdir/console*.log
 tcnt

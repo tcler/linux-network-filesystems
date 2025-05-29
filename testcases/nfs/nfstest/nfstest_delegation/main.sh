@@ -58,10 +58,10 @@ mkdir -p $resdir
   trun -tmux=${_test}-console-$vmclntx -logf=$resdir/console-$vmclntx.log vm console $vmclntx
   vmrunx - $vmclnt -- nfstest_delegation --server=$servaddr --export=$expdir --nfsversion=4.2 --client $clntxaddr --client-nfsvers=4.0,4.1,4.2 $TESTS;
   stopvms
-} &> >(tee $resdir/std.log)
 
-exFail=62
-trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
+  exFail=62
+  trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
+} &> >(tee $resdir/std.log)
 
 trun -x1-255 grep RI[P]: $resdir/console*.log
 tcnt
