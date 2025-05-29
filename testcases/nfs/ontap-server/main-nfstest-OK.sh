@@ -16,6 +16,10 @@ trap "cleanup" EXIT
 trun -x0 make-ontap-with-windows-ad.sh $distro $clientvm "$@" || exit $?
 timeout 300 vm port-available -w $clientvm || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
+distrodir=$(gen_distro_dir_name $clientvm ${SUFFIX})
+resdir=~/testres/${distrodir}/nfstest/ontap-env-prepare.log
+mkdir -p $resdir
+{
 #install nfstest on $clientvm
 vm cpto $clientvm /usr/bin/install-nfstest.sh /usr/bin/get-network-info.sh /usr/bin/get-if-by-ip.sh /usr/bin/.
 vmrunx 0 $clientvm -- install-nfstest.sh
@@ -24,11 +28,14 @@ vmrunx 0 $clientvm -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 ONTAP_ENV_FILE=/tmp/ontap2info.env
 source "$ONTAP_ENV_FILE"
 
-distrodir=$(gen_distro_dir_name $clientvm ${SUFFIX})
 oservaddr=$NETAPP_NAS_IP
 lservaddr=192.168.20.21
+vmrunx 0 $clientvm -- get-network-info.sh
 #read NIC clntaddr < <(vm exec $clientvm -- get-network-info.sh | grep ${NETAPP_NAS_IP%?.*})
-read NIC clntaddr < <(vm exec $clientvm -- get-network-info.sh | grep ${lservaddr})
+read NIC clntaddr < <(vm exec $clientvm -- get-network-info.sh | grep ${lservaddr%.*})
+[[ -z "$NIC" ]] && { echo "{TENV:ERROR} get NIC fail" >&2; exit 2; }
+} &> >(tee $resdir/std.log)
+
 
 _test=pnfs-ontap
 resdir=~/testres/${distrodir}/nfstest/$_test
