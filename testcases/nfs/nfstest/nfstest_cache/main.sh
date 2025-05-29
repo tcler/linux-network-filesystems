@@ -69,5 +69,8 @@ mkdir -p $resdir
   stopvms
 } &> >(tee $resdir/std.log)
 
+exFail=15
+trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
+
 trun -x1-255 grep RI[P]: $resdir/console*.log
 tcnt

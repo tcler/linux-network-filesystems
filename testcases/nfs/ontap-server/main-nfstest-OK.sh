@@ -56,6 +56,8 @@ mkdir -p $resdir
 
   vmrunx - $clientvm -- nfstest_pnfs --server $lservaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2 $TESTS;
 } &> >(tee $resdir/std.log)
+exFail=0
+trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
 trun -x1-255 grep RI[P]: $resdir/console*.log
 
 _test=interop-ontap-krb5
@@ -66,6 +68,8 @@ mkdir -p $resdir
   trun -tmux=${_test}-console-$clientvm -logf=$resdir/console-$clientvm.log vm console $clientvm
   vmrunx -  $clientvm -- nfstest_interop --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5 --datadir datadir --nfsversion=4.2 $TESTS;
 } &> >(tee $resdir/std.log)
+exFail=0
+trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
 trun -x1-255 grep RI[P]: $resdir/console*.log
 
 _test=posix-ontap-krb5
@@ -75,8 +79,10 @@ mkdir -p $resdir
   vmrunx - $clientvm -- uname -r;
   trun -tmux=${_test}-console-$clientvm -logf=$resdir/console-$clientvm.log vm console $clientvm
   vmrunx - $clientvm -- nfstest_posix --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5p --nfsversion=4.2 --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr $TESTS;
-  stopvms
+  #stopvms
 } &> >(tee $resdir/std.log)
+exFail=0
+trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
 trun -x1-255 grep RI[P]: $resdir/console*.log
 
 tcnt

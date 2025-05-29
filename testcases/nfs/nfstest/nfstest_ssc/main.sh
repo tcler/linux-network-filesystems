@@ -60,6 +60,8 @@ mkdir -p $resdir
   vmrunx - $nfsclnt -- nfstest_ssc -s $serv1addr -e $expdir --dst-server $serv2addr --dst-export $NFSSHARE/async ${TESTS:-inter};
   stopvms
 } &> >(tee $resdir/std.log)
+exFail=0
+trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
 
 trun -x1-255 grep RI[P]: $resdir/console*.log
 tcnt

@@ -57,6 +57,8 @@ mkdir -p $resdir
   vmrunx - $nfsclnt -- nfstest_dio --server $servaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --rsize=$pgsize --wsize=$pgsize --nfsversion=4.2 $TESTS;
   stopvms
 } &> >(tee $resdir/std.log)
+exFail=0
+trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
 
 trun -x1-255 grep RI[P]: $resdir/console*.log
 tcnt
