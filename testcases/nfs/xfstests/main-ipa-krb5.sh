@@ -124,6 +124,12 @@ vmrunx - $ipaserv -- "journalctl -u named-pkcs11.service | grep ${nfsserv}.*upda
 vmrunx - $nfsserv -- 'ipa host-show $(hostname)'
 
 #-------------------------------------------------------------------------------
+#install xfstests in nfs-client
+vm cpto -v  $nfsclnt /usr/bin/xfstests-install.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/.
+vmrunx 0 $nfsclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
+vmrunx 0 $nfsclnt -- "xfstests-install.sh nouring=$NOURING" || exit 1
+
+#-------------------------------------------------------------------------------
 #configure nfs-client to join the realm
 #Change host's DNS nameserver configuration to use the ipa/idm server.
 NIC=$(vmrunx - $nfsclnt -- get-if-by-ip.sh $nfsclntaddr)
@@ -177,11 +183,6 @@ vmrunx 0 $nfsclnt -- umount -a -t nfs4
 vmrunx 0 $nfsclnt -- mount -osec=krb5 ${nfsserv}.${domain}:$NFSSHARE/qe /mnt/nfsmp
 vmrunx 0 $nfsclnt -- mount -t nfs4
 vmrunx 0 $nfsclnt -- umount -a -t nfs4
-
-#-------------------------------------------------------------------------------
-vm cpto -v  $nfsclnt /usr/bin/xfstests-install.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/.
-vmrunx 0 $nfsclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
-vmrunx 0 $nfsclnt -- "xfstests-install.sh nouring=$NOURING" || exit 1
 vmrunx 0 $nfsclnt -- showmount -e $nfsservaddr
 
 #-------------------------------------------------------------------------------
