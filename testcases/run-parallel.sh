@@ -63,6 +63,10 @@ fi
 distro=$(awk '/getting fastest location/{print $(NF-1)}' <<<"$stdlog")
 [[ -z $distro ]] && { echo "{WARN} distro name is empty, exit" >&2; exit; }
 _at=($distro "$@" "$IOpt")
+if [[ "${_at[*]}" =~ .*-b[= ](repo:)?http.* ]]; then
+	url=$(echo "${_at[*]}"|sed -r 's/.*-b[= ](repo:)?(http[^ ]+).*/\2/')
+	yum-repo-query.sh "$url" || exit 1
+fi
 
 for ts in $(tmux ls 2>/dev/null | awk -F: '/fsparallel-test/ {print $1}'); do tmux kill-session -t ${ts}; done
 for ts in $(tmux ls 2>/dev/null | awk -F: '/kissrun-/ {print $1}'); do tmux kill-session -t ${ts}; done
