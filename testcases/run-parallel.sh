@@ -85,9 +85,11 @@ read avmmax vmmax < <(get_now_and_max_available_vms $avg_msize)
 vcpumax=$(get_vcpumax); vcpus=$((vcpumax/vmmax))
 export VCPUS=$vcpus,sockets=1,cores=$vcpus
 ontap_vmmax=6
+
+tag=${distro}.${SUFFIX}
 if [[ -n "${ontapTests}" ]]; then
 	if [[ $avmmax -ge $ontap_vmmax ]]; then
-		echo -e "{INFO $(date +%F_%T) $distro} submit ontap-simulator related test cases in background ..."
+		echo -e "{INFO $(date +%F_%T) $tag} submit ontap-simulator related test cases in background ..."
 		tmux new -s fsparallel-test-ontap/ -d bash -c "for f in ${ontapTests//$'\n'/ }; do \$f ${_at[*]}; done"
 		sleep 5
 		tmux ls
@@ -100,10 +102,10 @@ fi
 if [[ -n "${otherTests}" ]]; then
 	otArray=(${otherTests})
 	while :; do
-		[[ "${#otArray[@]}" = 0 ]] && { echo "{INFO $(date +%F_%T) $distro} all tests submmitted."; break; }
+		[[ "${#otArray[@]}" = 0 ]] && { echo "{INFO $(date +%F_%T) $tag} all tests submmitted."; break; }
 		read avmmax _ < <(get_now_and_max_available_vms $avg_msize)
 		if [[ $avmmax -ge 2 ]]; then
-			echo -e "\n{INFO $(date +%F_%T) $distro} available vms $avmmax > 2, submit more tests ..."
+			echo -e "\n{INFO $(date +%F_%T) $tag} available vms $avmmax > 2, submit more tests ..."
 			testn=$((avmmax/avg_vmcnt + 1))
 			[[ "$testn" -gt ${#otArray[@]} ]] && testn=${#otArray[@]}
 			totest=("${otArray[@]::${testn}}")
@@ -115,19 +117,19 @@ if [[ -n "${otherTests}" ]]; then
 			done
 			sleep 2m
 		else
-			echo -e "\n{INFO $(date +%F_%T) $distro} available vms: $avmmax, waiting some tests finish ..."
+			echo -e "\n{INFO $(date +%F_%T) $tag} available vms: $avmmax, waiting some tests finish ..."
 			sleep 2m
 		fi
 	done
 fi
 
 while :; do
-	echo -e "\n{INFO $(date +%F_%T) $distro} waiting all tests done ..."
+	echo -e "\n{INFO $(date +%F_%T) $tag} waiting all tests done ..."
 	if tmux ls 2>/dev/null | grep fsparallel-test; then
 		sleep 4m;
 	else
 		resdir=$(ls ~/testres/* -1td|head -1)
-		echo -e "\n{INFO $(date +%F_%T) $distro} all tests have done, please check the results at ${resdir}"
+		echo -e "\n{INFO $(date +%F_%T) $tag} all tests have done, please check the results at ${resdir}"
 		ls -l ${resdir}
 		grep -E RIP[:] -r ${resdir}
 		grep -E '(KISS.)?TEST.FAIL' -r ${resdir}
