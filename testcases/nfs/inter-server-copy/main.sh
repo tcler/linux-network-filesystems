@@ -55,8 +55,8 @@ vmrunx 0 $nfsservd -- systemctl status nfs-server
 vmrunx 0 $nfsservd -- "read val <$modulef; echo -n \$val' - '; echo Y >$modulef; cat $modulef"
 
 #-------------------------------------------------------------------------------
-serv_src_addr=$(vm if $nfsservs)
-serv_dst_addr=$(vm if $nfsservd)
+read serv_src_addr _ < <(vm if $nfsservs)
+read serv_dst_addr _ < <(vm if $nfsservd)
 vmrunx 0 $nfsclnt -- showmount -e ${nfsservs}
 vmrunx 0 $nfsclnt -- showmount -e ${nfsservd}
 vmrunx 0 $nfsclnt -- mkdir /mnt/src /mnt/dst

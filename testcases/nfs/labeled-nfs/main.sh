@@ -63,7 +63,7 @@ tests=(
 	@/nfsshare/share1:+testfile
 )
 
-vmnfsservaddr=$(vm if $vmnfsserv)
+read vmnfsservaddr _ < <(vm if $vmnfsserv)
 
 distrodir=$(gen_distro_dir_name $vmnfsclnt ${SUFFIX})
 resdir=~/testres/${distrodir}/nfs

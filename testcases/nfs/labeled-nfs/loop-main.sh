@@ -32,7 +32,7 @@ while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 vm -v exec $vmnfsserv -- systemctl stop firewalld
 vm -v exec $vmnfsclnt -- systemctl stop firewalld
 
-vmnfsservaddr=$(vm if $vmnfsserv)
+read vmnfsservaddr _ < <(vm if $vmnfsserv)
 for ((i=0; i<128; i++)); do
 	read sharepath file <<<"/var/crash +testfile"
 	read sharepath file <<<"/usr/share +testfile"
