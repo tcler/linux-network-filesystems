@@ -68,6 +68,10 @@ if [[ "${_at[*]}" =~ .*-b[=\ ](repo:)?http.* ]]; then
 	yum-repo-query.sh "$url" || exit 1
 fi
 
+if ! ping -I $(get-default-if.sh) -4c 4 ipa.corp.redhat.com; then
+	_at+=(--net=default --net=kissaltnet)
+fi
+
 for ts in $(tmux ls 2>/dev/null | awk -F: '/fsparallel-test/ {print $1}'); do tmux kill-session -t ${ts}; done
 for ts in $(tmux ls 2>/dev/null | awk -F: '/kissrun-/ {print $1}'); do tmux kill-session -t ${ts}; done
 
