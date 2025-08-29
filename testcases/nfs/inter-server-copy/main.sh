@@ -10,7 +10,7 @@ distro=${distro:-9}
 nfsservs=nfs-ssc-serverS
 nfsservd=nfs-ssc-serverD
 nfsclnt=nfs-ssc-client
-NFSSHARE=/var/nfsshare
+NFSSHARE=/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsservs $nfsservd $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -34,7 +34,7 @@ vm cpto -v $nfsservs /usr/bin/make-nfs-server.sh /usr/bin/.
 vm cpto -v $nfsservd /usr/bin/make-nfs-server.sh /usr/bin/.
 vmrunx - $nfsservs -- make-nfs-server.sh
 vmrunx - $nfsservs -- dd if=/dev/urandom of=$NFSSHARE/rw/largefile.img bs=1M count=256
-vmrunx - $nfsservd -- make-nfs-server.sh --prefix=$NFSSHARE
+vmrunx - $nfsservd -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=/var
 
 ### __main__ test start
 _test=inter-server-copy
