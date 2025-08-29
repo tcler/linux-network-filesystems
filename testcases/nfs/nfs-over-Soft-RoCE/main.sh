@@ -12,7 +12,7 @@ imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 
 nfsserv=nfs-o-soft-roce-serv
 nfsclnt=nfs-o-soft-roce-clnt
-NFSSHARE=/var/nfsshare
+NFSSHARE=/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -83,7 +83,7 @@ vmrunx - $nfsclnt -- ib_send_bw -d rxe0 $servAddr
 #-------------------------------------------------------------------------------
 ##xfstest
 if [[ $XFSTEST = yes ]]; then
-	tmux new -s roceNfsServer -d "vm exec -v $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE"
+	tmux new -s roceNfsServer -d "vm exec -v $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=/var"
 
 	vmrunx 0 $nfsclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
 	vmrunx 0 $nfsclnt -- "xfstests-install.sh nouring=$NOURING" || exit 1

@@ -5,6 +5,7 @@
 
 distro=${1:-9}; shift
 nfsserv=nfs-server-rpc-truncated-auth
+NFSSHARE=/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv; }
 cleanup() { stopvms 2>/dev/null; }
@@ -22,7 +23,7 @@ mkdir -p $resdir
   trun -tmux=${_test}-console-$nfsserv -logf=$resdir/console-$nfsserv.log vm console $nfsserv
 
   vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/get-if-by-ip.sh /usr/bin/.
-  vm exec -v $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --no-tlshd
+  vm exec -v $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=/var --no-tlshd
   servaddr=$(vm ifaddr $nfsserv|head -1)
 
   loopn=4096

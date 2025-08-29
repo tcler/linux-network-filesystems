@@ -9,7 +9,7 @@ distro=${distro:-9}
 nfsserv=nfstest-cache-serv
 nfsclnt=nfstest-cache-clnt
 nfsclntx=nfstest-cache-clntx
-NFSSHARE=/var/nfsshare
+NFSSHARE=/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt $nfsclntx; }
 cleanup() { stopvms 2>/dev/null; }
@@ -28,7 +28,7 @@ while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/.
-vmrunx - $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE
+vmrunx - $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=/var
 vmrunx - $nfsserv -- mkdir -p $NFSSHARE/rw/testdir
 vmrunx - $nfsserv -- touch $NFSSHARE/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $nfsserv|head -1)

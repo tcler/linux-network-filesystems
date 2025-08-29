@@ -16,14 +16,14 @@ trun vm create $distro -n $nfsserv -f -nointeract -p nfs-utils,wireshark,tmux "$
 _test=loop-dev-over-nfs
 distrodir=$(gen_distro_dir_name $nfsserv ${SUFFIX})
 resdir=~/testres/${distrodir}/nfs/$_test
-NFSSHARE=/var/nfsshare
+NFSSHARE=/nfsshare
 mkdir -p $resdir
 {
   vmrunx - $nfsserv -- uname -r;
   trun -tmux=${_test}-console-$nfsserv -logf=$resdir/console-$nfsserv.log vm console $nfsserv
 
   vm cpto -v  $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/get-if-by-ip.sh ./loop-dev-over-nfs.sh /usr/bin/.
-  vm exec -v  $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --no-tlshd
+  vm exec -v  $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=/var --no-tlshd
   vm exec -vx $nfsserv -- loop-dev-over-nfs.sh
 
   trun -x1-255 grep RI[P]: $resdir/console*.log

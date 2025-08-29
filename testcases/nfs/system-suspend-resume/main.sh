@@ -8,7 +8,7 @@
 distro=${distro:-9}
 nfsserv=nfs-suspend-serv
 nfsclnt=nfs-suspend-clnt
-NFSSHARE=/var/nfsshare
+NFSSHARE=/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -32,7 +32,7 @@ mkdir -p $resdir
 #-------------------------------------------------------------------------------
 #nfs-serv: start nfs service
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/.
-vmrunx - $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE
+vmrunx - $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=/var
 vmrunx - $nfsserv -- dd if=/dev/urandom of=$NFSSHARE/rw/largefile.img bs=1M count=512
 
 ### __main__ test start

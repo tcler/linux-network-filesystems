@@ -14,7 +14,7 @@ distro=${distro:-9}
 nfsserv=fstest-nfsserv
 nfsclnt=fstest-nfsclnt
 pkglist=vim,nfs-utils,tmux
-NFSSHARE=/var/nfsshare
+NFSSHARE=/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -32,7 +32,7 @@ while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 10; done
 servaddr=$(vm ifaddr $nfsserv|head -1)
 
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin
-tmux new -s nfsServer -d "vm exec -v $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE"
+tmux new -s nfsServer -d "vm exec -v $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=/var"
 
 vm cpto -v  $nfsclnt /usr/bin/xfstests-install.sh /usr/bin/yum-install-from-fedora.sh /usr/bin/.
 vmrunx 0 $nfsclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'

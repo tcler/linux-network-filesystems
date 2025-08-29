@@ -10,7 +10,7 @@ script_dir=$(readlink -f $(dirname $0))
 distro=${1:-9}; shift
 nfsserv=nfs-server
 nfsclnt=nfs-client
-NFSSHARE=/var/nfsshare
+NFSSHARE=/nfsshare
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -23,7 +23,7 @@ echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/get-if-by-ip.sh /usr/bin/.
-vm exec -v $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --no-tlshd
+vm exec -v $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=/var --no-tlshd
 vm exec -v $nfsserv -- mkdir -p $NFSSHARE/rw/testdir
 vm exec -v $nfsserv -- touch $NFSSHARE/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $nfsserv|head -1)

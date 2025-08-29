@@ -5,7 +5,7 @@
 
 #export share dir by nfs
 nfsmp=/mnt/nfsmp
-NFSSHARE=/var/nfsshare
+NFSSHARE=/nfsshare
 
 #create nfs-server vm
 distro=${1:-9}; shift
@@ -18,7 +18,7 @@ while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 vm -v cpto $nfsserv /usr/bin/make-nfs-server.sh .
-vm -v exec $nfsserv -- bash make-nfs-server.sh --prefix=$NFSSHARE
+vm -v exec $nfsserv -- bash make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=/var
 vm -v exec $nfsserv -- mkdir -p $NFSSHARE/rw/testdir
 vm -v exec $nfsserv -- touch $NFSSHARE/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $nfsserv|head -1)
