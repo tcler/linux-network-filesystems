@@ -15,6 +15,7 @@ nfsserv=ipa-nfs-server
 nfsclnt=ipa-nfs-client
 password=redhat123
 NFSSHARE=/nfsshare
+NFSROOT=/var
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $ipaserv $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -147,10 +148,10 @@ vmrunx - $nfsclnt -- 'command -v authselect && { authselect test -a sssd with-mk
 
 #-------------------------------------------------------------------------------
 #nfs-server: configure krb5 nfs server
-vmrunx - $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=/var --no-tlshd
-vmrunx 0 $nfsserv -- "chown :qe $NFSSHARE/qe; chown :devel $NFSSHARE/devel"
-vmrunx 0 $nfsserv -- chmod g+ws $NFSSHARE/qe $NFSSHARE/devel
-vmrunx - $nfsserv -- ls -l $NFSSHARE
+vmrunx - $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=$NFSROOT --no-tlshd
+vmrunx 0 $nfsserv -- "chown :qe $NFSROOT/$NFSSHARE/qe; chown :devel $NFSROOT/$NFSSHARE/devel"
+vmrunx 0 $nfsserv -- chmod g+ws $NFSROOT/$NFSSHARE/qe $NFSROOT/$NFSSHARE/devel
+vmrunx - $nfsserv -- ls -l $NFSROOT/$NFSSHARE
 
 vmrunx - $nfsserv -- ipa service-add nfs/${nfsserv}.${domain}
 vmrunx - $nfsserv -- ipa-getkeytab -s ${ipaserv}.${domain} -p nfs/${nfsserv}.${domain} -k /etc/krb5.keytab
