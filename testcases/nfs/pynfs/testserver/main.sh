@@ -8,6 +8,7 @@ distro=${distro:-9}
 nfsserv=pynfs-server
 nfsclnt=pynfs-client
 NFSSHARE=/nfsshare
+NFSROOT=${NFSROOT}
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -24,9 +25,9 @@ echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh .
-vmrunx - $nfsserv -- bash make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=/var
-vmrunx - $nfsserv -- mkdir -p $NFSSHARE/rw/testdir
-vmrunx - $nfsserv -- touch $NFSSHARE/rw/testdir/file{1..128}
+vmrunx - $nfsserv -- bash make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=$NFSROOT
+vmrunx - $nfsserv -- mkdir -p $NFSROOT/$NFSSHARE/rw/testdir
+vmrunx - $nfsserv -- touch $NFSROOT/$NFSSHARE/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $nfsserv|head -1)
 
 vmrunx - $nfsclnt -- showmount -e $servaddr

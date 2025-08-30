@@ -15,7 +15,7 @@ nfsserv=ipa-nfs-server
 nfsclnt=ipa-nfs-client
 password=redhat123
 NFSSHARE=/nfsshare
-NFSROOT=/var
+NFSROOT=${NFSROOT}
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $ipaserv $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }

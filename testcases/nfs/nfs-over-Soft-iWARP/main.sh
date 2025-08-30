@@ -13,6 +13,7 @@ imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 nfsserv=nfs-o-soft-iwarp-serv
 nfsclnt=nfs-o-soft-iwarp-clnt
 NFSSHARE=/nfsshare
+NFSROOT=${NFSROOT}
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
@@ -83,7 +84,7 @@ vmrunx - $nfsclnt -- ib_write_bw -d siw0 -R -n 5 -s 1500 $servAddr
 #-------------------------------------------------------------------------------
 ##xfstest
 if [[ $XFSTEST = yes ]]; then
-	tmux new -s iwarpNfsServer -d "vm exec -v $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=/var"
+	tmux new -s iwarpNfsServer -d "vm exec -v $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=$NFSROOT"
 
 	vmrunx 0 $nfsclnt -- tmux new -d 'yum-install-from-fedora.sh fsverity-utils'
 	vmrunx 0 $nfsclnt -- "xfstests-install.sh nouring=$NOURING" || exit 1

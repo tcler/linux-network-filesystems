@@ -4,7 +4,7 @@
 #please run make-nfs-server.sh first
 
 mkdir -p /product /product_nfs
-mount -v localhost:/var/nfsshare/rw /product_nfs || exit
+mount -v localhost:/nfsshare/rw /product_nfs || exit
 dd if=/dev/zero of=/product_nfs/loop_fs bs=1024K count=20000 status=progress
 losetup /dev/loop0 /product_nfs/loop_fs
 mkfs -t xfs /dev/loop0

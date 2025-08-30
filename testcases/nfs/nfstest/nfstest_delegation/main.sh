@@ -11,6 +11,7 @@ vmserv=nfstest-deleg-serv
 vmclnt=nfstest-deleg-clnt
 vmclntx=nfstest-deleg-clntx
 NFSSHARE=/nfsshare
+NFSROOT=${NFSROOT}
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $vmserv $vmclnt $vmclntx; }
 cleanup() { stopvms 2>/dev/null; }
@@ -28,9 +29,9 @@ while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $vmserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 vm cpto -v $vmserv /usr/bin/make-nfs-server.sh /usr/bin/.
-vmrunx - $vmserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=/var
-vmrunx - $vmserv -- mkdir -p $NFSSHARE/rw/testdir
-vmrunx - $vmserv -- touch $NFSSHARE/rw/testdir/file{1..128}
+vmrunx - $vmserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=$NFSROOT
+vmrunx - $vmserv -- mkdir -p $NFSROOT/$NFSSHARE/rw/testdir
+vmrunx - $vmserv -- touch $NFSROOT/$NFSSHARE/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $vmserv|head -1)
 
 vmrunx - $vmclntx -- showmount -e $servaddr
