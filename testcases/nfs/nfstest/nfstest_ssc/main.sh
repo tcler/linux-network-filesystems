@@ -30,8 +30,8 @@ timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not
 
 vm cpto -v $nfsserv  /usr/bin/make-nfs-server.sh /usr/bin/.
 vm cpto -v $nfsserv2 /usr/bin/make-nfs-server.sh /usr/bin/.
-vmrunx 0 $nfsserv  -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=$NFSROOT
-vmrunx 0 $nfsserv2 -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=$NFSROOT
+vmrunx 0 $nfsserv  -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=$NFSROOT -no-tlshd
+vmrunx 0 $nfsserv2 -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=$NFSROOT -no-tlshd
 vmrunx 0 $nfsserv  -- "echo Y >/sys/module/nfsd/parameters/inter_copy_offload_enable"
 vmrunx 0 $nfsserv2 -- "echo Y >/sys/module/nfsd/parameters/inter_copy_offload_enable"
 
