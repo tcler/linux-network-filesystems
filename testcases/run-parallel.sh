@@ -62,6 +62,8 @@ else
 fi
 distro=$(awk '/getting fastest location/{print $(NF-1)}' <<<"$stdlog")
 [[ -z $distro ]] && { echo "{WARN} distro name is empty, exit" >&2; exit; }
+tag=${distro}.${SUFFIX}
+sessiontag=fsparallel-test-${tag}
 _at=($distro "$@" "$IOpt")
 if [[ "${_at[*]}" =~ .*-b[=\ ](repo:)?http.* ]]; then
 	url=$(echo "${_at[*]}"|sed -r 's/.*-b[= ](repo:)?(http[^ ]+).*/\2/')
@@ -72,8 +74,12 @@ if ! ping -I $(get-default-if.sh) -4c 4 ipa.corp.redhat.com; then
 	_at+=(--net=default --net=kissaltnet)
 fi
 
-for ts in $(tmux ls 2>/dev/null | awk -F: '/fsparallel-test/ {print $1}'); do tmux kill-session -t ${ts}; done
-for ts in $(tmux ls 2>/dev/null | awk -F: '/kissrun-/ {print $1}'); do tmux kill-session -t ${ts}; done
+for ts in $(tmux ls 2>/dev/null | awk -F: '/'"$sessiontag"'/ {print $1}'); do
+	tmux kill-session -t ${ts};
+done
+for ts in $(tmux ls 2>/dev/null | awk -F: '/kissrun-/ {print $1}'); do
+	tmux kill-session -t ${ts};
+done
 
 [[ "$noOntap" = yes ]] && grepOpt='-v ontap.*.sh'
 pattern=${pathPattern:-.}
@@ -94,11 +100,10 @@ vcpumax=$(get_vcpumax); vcpus=$((vcpumax/vmmax))
 export VCPUS=$vcpus,sockets=1,cores=$vcpus
 ontap_vmmax=6
 
-tag=${distro}.${SUFFIX}
 if [[ -n "${ontapTests}" ]]; then
 	if [[ $avmmax -ge $ontap_vmmax ]]; then
 		echo -e "{INFO $(date +%F_%T) $tag} submit ontap-simulator related test cases in background ..."
-		tmux new -s fsparallel-test-ontap/ -d bash -c "for f in ${ontapTests//$'\n'/ }; do \$f ${_at[*]}; done"
+		tmux new -s ${sessiontag}/ontap/ -d bash -c "for f in ${ontapTests//$'\n'/ }; do \$f ${_at[*]}; done"
 		sleep 5
 		tmux ls
 	else
@@ -119,7 +124,7 @@ if [[ -n "${otherTests}" ]]; then
 			totest=("${otArray[@]::${testn}}")
 			otArray=("${otArray[@]:${testn}}")
 			for f in "${totest[@]}"; do
-				sessionName="fsparallel-test-${f#./}"
+				sessionName="${sessiontag}/${f#./}"
 				echo [run] tmux new -s $sessionName -d \"$f ${_at[*]}\"
 				tmux new -s "$sessionName" -d "$f ${_at[*]}"
 			done
@@ -133,7 +138,7 @@ fi
 
 while :; do
 	echo -e "\n{INFO $(date +%F_%T) $tag} waiting all tests done ..."
-	if tmux ls 2>/dev/null | grep fsparallel-test; then
+	if tmux ls 2>/dev/null | grep $sessiontag; then
 		sleep 4m;
 	else
 		resdir=$(ls ~/testres/* -1td|head -1)
