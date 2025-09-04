@@ -5,6 +5,7 @@
 
 distro=${1:-9}; shift
 nfsserv=loop-o-nfs
+SCRIPT_DIR=$(dirname -- "$0")
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv; }
 cleanup() { stopvms 2>/dev/null; }
@@ -23,7 +24,7 @@ mkdir -p $resdir
   vmrunx - $nfsserv -- uname -r;
   trun -tmux=${_test}-console-$nfsserv -logf=$resdir/console-$nfsserv.log vm console $nfsserv
 
-  vm cpto -v  $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/get-if-by-ip.sh ./loop-dev-over-nfs.sh /usr/bin/.
+  vm cpto -v  $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/get-if-by-ip.sh $SCRIPT_DIR/loop-dev-over-nfs.sh /usr/bin/.
   vm exec -v  $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=$NFSROOT --no-tlshd
   vm exec -vx $nfsserv -- loop-dev-over-nfs.sh
 
