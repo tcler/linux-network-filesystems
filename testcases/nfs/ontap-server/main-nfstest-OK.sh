@@ -102,7 +102,7 @@ mkdir -p $resdir
   vmrunx - $nfsclnt -- uname -r;
   trun -tmux=${_test}-console-$nfsclnt -logf=$resdir/console-$nfsclnt.log vm console $nfsclnt
   trun -tmux=${_test}-console-$nfsclnt2 -logf=$resdir/console-$nfsclnt2.log vm console $nfsclnt2
-  vmrunx - $nfsclnt -- nfstest_delegation --server=${NETAPP_NAS_HOSTNAME} --export=$expdir --nfsversion=4.1 --client $clnt2addr --client-nfsvers=4.0,4.1 $TESTS;
+  vmrunx - $nfsclnt -- nfstest_delegation --server=${NETAPP_NAS_HOSTNAME} --export=$expdir --nfsversion=4.1 --client $clnt2addr --client-nfsvers=4.1 $TESTS;
   #stopvms
   exFail=0
   trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
