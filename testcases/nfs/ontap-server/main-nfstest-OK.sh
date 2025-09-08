@@ -14,6 +14,9 @@ trap "cleanup" EXIT
 
 ### __prepare__ test env build
 #create Windows AD server, ONTAP simulator and client VMs
+if ! ping -c 4 -I $(get-default-if.sh) ipa.corp.redhat.com; then
+	export PUBIF=no
+fi
 trun -x0 make-ontap-with-windows-ad.sh $distro ${nfsclnt},${nfsclnt2} "$@" || exit $?
 timeout 300 vm port-available -w $nfsclnt || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
@@ -26,6 +29,8 @@ vm cpto $nfsclnt /usr/bin/install-nfstest.sh /usr/bin/get-network-info.sh /usr/b
 vm cpto $nfsclnt2 /usr/bin/install-nfstest.sh /usr/bin/get-network-info.sh /usr/bin/get-if-by-ip.sh /usr/bin/.
 vmrunx 0 $nfsclnt -- install-nfstest.sh
 vmrunx 0 $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
+vmrunx 0 $nfsclnt2 -- install-nfstest.sh
+vmrunx 0 $nfsclnt2 -- bash -c 'cat /tmp/nfstest.env >>/etc/bashrc'
 
 ONTAP_ENV_FILE=/tmp/ontap2info.env
 source "$ONTAP_ENV_FILE"
@@ -35,7 +40,7 @@ lservaddr=192.168.20.21
 vmrunx 0 $nfsclnt -- get-network-info.sh
 #read NIC clntaddr < <(vm exec $nfsclnt -- get-network-info.sh | grep ${NETAPP_NAS_IP%?.*})
 read NIC clntaddr < <(vm exec $nfsclnt -- get-network-info.sh | grep ${lservaddr%.*})
-read ___ clnt2addr < <(vm exec $nfsclnt2 -- get-network-info.sh | grep ${lservaddr%.*})
+read NIC2 clnt2addr < <(vm exec $nfsclnt2 -- get-network-info.sh | grep ${lservaddr%.*})
 [[ -z "$NIC" ]] && { echo "{TENV:ERROR} get NIC fail" >&2; exit 2; }
 } &> >(tee $resdir/std.log)
 
@@ -102,7 +107,9 @@ mkdir -p $resdir
   vmrunx - $nfsclnt -- uname -r;
   trun -tmux=${_test}-console-$nfsclnt -logf=$resdir/console-$nfsclnt.log vm console $nfsclnt
   trun -tmux=${_test}-console-$nfsclnt2 -logf=$resdir/console-$nfsclnt2.log vm console $nfsclnt2
-  vmrunx - $nfsclnt -- nfstest_delegation --server=${NETAPP_NAS_HOSTNAME} --export=$expdir --nfsversion=4.1 --client $clnt2addr --client-nfsvers=4.1 $TESTS;
+  vm cpto $nfsclnt /usr/bin/ssh-copy-id.sh /usr/bin/.
+  vmrunx - $nfsclnt -- ssh-copy-id.sh $clnt2addr root redhat
+  vmrunx - $nfsclnt -- nfstest_delegation --server=${NETAPP_NAS_HOSTNAME} --export=$expdir --nfsversion=4.1 --client ${clnt2addr}:nfsversion=4.1 $TESTS;
   #stopvms
   exFail=0
   trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
