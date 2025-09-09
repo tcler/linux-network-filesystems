@@ -115,7 +115,7 @@ mkdir -p $resdir
 
   vmrunx - $nfsclnt -- nfstest_delegation --server=${NETAPP_NAS_HOSTNAME} --export=$expdir --nfsversion=4.1 --client ${clnt2addr} --client-nfsvers=4.1,4.2 $TESTS;
   #stopvms
-  exFail=62
+  exFail=99
   trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
 } &> >(tee $resdir/std.log)
 trun -x1-255 grep RI[P]: $resdir/console*.log
