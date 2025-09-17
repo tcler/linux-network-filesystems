@@ -136,12 +136,14 @@ if [[ -n "${otherTests}" ]]; then
 	done
 fi
 
+arch=$(sed -rn '/.*--arch[= ]([^ ]+).*/{s//\1/;p}' <<<"$*")
+distrodir=$(_gen_distro_dir_name $distro ${arch:-x86_64} ${SUFFIX})
+resdir=~/testres/${distrodir}
 while :; do
 	echo -e "\n{INFO $(date +%F_%T) $tag} waiting all tests done ..."
 	if tmux ls 2>/dev/null | grep $sessiontag; then
 		sleep 4m;
 	else
-		resdir=$(ls ~/testres/* -1td|head -1)
 		echo -e "\n{INFO $(date +%F_%T) $tag} all tests have done, please check the results at ${resdir}"
 		ls -l ${resdir}
 		grep -E RIP[:] -r ${resdir}
