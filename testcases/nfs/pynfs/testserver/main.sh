@@ -24,8 +24,8 @@ trun       vm create $distro -n $nfsclnt -m 4G -f -nointeract -p vim,nfs-utils,t
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 
-vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh .
-vmrunx - $nfsserv -- bash make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=$NFSROOT
+vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin/
+vmrunx - $nfsserv -- Squash=no_root_squash make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=$NFSROOT
 vmrunx - $nfsserv -- mkdir -p $NFSROOT/$NFSSHARE/rw/testdir
 vmrunx - $nfsserv -- touch $NFSROOT/$NFSSHARE/rw/testdir/file{1..128}
 servaddr=$(vm ifaddr $nfsserv|head -1)
