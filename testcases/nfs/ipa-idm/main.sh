@@ -7,7 +7,7 @@
 
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
-dnsdomain=lab.kissvm.net
+dnsdomain=alt.kissvm.net
 domain=${dnsdomain}
 realm=${domain^^}
 ipaserv=ipa-server
@@ -26,9 +26,10 @@ stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 [[ -n "${imgf}" ]] && insOpt=-I=$imgf
 
-trun -tmux=$$-nfsserv vm create -n $nfsserv $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -f "$@" $insOpt
-trun -tmux=$$-nfsclnt vm create -n $nfsclnt $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -f "$@" $insOpt
-trun                  vm create -n $ipaserv $distro --msize 4096 -p firewalld,bind-utils,expect,vim,tomcat,NetworkManager,sssd-tools,krb5-server --nointeract -f "$@" $insOpt
+_at=(--net=kissaltnet --net=default "${@/--net=[^ ]*}")
+trun -tmux=$$-nfsserv vm create -n $nfsserv $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -f "${_at[@]}" $insOpt
+trun -tmux=$$-nfsclnt vm create -n $nfsclnt $distro --msize 4096 -p bind-utils,vim,nfs-utils,NetworkManager --nointeract -f "${_at[@]}" $insOpt
+trun                  vm create -n $ipaserv $distro --msize 4096 -p firewalld,bind-utils,expect,vim,tomcat,NetworkManager,sssd-tools,krb5-server --nointeract -f "${_at[@]}" $insOpt
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-nfs.*-d.vm.creat[e]; do sleep 10; done
 timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
