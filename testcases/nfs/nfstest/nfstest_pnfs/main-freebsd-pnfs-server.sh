@@ -47,6 +47,10 @@ mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
   trun -tmux=${_test}-console-$nfsclnt -logf=$resdir/console-$nfsclnt.log vm console $nfsclnt
+  vmrunx - $nfsclnt -- mount -v ${mdsaddr}:${expdir0} ${nfsmp}
+  vmrunx - $nfsclnt -- touch ${nfsmp}/testf
+  vmrunx - $nfsclnt -- grep pnfs=LAYOUT_FLEX_FILES /proc/self/mountstats
+  vmrunx - $nfsclnt -- umount ${nfsmp}
   vmrunx - $nfsclnt -- nfstest_pnfs --server $mdsaddr --export=$expdir0 --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2 $TESTS;
   stopvms
 
