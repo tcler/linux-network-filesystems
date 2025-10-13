@@ -2,11 +2,14 @@
 #
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+PROG=$0; ARGS=("$@")
+trap_try_again() { exec $PROG "${ARGS[@]}"; }
 
 #export share dir by nfs
 nfsmp=/mnt/nfsmp
 NFSSHARE=/nfsshare
 NFSROOT=${NFSROOT}
+trap try_again SIGUSR2
 
 #create nfs-server vm
 distro=${1:-9}; shift
@@ -26,7 +29,7 @@ servaddr=$(vm ifaddr $nfsserv|head -1)
 pcapf=nfs.pcap
 
 _test=mount-options
-distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX}) || kill -s SIGUSR2 $$
 resdir=~/testres/${distrodir}/nfs/$_test
 mkdir -p $resdir
 {

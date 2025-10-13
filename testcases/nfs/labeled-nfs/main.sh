@@ -1,6 +1,8 @@
 #!/bin/bash
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+PROG=$0; ARGS=("$@")
+trap_try_again() { exec $PROG "${ARGS[@]}"; }
 
 argv=()
 for arg; do
@@ -21,7 +23,8 @@ vmnfsclnt=labeled-nfs-clnt
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $vmnfsserv $vmnfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
-trap "cleanup" EXIT
+trap cleanup EXIT
+trap try_again SIGUSR2
 
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
 imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
@@ -65,7 +68,7 @@ tests=(
 
 read vmnfsservaddr _ < <(vm if $vmnfsserv)
 
-distrodir=$(gen_distro_dir_name $vmnfsclnt ${SUFFIX})
+distrodir=$(gen_distro_dir_name $vmnfsclnt ${SUFFIX}) || kill -s SIGUSR2 $$
 resdir=~/testres/${distrodir}/nfs
 mkdir -p $resdir
 {

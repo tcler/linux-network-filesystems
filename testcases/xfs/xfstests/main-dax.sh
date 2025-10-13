@@ -3,6 +3,8 @@
 #xfstests xfs test, based on kiss-vm
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+PROG=$0; ARGS=("$@")
+trap_try_again() { exec $PROG "${ARGS[@]}"; }
 
 #env
 #TESTS="generic/068 ..."
@@ -20,7 +22,8 @@ pkglist=git,tmux,vim,ndctl
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $vmname; }
 cleanup() { stopvms 2>/dev/null; }
-trap "cleanup" EXIT
+trap cleanup EXIT
+trap try_again SIGUSR2
 
 ### __prepare__ test env build
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
@@ -74,7 +77,7 @@ vmrunx 0 $vmname -- "for dev in ${pdevs[*]:0:2}; do mkfs.${fs} $MKFS_OPTIONS /de
 TESTS=${TESTS:--g dax}
 
 _test=${fs}-dax
-distrodir=$(gen_distro_dir_name $vmname ${SUFFIX})
+distrodir=$(gen_distro_dir_name $vmname ${SUFFIX}) || kill -s SIGUSR2 $$
 resdir=~/testres/${distrodir}/localfs/xfstests/${_test}
 mkdir -p $resdir
 {

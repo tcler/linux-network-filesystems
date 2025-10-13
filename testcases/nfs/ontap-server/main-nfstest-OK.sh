@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+PROG=$0; ARGS=("$@")
+trap_try_again() { exec $PROG "${ARGS[@]}"; }
 export LANG=C LANGUAGE=C   #nfstest only works on english lang env
 
 [[ -n "$1" && "$1" != -* ]] && { distro=${1}; shift; [[ -n "$1" && "$1" != -* ]] && { nfsclnt=${1}; shift 1; }; }
@@ -10,7 +12,8 @@ nfsclnt2="${nfsclnt}2"
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
-trap "cleanup" EXIT
+trap cleanup EXIT
+trap try_again SIGUSR2
 
 ### __prepare__ test env build
 #create Windows AD server, ONTAP simulator and client VMs
@@ -20,7 +23,7 @@ fi
 trun -x0 make-ontap-with-windows-ad.sh $distro ${nfsclnt},${nfsclnt2} "$@" || exit $?
 timeout 300 vm port-available -w $nfsclnt || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
-distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX}) || kill -s SIGUSR2 $$
 resdir=~/testres/${distrodir}/nfstest/ontap-env-prepare.log
 mkdir -p $resdir
 {

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+PROG=$0; ARGS=("$@")
+trap_try_again() { exec $PROG "${ARGS[@]}"; }
 export LANG=C LANGUAGE=C   #nfstest only works on english lang env
 
 #create nfs-server vm
@@ -14,7 +16,8 @@ NFSROOT=${NFSROOT}
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv $nfsclnt $nfsclntx; }
 cleanup() { stopvms 2>/dev/null; }
-trap "cleanup" EXIT
+trap cleanup EXIT
+trap try_again SIGUSR2
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
@@ -54,7 +57,7 @@ vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
 vmrunx - $nfsclnt -- usermod -a -G nobody foo
 
 _test=cache
-distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX}) || kill -s SIGUSR2 $$
 resdir=~/testres/${distrodir}/nfstest/$_test
 mkdir -p $resdir
 {

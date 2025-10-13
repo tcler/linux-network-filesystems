@@ -2,6 +2,8 @@
 #
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+PROG=$0; ARGS=("$@")
+trap_try_again() { exec $PROG "${ARGS[@]}"; }
 
 distro=${1:-9}; shift
 nfsserv=loop-o-nfs
@@ -9,13 +11,14 @@ SCRIPT_DIR=$(dirname -- "$0")
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsserv; }
 cleanup() { stopvms 2>/dev/null; }
-trap "cleanup" EXIT
+trap cleanup EXIT
+trap try_again SIGUSR2
 
 #create nfs-server vm
 trun vm create $distro -n $nfsserv -f -nointeract -p nfs-utils,wireshark,tmux "$@"
 
 _test=loop-dev-over-nfs
-distrodir=$(gen_distro_dir_name $nfsserv ${SUFFIX})
+distrodir=$(gen_distro_dir_name $nfsserv ${SUFFIX}) || kill -s SIGUSR2 $$
 resdir=~/testres/${distrodir}/nfs/$_test
 NFSSHARE=/nfsshare
 NFSROOT=${NFSROOT}

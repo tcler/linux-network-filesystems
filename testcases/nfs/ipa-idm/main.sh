@@ -4,6 +4,8 @@
 #test pass on CentOS-7,CentOS-{8,9}-stream,Fedora-40 and RHEL-7.9,RHEL-8.9,RHEL-9.5
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+PROG=$0; ARGS=("$@")
+trap_try_again() { exec $PROG "${ARGS[@]}"; }
 
 [[ $1 != -* ]] && { distro="$1"; shift; }
 distro=${distro:-9}
@@ -19,7 +21,8 @@ NFSROOT=${NFSROOT}
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $ipaserv $nfsserv $nfsclnt; }
 cleanup() { stopvms 2>/dev/null; }
-trap "cleanup" EXIT
+trap cleanup EXIT
+trap try_again SIGUSR2
 
 ### __prepare__ test env build: create vm
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
@@ -38,7 +41,7 @@ read nfsservaddr < <(vm ifaddr $nfsserv)
 read nfsclntaddr < <(vm ifaddr $nfsclnt|grep ${nfsservaddr%.*})
 
 _test=ipa-idm
-distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX}) || kill -s SIGUSR2 $$
 resdir=~/testres/${distrodir}/nfs/$_test
 mkdir -p $resdir
 {

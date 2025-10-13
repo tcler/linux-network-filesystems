@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+PROG=$0; ARGS=("$@")
+trap_try_again() { exec $PROG "${ARGS[@]}"; }
 export LANG=C LANGUAGE=C   #nfstest only works on english lang env
 
 [[ $1 != -* ]] && { distro="$1"; shift; }
@@ -23,7 +25,8 @@ vm_fbclient=freebsd-pnfs-client
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsclnt $vm_mds $vm_ds1 $vm_ds2 $vm_fbclient; }
 cleanup() { stopvms 2>/dev/null; }
-trap "cleanup" EXIT
+trap cleanup EXIT
+trap try_again SIGUSR2
 
 trun -x0 make-freebsd-pnfsserver.sh $distro $nfsclnt "$@" $insOpt || exit $?
 timeout 300 vm port-available -w $nfsclnt || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
@@ -41,7 +44,7 @@ vmrunx - $nfsclnt -- bash -c 'cat /tmp/nfstest.env >>~/.bashrc'
 vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
 
 _test=pnfs-freebsd
-distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX})
+distrodir=$(gen_distro_dir_name $nfsclnt ${SUFFIX}) || kill -s SIGUSR2 $$
 resdir=~/testres/${distrodir}/nfstest/$_test
 mkdir -p $resdir
 {

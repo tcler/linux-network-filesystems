@@ -3,6 +3,8 @@
 #xfstests cifs test, based on kiss-vm
 
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+PROG=$0; ARGS=("$@")
+trap_try_again() { exec $PROG "${ARGS[@]}"; }
 
 #env
 #TESTS="-g quick ..."
@@ -19,7 +21,8 @@ PASSWORD=redhat
 
 stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $smbserv $cifsclnt; }
 cleanup() { stopvms 2>/dev/null; }
-trap "cleanup" EXIT
+trap cleanup EXIT
+trap try_again SIGUSR2
 
 #download image file
 stdlog=$(trun vm create $distro --downloadonly "$@" |& tee /dev/tty)
@@ -93,7 +96,7 @@ TEST_FS_MOUNT_OPTS='-ousername=$USERNAME,password=$PASSWORD,nounix,noperm,cifsac
 EOF"
 
 _test=xfstests-cifs
-distrodir=$(gen_distro_dir_name $cifsclnt ${SUFFIX})
+distrodir=$(gen_distro_dir_name $cifsclnt ${SUFFIX}) || kill -s SIGUSR2 $$
 resdir=~/testres/${distrodir}/cifs/$_test
 mkdir -p $resdir
 {
