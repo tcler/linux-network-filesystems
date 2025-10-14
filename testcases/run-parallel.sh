@@ -48,7 +48,7 @@ while true; do
 	esac
 done
 SUFFIX=${SUFFIX//\//.}
-export SUFFIX=${SUFFIX// /_}
+SUFFIX=${SUFFIX// /_}
 
 [[ $# -eq 0 ]] && { Usage; exit 1; }
 distro=$1; shift
@@ -103,7 +103,7 @@ ontap_vmmax=6
 if [[ -n "${ontapTests}" ]]; then
 	if [[ $avmmax -ge $ontap_vmmax ]]; then
 		echo -e "{INFO $(date +%F_%T) $tag} submit ontap-simulator related test cases in background ..."
-		tmux new -s ${sessiontag}/ontap/ -d bash -c "for f in ${ontapTests//$'\n'/ }; do \$f ${_at[*]}; done"
+		tmux new -s ${sessiontag}/ontap/ -d bash -c "for f in ${ontapTests//$'\n'/ }; do SUFFIX=${SUFFIX} \$f ${_at[*]}; done"
 		sleep 5
 		tmux ls
 	else
@@ -125,8 +125,8 @@ if [[ -n "${otherTests}" ]]; then
 			otArray=("${otArray[@]:${testn}}")
 			for f in "${totest[@]}"; do
 				sessionName="${sessiontag}/${f#./}"
-				echo [run] tmux new -s $sessionName -d \"$f ${_at[*]}\"
-				tmux new -s "$sessionName" -d "$f ${_at[*]}"
+				echo [run] tmux new -s $sessionName -d \"SUFFIX=${SUFFIX} $f ${_at[*]}\"
+				tmux new -s "$sessionName" -d "SUFFIX=${SUFFIX} $f ${_at[*]}"
 			done
 			sleep 2m
 		else
