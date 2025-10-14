@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
 
+export LANG=C
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 
 #export share dir by nfs

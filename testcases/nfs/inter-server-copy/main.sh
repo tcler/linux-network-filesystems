@@ -3,6 +3,7 @@
 #test for NFS4.2 inter-server copy
 #ref: https://access.redhat.com/solutions/7027105
 
+export LANG=C
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 PROG=$0; ARGS=("$@")
 trap_try_again() { exec $PROG "${ARGS[@]}"; }

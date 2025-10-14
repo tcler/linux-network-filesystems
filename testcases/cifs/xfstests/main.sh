@@ -2,6 +2,7 @@
 #author: Jianhong Yin <yin-jianhong@163.com>
 #xfstests cifs test, based on kiss-vm
 
+export LANG=C
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 PROG=$0; ARGS=("$@")
 trap_try_again() { exec $PROG "${ARGS[@]}"; }
