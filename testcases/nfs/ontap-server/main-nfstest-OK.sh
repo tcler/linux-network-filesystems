@@ -73,7 +73,7 @@ mkdir -p $resdir
   vmrunx 0 $nfsclnt -- rm -f $nfsmp/testfile
   vmrunx 0 $nfsclnt -- umount $nfsmp
 
-  vmrunx - $nfsclnt -- nfstest_pnfs --server $lservaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2 $TESTS;
+  vmrunx - $nfsclnt -- nfstest_pnfs --server $lservaddr --export=$expdir --mtpoint=$nfsmp --interface=$NIC --client-ipaddr=$clntaddr --nfsversion=4.2 --trcdelay=3 $TESTS;
   exFail=0
   trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
 } &> >(tee $resdir/std.log)
@@ -85,7 +85,7 @@ mkdir -p $resdir
 {
   vmrunx -  $nfsclnt -- uname -r;
   trun -tmux=${_test}-console-$nfsclnt -logf=$resdir/console-$nfsclnt.log vm console $nfsclnt
-  vmrunx -  $nfsclnt -- nfstest_interop --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5 --datadir datadir --nfsversion=4.2 $TESTS;
+  vmrunx -  $nfsclnt -- nfstest_interop --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5 --datadir datadir --nfsversion=4.2 --trcdelay=3 $TESTS;
   exFail=0
   trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
 } &> >(tee $resdir/std.log)
@@ -97,7 +97,7 @@ mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
   trun -tmux=${_test}-console-$nfsclnt -logf=$resdir/console-$nfsclnt.log vm console $nfsclnt
-  vmrunx - $nfsclnt -- nfstest_posix --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5p --nfsversion=4.2 --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr $TESTS;
+  vmrunx - $nfsclnt -- nfstest_posix --server ${NETAPP_NAS_HOSTNAME} --export=${NETAPP_NFS_SHARE} --sec=krb5p --nfsversion=4.2 --interface=$NIC --client-ipaddr=$clntaddr --trcdelay=3 $TESTS;
   #stopvms
   exFail=0
   trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
@@ -117,7 +117,7 @@ mkdir -p $resdir
   vmrunx - $nfsclnt -- ip link set "$NIC" promisc on
   vmrunx - $nfsclnt2 -- ip link set "$NIC2" promisc on
 
-  vmrunx - $nfsclnt -- nfstest_delegation --server=${NETAPP_NAS_HOSTNAME} --export=$expdir --nfsversion=4.1 --client ${clnt2addr} --client-nfsvers=4.1,4.2 $TESTS;
+  vmrunx - $nfsclnt -- nfstest_delegation --server=${NETAPP_NAS_HOSTNAME} --export=$expdir --nfsversion=4.1 --client ${clnt2addr} --client-nfsvers=4.1,4.2 --trcdelay=3 $TESTS;
   #stopvms
   exFail=99
   trun -x0 nfstest-result-check.sh $exFail $resdir/std.log

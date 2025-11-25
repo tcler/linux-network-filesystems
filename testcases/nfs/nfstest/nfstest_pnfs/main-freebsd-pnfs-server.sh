@@ -55,7 +55,7 @@ mkdir -p $resdir
   vmrunx - $nfsclnt -- touch ${nfsmp}/testf
   vmrunx - $nfsclnt -- grep pnfs=LAYOUT_FLEX_FILES /proc/self/mountstats
   vmrunx - $nfsclnt -- umount ${nfsmp}
-  vmrunx - $nfsclnt -- nfstest_pnfs --server $mdsaddr --export=$expdir0 --mtpoint=$nfsmp --interface=$NIC --trcdelay=3 --client-ipaddr=$clntaddr --nfsversion=4.2 $TESTS;
+  vmrunx - $nfsclnt -- nfstest_pnfs --server $mdsaddr --export=$expdir0 --mtpoint=$nfsmp --interface=$NIC --client-ipaddr=$clntaddr --nfsversion=4.2 --trcdelay=3 $TESTS;
   stopvms
 
   exFail=34

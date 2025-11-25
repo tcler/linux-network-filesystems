@@ -59,10 +59,10 @@ resdir=~/testres/${distrodir}/nfstest/$_test
 mkdir -p $resdir
 {
   vmrunx - $nfsclnt -- uname -r;
-  trun -tmux=${_test}-console-$nfsserv  -logf=$resdir/console-$nfsserv  vm console $nfsserv
-  trun -tmux=${_test}-console-$nfsserv2 -logf=$resdir/console-$nfsserv2 vm console $nfsserv2
-  trun -tmux=${_test}-console-$nfsclnt  -logf=$resdir/console-$nfsclnt  vm console $nfsclnt
-  vmrunx - $nfsclnt -- nfstest_ssc -s $serv1addr -e $expdir --dst-server $serv2addr --dst-export $NFSSHARE/async ${TESTS:-inter};
+  trun -tmux=${_test}-console-$nfsserv  -logf=$resdir/console-$nfsserv.log  vm console $nfsserv
+  trun -tmux=${_test}-console-$nfsserv2 -logf=$resdir/console-$nfsserv2.log vm console $nfsserv2
+  trun -tmux=${_test}-console-$nfsclnt  -logf=$resdir/console-$nfsclnt.log  vm console $nfsclnt
+  vmrunx - $nfsclnt -- nfstest_ssc -s $serv1addr -e $expdir --dst-server $serv2addr --dst-export $NFSSHARE/async --trcdelay 3 --createlog --keeptraces --verbose 2 ${TESTS:-inter};
   stopvms
 
   exFail=0
