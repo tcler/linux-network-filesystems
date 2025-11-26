@@ -64,5 +64,5 @@ mkdir -p $resdir
   trun -x0 nfstest-result-check.sh $exFail $resdir/std.log
 } &> >(tee $resdir/std.log)
 
-trun -x1-255 grep RI[P]: $resdir/console*.log
+trun -x1-255 grep -a RI[P]: $resdir/console*.log
 tcnt

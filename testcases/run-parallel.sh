@@ -146,8 +146,8 @@ while :; do
 	else
 		echo -e "\n{INFO $(date +%F_%T) $tag} all tests have done, please check the results at ${resdir}"
 		ls -l ${resdir}
-		grep -E RIP[:] -r ${resdir}
-		grep -E '(KISS.)?TEST.FAIL' -r ${resdir}
+		grep -Ea RIP[:] -r ${resdir}
+		grep -Ea '(KISS.)?TEST.FAIL' -r ${resdir}
 		break
 	fi
 done

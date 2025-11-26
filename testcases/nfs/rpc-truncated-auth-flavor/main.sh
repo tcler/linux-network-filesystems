@@ -40,7 +40,7 @@ mkdir -p $resdir
   done
   trun -x0 test $i -ge $loopn
 
-  trun -x1-255 grep RI[P]: $resdir/console*.log
+  trun -x1-255 grep -a RI[P]: $resdir/console*.log
   stopvms
 } &> >(tee $resdir/std.log)
 
