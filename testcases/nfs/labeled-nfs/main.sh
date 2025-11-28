@@ -98,19 +98,23 @@ for key in "${!tests[@]}"; do
 
 	#client side
 	nfsmp=/mnt/nfsmp$key
+	vm -vx exec $vmnfsclnt -- "umount -a -t nfs,nfs4; rm -rf $nfsmp"
 	vm -vx exec $vmnfsclnt -- mkdir -p $nfsmp
 	vm -vx exec $vmnfsclnt -- mount $vmnfsservaddr:$sharepath $nfsmp -overs=4.2,actimeo=1,sync
 
 	echo
+	#show files content in client side
 	for f in ${files//,/ }; do
 		vm -vx exec $vmnfsclnt -- ls -ldZ $nfsmp/${f#+}
 	done
 	echo
+	#show files content in client side again after sync and wait 2s
 	vm -v exec $vmnfsclnt -- "sync; sleep 2; sync"
 	for f in ${files//,/ }; do
 		vm -vx exec $vmnfsclnt -- ls -ldZ $nfsmp/${f#+}
 	done
 	echo
+	#retry 32 times to see if client can get the right content from server
 	for f in ${files//,/ }; do
 		for ((i=0; i<32; i++)); do
 			scontextServ=$(vm -v exec $vmnfsserv -- stat -c %C $sharepath/${f#+})
@@ -120,7 +124,7 @@ for key in "${!tests[@]}"; do
 	done
 
 	echo
-	vm -vx exec $vmnfsclnt -- umount $nfsmp
+	vm -vx exec $vmnfsclnt -- "umount -a -t nfs,nfs4 && rm -rf $nfsmp"
 	echo
 	echo
 done
