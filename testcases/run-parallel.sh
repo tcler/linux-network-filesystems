@@ -61,6 +61,7 @@ else
 	exit 2
 fi
 distro=$(awk '/getting fastest location/{print $(NF-1)}' <<<"$stdlog")
+[[ -z $distro ]] && distro=$(awk '/downloading cloud image/{print $7}' <<<"$stdlog")
 [[ -z $distro ]] && { echo "{WARN} distro name is empty, exit" >&2; exit; }
 tag=${distro}.${SUFFIX}
 sessiontag=fsparallel-test-${tag}
