@@ -94,7 +94,7 @@ vmrunx - $nfsclnt -- "dmesg | grep TECH.PREVIEW /var/log/messages"
 vmrunx - $nfsservs -- "dmesg | grep TECH.PREVIEW /var/log/messages"
 vmrunx - $nfsservd -- "dmesg | grep TECH.PREVIEW /var/log/messages"
 
-trun -x1-255 grep -a RI[P]: $resdir/console*.log
+console_check $resdir/console*.log
 stopvms
 } &> >(tee $resdir/std.log)
 

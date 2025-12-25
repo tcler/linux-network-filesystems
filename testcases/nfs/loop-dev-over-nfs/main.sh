@@ -32,7 +32,7 @@ mkdir -p $resdir
   vm exec -v  $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=$NFSROOT --no-tlshd
   vm exec -vx $nfsserv -- loop-dev-over-nfs.sh
 
-  trun -x1-255 grep -a RI[P]: $resdir/console*.log
+  console_check $resdir/console*.log
   stopvms
 } &> >(tee $resdir/std.log)
 

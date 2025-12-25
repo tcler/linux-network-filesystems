@@ -205,7 +205,7 @@ EOF"
 
 vmrunx - $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS:--g quick};"
 
-trun -x1-255 grep -a RI[P]: $resdir/console*.log
+console_check $resdir/console*.log
 stopvms
 } &> >(tee $resdir/std.log)
 
