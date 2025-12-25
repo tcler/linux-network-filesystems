@@ -147,7 +147,8 @@ while :; do
 	else
 		echo -e "\n{INFO $(date +%F_%T) $tag} all tests have done, please check the results at ${resdir}"
 		ls -l ${resdir}
-		grep -Ea RIP[:] -r ${resdir}
+		find ${resdir} -type f -name *console*.log |
+			xargs console_check
 		grep -Ea '(KISS.)?TEST.FAIL' -r ${resdir}
 		break
 	fi
