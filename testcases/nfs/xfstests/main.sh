@@ -6,14 +6,23 @@ export LANG=C
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 PROG=$0; ARGS=("$@")
 trap_try_again() { exec $PROG "${ARGS[@]}"; }
+Usage() {
+	cat <<-EOF
+	Usage:
+	  [ENV] $PROG <9|10|CentOS-10-stream|RHEL-10.2-20251217.0> [vm-create-options]
+	Example:
+	  $PROG RHEL-10.2-20251217.0 --brewinstall=-debugk
+	  KEEPVMS=yes NOURING=no TESTS="-i 5 generic/751" $PROG RHEL-10.2-20251217.0 --brewinstall=-debugk
+	EOF
+}
 
-#env
+#env:
 #TESTS="-g quick ..."
 #DIFFLEN=-0
 #NOURING=yes
 
 [[ $1 != -* ]] && { distro="$1"; shift; }
-distro=${distro:-9}
+[[ -z "$distro" ]] && { Usage >&2; exit 1; }
 nfsserv=fstest-nfsserv
 nfsclnt=fstest-nfsclnt
 pkglist=vim,nfs-utils,tmux
