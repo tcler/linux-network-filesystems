@@ -40,7 +40,7 @@ imgf=$(sed -rn '${/^-[-rwx]{9}.? /{s/^.* //;p}}' <<<"$stdlog")
 [[ -n "${imgf}" ]] && insOpt=-I=$imgf
 
 trun -tmux vm create $distro -n $nfsserv -m 4G -f -nointeract -p ${pkglist} --xdisk 10,xfs --xdisk 10,xfs "$@" $insOpt
-trun       vm create $distro -n $nfsclnt -m 6G -f -nointeract -p ${pkglist},git "$@" $insOpt || exit $?
+trun       vm create $distro -n $nfsclnt -m 8G -f -nointeract -p ${pkglist},git "$@" $insOpt || exit $?
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 10; done
 servaddr=$(vm ifaddr $nfsserv|head -1)
