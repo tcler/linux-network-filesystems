@@ -18,9 +18,8 @@ trap try_again SIGUSR2
 
 ### __prepare__ test env build
 #create Windows AD server, ONTAP simulator and client VMs
-if ! ping -c 4 -I $(get-default-if.sh) ipa.corp.redhat.com; then
-	export PUBIF=no
-fi
+#export PUBIF=no
+ping -c 4 -I $(get-default-if.sh) ipa.corp.redhat.com || export PUBIF=no
 trun -x0 make-ontap-with-windows-ad.sh $distro ${nfsclnt},${nfsclnt2} "$@" || exit $?
 timeout 300 vm port-available -w $nfsclnt || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
