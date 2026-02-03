@@ -60,7 +60,7 @@ trun port-available.sh $serv_addr 22 -w
 vmrunx 0      $nfsclnt -- showmount -e ${nfsserv}
 
 #suspend client
-vmrunx 0 $nfsclnt -- tmux new -d "dd if=/mnt/nfsmp/largefile.img of=/home/largefile.img bs=64"
+vmrunx 0 $nfsclnt -- tmux new -d "dd if=/mnt/nfsmp/largefile.img of=/home/largefile.img bs=32"
 vmrunx 0 $nfsclnt -- 'sleep 3; ps axf|grep -w d[d]'
 trun virsh suspend $nfsclnt
 trun sleep 8
