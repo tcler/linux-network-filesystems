@@ -75,6 +75,7 @@ mkdir -p $resdir
   vmrunx - $nfsclnt -- uname -r;
   trun -tmux=${_test}-console-$nfsserv -logf=$resdir/console-$nfsserv.log vm console $nfsserv
   trun -tmux=${_test}-console-$nfsclnt -logf=$resdir/console-$nfsclnt.log vm console $nfsclnt
+  vmrunx - $nfsclnt -- "modprobe nfs; cat /sys/module/nfs/parameters/localio_enabled"
   vmrunx - $nfsclnt -- "cd /var/lib/xfstests/; DIFF_LENGTH=${DIFFLEN} ./check -nfs ${TESTS};"
   console_check $resdir/console*.log
   stopvms
