@@ -44,6 +44,7 @@ trun       vm create $distro -n $nfsclnt -m 12G -f -nointeract -p ${pkglist},git
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 10; done
 servaddr=$(vm ifaddr $nfsserv|head -1)
+[[ -z "$servaddr" ]] && { echo "{ERROR} can not get ipaddr from VM '$nfsserv'" >&2; exit 1; }
 
 vm cpto -v $nfsserv /usr/bin/make-nfs-server.sh /usr/bin
 tmux new -s nfsServer -d "vm exec -v $nfsserv -- make-nfs-server.sh --prefix=$NFSSHARE --nfsroot=$NFSROOT"
