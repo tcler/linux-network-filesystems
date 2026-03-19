@@ -6,9 +6,27 @@ PROG=$0; ARGS=("$@")
 trap_try_again() { exec $PROG "${ARGS[@]}"; }
 export LANG=C LANGUAGE=C   #nfstest only works on english lang env
 
+Usage() {
+	cat <<-EOF
+	Usage:
+	  [ENV] $PROG <9|10|CentOS-10-stream|RHEL-10.2-20251217.0> [-- vm-create-options]
+	EOF
+}
+_at=$(getopt -a -o h \
+	--long help \
+	-n "$PROG" -- "$@")
+[[ $? != 0 ]] && { Usage >&2; exit 1; }
+eval set -- "$_at"
+while true; do
+	case "$1" in
+	-h|--help) Usage; shift 1; exit 0;;
+	--) shift; break;;
+	esac
+done
+[[ $# = 0 || $1 = -* ]] && { Usage >&2; exit 1; }
+distro=$1; shift
+
 #create nfs-server vm
-[[ $1 != -* ]] && { distro="$1"; shift; }
-distro=${distro:-9}
 nfsserv=nfstest-cache-serv
 nfsclnt=nfstest-cache-clnt
 nfsclntx=nfstest-cache-clntx

@@ -6,23 +6,35 @@ export LANG=C
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
 PROG=$0; ARGS=("$@")
 trap_try_again() { exec $PROG "${ARGS[@]}"; }
+
 Usage() {
 	cat <<-EOF
 	Usage:
-	  [ENV] $PROG <9|10|CentOS-10-stream|RHEL-10.2-20251217.0> [vm-create-options]
+	  [ENV] $PROG <9|10|CentOS-10-stream|RHEL-10.2-20251217.0> [-- vm-create-options]
 	Example:
-	  $PROG RHEL-10.2-20251217.0 --brewinstall=-debugk
-	  KEEPVMS=yes NOURING=no TESTS="-i 5 generic/751" $PROG RHEL-10.2-20251217.0 --brewinstall=-debugk
+	  $PROG RHEL-10.2-20251217.0 -- --brewinstall=-debugk
+	  KEEPVMS=yes NOURING=no TESTS="-i 5 generic/751" $PROG RHEL-10.2-20251217.0 -- --brewinstall=-debugk
 	EOF
 }
+_at=$(getopt -a -o h \
+	--long help \
+	-n "$PROG" -- "$@")
+[[ $? != 0 ]] && { Usage >&2; exit 1; }
+eval set -- "$_at"
+while true; do
+	case "$1" in
+	-h|--help) Usage; shift 1; exit 0;;
+	--) shift; break;;
+	esac
+done
+[[ $# = 0 || $1 = -* ]] && { Usage >&2; exit 1; }
+distro=$1; shift
 
 #env:
 #TESTS="-g quick ..."
 #DIFFLEN=-0
 #NOURING=yes
 
-[[ $1 != -* ]] && { distro="$1"; shift; }
-[[ -z "$distro" ]] && { Usage >&2; exit 1; }
 nfsserv=fstest-nfsserv
 nfsclnt=fstest-nfsclnt
 pkglist=vim,nfs-utils,tmux

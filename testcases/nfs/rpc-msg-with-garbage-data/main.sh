@@ -3,12 +3,32 @@
 
 export LANG=C
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+PROG=$0; ARGS=("$@")
+
+Usage() {
+	cat <<-EOF
+	Usage:
+	  [ENV] $PROG <9|10|CentOS-10-stream|RHEL-10.2-20251217.0> [-- vm-create-options]
+	EOF
+}
+_at=$(getopt -a -o h \
+	--long help \
+	-n "$PROG" -- "$@")
+[[ $? != 0 ]] && { Usage >&2; exit 1; }
+eval set -- "$_at"
+while true; do
+	case "$1" in
+	-h|--help) Usage; shift 1; exit 0;;
+	--) shift; break;;
+	esac
+done
+[[ $# = 0 || $1 = -* ]] && { Usage >&2; exit 1; }
+distro=$1; shift
 
 #export share dir by nfs
 nfsmp=/mnt/nfsmp
 script_dir=$(readlink -f $(dirname $0))
 
-distro=${1:-9}; shift
 nfsserv=nfs-server
 nfsclnt=nfs-client
 NFSSHARE=/nfsshare

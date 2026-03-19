@@ -6,8 +6,28 @@ PROG=$0; ARGS=("$@")
 trap_try_again() { exec $PROG "${ARGS[@]}"; }
 export LANG=C LANGUAGE=C   #nfstest only works on english lang env
 
-[[ -n "$1" && "$1" != -* ]] && { distro=${1}; shift; [[ -n "$1" && "$1" != -* ]] && { nfsclnt=${1}; shift 1; }; }
-distro=${distro:-9}
+Usage() {
+	cat <<-EOF
+	Usage:
+	  [ENV] $PROG <9|10|CentOS-10-stream|RHEL-10.2-20251217.0> [-clientvm=<vmname>] [-- vm-create-options]
+	EOF
+}
+_at=$(getopt -a -o h \
+	--long help \
+	--long clientvm: \
+	-n "$PROG" -- "$@")
+[[ $? != 0 ]] && { Usage >&2; exit 1; }
+eval set -- "$_at"
+while true; do
+	case "$1" in
+	-h|--help) Usage; shift 1; exit 0;;
+	--client*) nfsclnt=$2; shift 2;;
+	--) shift; break;;
+	esac
+done
+[[ $# = 0 || $1 = -* ]] && { Usage >&2; exit 1; }
+distro=$1; shift
+
 nfsclnt=${nfsclnt:-nfstest-ontap-clnt}
 nfsclnt2="${nfsclnt}2"
 

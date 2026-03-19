@@ -3,13 +3,33 @@
 
 export LANG=C
 . /usr/lib/bash/libtest || { echo "{ERROR} 'kiss-vm-ns' is required, please install it first" >&2; exit 2; }
+PROG=$0; ARGS=("$@")
 
 warnlog() { echo -e "\033[41m{TEST:WARN} $*\033[0m"; }
 faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
 
+Usage() {
+	cat <<-EOF
+	Usage:
+	  [ENV] $PROG <9|10|CentOS-10-stream|RHEL-10.2-20251217.0> [-- vm-create-options]
+	EOF
+}
+_at=$(getopt -a -o h \
+	--long help \
+	-n "$PROG" -- "$@")
+[[ $? != 0 ]] && { Usage >&2; exit 1; }
+eval set -- "$_at"
+while true; do
+	case "$1" in
+	-h|--help) Usage; shift 1; exit 0;;
+	--) shift; break;;
+	esac
+done
+[[ $# = 0 || $1 = -* ]] && { Usage >&2; exit 1; }
+distro=$1; shift
+
 ExportDir=/nfsshare
 MountPoint=/mnt/nfs
-distro=${1:-9}; shift
 MOUNT_OPTS=${MOUNT_OPTS:--onosharecache,nconnect=16}
 
 subnet1=12

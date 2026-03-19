@@ -6,8 +6,26 @@ PROG=$0; ARGS=("$@")
 trap_try_again() { exec $PROG "${ARGS[@]}"; }
 export LANG=C LANGUAGE=C   #nfstest only works on english lang env
 
-[[ $1 != -* ]] && { distro="$1"; shift; }
-distro=${distro:-9}
+Usage() {
+	cat <<-EOF
+	Usage:
+	  [ENV] $PROG <9|10|CentOS-10-stream|RHEL-10.2-20251217.0> [-- vm-create-options]
+	EOF
+}
+_at=$(getopt -a -o h \
+	--long help \
+	-n "$PROG" -- "$@")
+[[ $? != 0 ]] && { Usage >&2; exit 1; }
+eval set -- "$_at"
+while true; do
+	case "$1" in
+	-h|--help) Usage; shift 1; exit 0;;
+	--) shift; break;;
+	esac
+done
+[[ $# = 0 || $1 = -* ]] && { Usage >&2; exit 1; }
+distro=$1; shift
+
 nfsclnt=fbpnfs-linux-client
 
 #download image file
@@ -20,11 +38,10 @@ nfsmp=/mnt/nfsmp
 expdir0=/export0
 expdir1=/export1
 vm_ds1=freebsd-pnfs-ds1
-vm_ds2=freebsd-pnfs-ds2
 vm_mds=freebsd-pnfs-mds
 vm_fbclient=freebsd-pnfs-client
 
-stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsclnt $vm_mds $vm_ds1 $vm_ds2 $vm_fbclient; }
+stopvms() { [[ "${KEEPVM:-${KEEPVMS}}" != yes ]] && vm stop $nfsclnt $vm_mds ${vm_ds1%1}* $vm_fbclient; }
 cleanup() { stopvms 2>/dev/null; }
 trap cleanup EXIT
 trap try_again SIGUSR2

@@ -7,13 +7,34 @@ export LANG=C
 PROG=$0; ARGS=("$@")
 trap_try_again() { exec $PROG "${ARGS[@]}"; }
 
+Usage() {
+	cat <<-EOF
+	Usage:
+	  [ENV] $PROG <9|10|CentOS-10-stream|RHEL-10.2-20251217.0> [-- vm-create-options]
+	Example:
+	  $PROG RHEL-10.2-20251217.0 -- --brewinstall=-debugk
+	  KEEPVMS=yes NOURING=no TESTS="-i 5 generic/751" $PROG RHEL-10.2-20251217.0 -- --brewinstall=-debugk
+	EOF
+}
+_at=$(getopt -a -o h \
+	--long help \
+	-n "$PROG" -- "$@")
+[[ $? != 0 ]] && { Usage >&2; exit 1; }
+eval set -- "$_at"
+while true; do
+	case "$1" in
+	-h|--help) Usage; shift 1; exit 0;;
+	--) shift; break;;
+	esac
+done
+[[ $# = 0 || $1 = -* ]] && { Usage >&2; exit 1; }
+distro=$1; shift
+
 #env
 #TESTS="-g quick ..."
 #DIFFLEN=-0
 #NOURING=yes
 
-[[ $1 != -* ]] && { distro="$1"; shift; }
-distro=${distro:-9}
 smbserv=fstest-smbserv
 cifsclnt=fstest-cifsclnt
 pkglist=vim,cifs-utils,samba-client,tmux

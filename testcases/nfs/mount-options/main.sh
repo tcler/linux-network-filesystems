@@ -6,6 +6,26 @@ export LANG=C
 PROG=$0; ARGS=("$@")
 trap_try_again() { exec $PROG "${ARGS[@]}"; }
 
+Usage() {
+	cat <<-EOF
+	Usage:
+	  [ENV] $PROG <9|10|CentOS-10-stream|RHEL-10.2-20251217.0> [-- vm-create-options]
+	EOF
+}
+_at=$(getopt -a -o h \
+	--long help \
+	-n "$PROG" -- "$@")
+[[ $? != 0 ]] && { Usage >&2; exit 1; }
+eval set -- "$_at"
+while true; do
+	case "$1" in
+	-h|--help) Usage; shift 1; exit 0;;
+	--) shift; break;;
+	esac
+done
+[[ $# = 0 || $1 = -* ]] && { Usage >&2; exit 1; }
+distro=$1; shift
+
 #export share dir by nfs
 nfsmp=/mnt/nfsmp
 NFSSHARE=/nfsshare
@@ -13,11 +33,10 @@ NFSROOT=${NFSROOT}
 trap try_again SIGUSR2
 
 #create nfs-server vm
-distro=${1:-9}; shift
 nfsserv=nfs-server
 nfsclnt=nfs-client
-trun -tmux vm create $distro -n $nfsserv -f -nointeract -p 'nfs-utils wireshark tmux' "$@"
-trun       vm create $distro -n $nfsclnt -f -nointeract -p 'nfs-utils wireshark tmux' "$@"
+trun -tmux vm create $distro -n $nfsserv -f -nointeract -p nfs-utils,wireshark,tmux "$@"
+trun       vm create $distro -n $nfsclnt -f -nointeract -p nfs-utils,wireshark,tmux "$@"
 echo "{INFO} waiting all vm create process finished ..."
 while ps axf|grep tmux.new.*$$-$USER.*-d.vm.creat[e]; do sleep 16; done
 timeout 300 vm port-available -w $nfsserv || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }

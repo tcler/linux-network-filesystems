@@ -5,17 +5,25 @@ export LANG=C
 PROG=$0; ARGS=("$@")
 trap_try_again() { exec $PROG "${ARGS[@]}"; }
 
-argv=()
-for arg; do
-	case "$arg" in
-	-upk) VMOPT+=" --brewinstall=upk";;
-	-h)   echo "Usage: $0 [-h] [distro] [-upk] [-force|-f]"; exit;;
-	*)    argv+=($arg);;
+Usage() {
+	cat <<-EOF
+	Usage:
+	  [ENV] $PROG <9|10|CentOS-10-stream|RHEL-10.2-20251217.0> [-- vm-create-options]
+	EOF
+}
+_at=$(getopt -a -o h \
+	--long help \
+	-n "$PROG" -- "$@")
+[[ $? != 0 ]] && { Usage >&2; exit 1; }
+eval set -- "$_at"
+while true; do
+	case "$1" in
+	-h|--help) Usage; shift 1; exit 0;;
+	--) shift; break;;
 	esac
 done
-set -- "${argv[@]}"
-
-distro=${1:-9}; shift
+[[ $# = 0 || $1 = -* ]] && { Usage >&2; exit 1; }
+distro=$1; shift
 
 #---------------------------------------------------------------
 #create nfs server and client VMs

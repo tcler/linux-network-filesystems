@@ -65,7 +65,7 @@ distro=$(awk '/getting fastest location/{print $(NF-1)}' <<<"$stdlog")
 [[ -z $distro ]] && { echo "{WARN} distro name is empty, exit" >&2; exit; }
 tag=${distro}.${SUFFIX}
 sessiontag=fsparallel-test-${tag}
-_at=($distro "$@" "$IOpt")
+_at=($distro -- "$@" "$IOpt")
 if [[ "${_at[*]}" =~ .*-b[=\ ](repo:)?http.* ]]; then
 	url=$(echo "${_at[*]}"|sed -r 's/.*-b[= ](repo:)?(http[^ #;]+).*/\2/')
 	yum-repo-query.sh "$url" || exit 1
