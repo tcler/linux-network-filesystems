@@ -46,7 +46,7 @@ cleanup() { stopvms 2>/dev/null; }
 trap cleanup EXIT
 trap try_again SIGUSR2
 
-trun -x0 make-freebsd-pnfsserver.sh $distro $nfsclnt "$@" $insOpt || exit $?
+trun -x0 make-freebsd-pnfsserver.sh $distro --clientvm=$nfsclnt -- "$@" $insOpt || exit $?
 timeout 300 vm port-available -w $nfsclnt || { echo "{TENV:ERROR} vm port 22 not available" >&2; exit 124; }
 
 mdsaddr=$(vm ifaddr $vm_mds|head -1)
