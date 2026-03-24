@@ -43,7 +43,8 @@ while true; do
 	-f|--filter)	pathPattern=$2; shift 2;;
 	--suffix)	SUFFIX=${2}; shift 2;;
 	--suffix=*)	SUFFIX=${1#*=}; shift 1;;
-	--no|--noontap)	noOntap=yes; shift 1; exit 0;;
+	--no|--noontap)	noOntap=yes; shift 1;;
+	--)		shift 1;;
 	*)		break;;
 	esac
 done
