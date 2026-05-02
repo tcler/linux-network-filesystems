@@ -32,10 +32,10 @@ get_now_and_max_available_vms() {
 
 Usage() {
 	echo "Usage: $P [-h] [--suffix=mr-xxx] [--no|--no-ontap] [-f <path-pattern>] <distro> [vm-create-options]";
-	echo "  e.g: $P --no-ontap RHEL-8.10.0"
-	echo "  e.g: $P -f ontap RHEL-9.5.0"
-	echo "  e.g: $P -f nfstest.cache RHEL-10.0"
-	echo "  e.g: $P --suffix RHEL-80508-mr421_1690255145 RHEL-10.0 -b https://s3.amazonaws.com/somepath/repo/6.12.0-57.421_1690255145.el10.x86_64"
+	echo "  e.g: $P --no-ontap Alma-8"
+	echo "  e.g: $P -f ontap Alma-9"
+	echo "  e.g: $P -f nfstest.cache Alma-10"
+	echo "  e.g: $P --suffix RHEL-80508-mr421_1690255145 Alma-10 --repo=url -p pkgname"
 }
 while true; do
 	case "$1" in
@@ -67,8 +67,8 @@ distro=$(awk '/getting fastest location/{print $(NF-1)}' <<<"$stdlog")
 tag=${distro}.${SUFFIX}
 sessiontag=fsparallel-test-${tag}
 _at=($distro -- "$@" "$IOpt")
-if [[ "${_at[*]}" =~ .*-b[=\ ](repo:)?http.* ]]; then
-	url=$(echo "${_at[*]}"|sed -r 's/.*-b[= ](repo:)?(http[^ #;]+).*/\2/')
+if [[ "${_at[*]}" =~ .*-repo[=\ ]http.* ]]; then
+	url=$(echo "${_at[*]}"|sed -r 's/.*-repo[= ](http[^ #;]+).*/\2/')
 	yum-repo-query.sh "$url" || exit 1
 fi
 

@@ -8,7 +8,7 @@ trap_try_again() { exec $PROG "${ARGS[@]}"; }
 Usage() {
 	cat <<-EOF
 	Usage:
-	  [ENV] $PROG <9|10|CentOS-10-stream|RHEL-10.2-20251217.0> [-- vm-create-options]
+	  [ENV] $PROG <9|10|CentOS-10-stream|Alma-10|..> [-- vm-create-options]
 	EOF
 }
 _at=$(getopt -a -o h \

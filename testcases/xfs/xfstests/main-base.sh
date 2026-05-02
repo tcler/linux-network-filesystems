@@ -10,10 +10,10 @@ trap_try_again() { exec $PROG "${ARGS[@]}"; }
 Usage() {
 	cat <<-EOF
 	Usage:
-	  [ENV] $PROG <9|10|CentOS-10-stream|RHEL-10.2-20251217.0> [-- vm-create-options]
+	  [ENV] $PROG <9|10|CentOS-10-stream|Alma-10|..> [-- vm-create-options]
 	Example:
-	  $PROG RHEL-10.2-20251217.0 -- --brewinstall=-debugk
-	  KEEPVMS=yes NOURING=no TESTS="-i 5 generic/751" $PROG RHEL-10.2-20251217.0 -- --brewinstall=-debugk
+	  $PROG Alma-10
+	  KEEPVMS=yes NOURING=no TESTS="-i 5 generic/751" $PROG Alma-10
 	EOF
 }
 _at=$(getopt -a -o h \

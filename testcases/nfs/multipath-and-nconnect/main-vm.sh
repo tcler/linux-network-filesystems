@@ -11,7 +11,7 @@ faillog() { echo -e "\033[41m{TEST:FAIL} $*\033[0m"; }
 Usage() {
 	cat <<-EOF
 	Usage:
-	  [ENV] $PROG <9|10|CentOS-10-stream|RHEL-10.2-20251217.0> [-- vm-create-options]
+	  [ENV] $PROG <9|10|CentOS-10-stream|Alma-10|..> [-- vm-create-options]
 	EOF
 }
 _at=$(getopt -a -o h \
